@@ -5,7 +5,7 @@ services:
     plan: free
     region: oregon
     rootDir: .
-    buildCommand: corepack enable && corepack prepare pnpm@9.15.0 --activate && pnpm install --frozen-lockfile && pnpm --filter @everpride/database db:generate && pnpm --filter @everpride/shared build && pnpm --filter @everpride/auth build && pnpm --filter @everpride/api build
+    buildCommand: npm install -g pnpm@9.15.0 && pnpm install --frozen-lockfile && pnpm --filter @everpride/database db:generate && pnpm --filter @everpride/shared build && pnpm --filter @everpride/auth build && pnpm --filter @everpride/api build
     startCommand: node apps/api/dist/main.js
     envVars:
       - key: NODE_ENV
