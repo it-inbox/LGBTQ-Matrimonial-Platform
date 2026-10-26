@@ -1,0 +1,40 @@
+{
+  "name": "@everpride/api",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "dev": "node --watch dist/main.js",
+    "watch": "tsc --watch --preserveWatchOutput",
+    "start": "node dist/main.js",
+    "start:prod": "node dist/main.js",
+    "clean": "rimraf dist"
+  },
+  "dependencies": {
+    "@everpride/auth": "workspace:*",
+    "@everpride/database": "workspace:*",
+    "@everpride/shared": "workspace:*",
+    "@nestjs/common": "^11.0.1",
+    "@nestjs/core": "^11.0.1",
+    "@nestjs/platform-express": "^11.0.1",
+    "@nestjs/platform-socket.io": "^11.2.8",
+    "@nestjs/swagger": "^11.0.3",
+    "@nestjs/websockets": "^11.2.8",
+    "dotenv": "^16.4.7",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.1",
+    "socket.io": "^4.8.4",
+    "swagger-ui-express": "^5.0.1",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@everpride/typescript-config": "workspace:*",
+    "@nestjs/cli": "^11.0.2",
+    "@nestjs/schematics": "^11.0.0",
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.10.7",
+    "rimraf": "^6.0.1",
+    "typescript": "^5.7.2"
+  }
+}

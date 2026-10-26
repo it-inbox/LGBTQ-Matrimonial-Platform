@@ -1,0 +1,41 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: everpride-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: everpride_matrimonial
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - everpride-network
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: everpride-api
+    restart: always
+    environment:
+      DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/everpride_matrimonial?schema=public"
+      JWT_ACCESS_SECRET: "super-secret-access-token-change-in-production"
+      JWT_REFRESH_SECRET: "super-secret-refresh-token-change-in-production"
+      PORT: 4001
+      NODE_ENV: production
+    ports:
+      - "4001:4001"
+    depends_on:
+      - postgres
+    networks:
+      - everpride-network
+
+volumes:
+  pgdata:
+
+networks:
+  everpride-network:
+    driver: bridge

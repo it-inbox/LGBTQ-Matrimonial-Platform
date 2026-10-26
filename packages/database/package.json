@@ -1,0 +1,25 @@
+{
+  "name": "@everpride/database",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push",
+    "db:seed": "pnpm dlx tsx prisma/seed.ts",
+    "db:studio": "prisma studio",
+    "clean": "rimraf node_modules"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.3.0"
+  },
+  "devDependencies": {
+    "@everpride/typescript-config": "workspace:*",
+    "prisma": "^6.3.0",
+    "rimraf": "^6.0.1",
+    "typescript": "^5.7.2"
+  }
+}

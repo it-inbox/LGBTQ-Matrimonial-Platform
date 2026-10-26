@@ -1,0 +1,6 @@
+{
+  "extends": "@everpride/typescript-config/node.json",
+  "include": [
+    "src/**/*"
+  ]
+}

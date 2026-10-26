@@ -1,0 +1,298 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ─────────────────────────────────────────────────────────────
+// Enums
+// ─────────────────────────────────────────────────────────────
+
+enum Gender {
+  MAN
+  WOMAN
+  NON_BINARY
+  TRANS_MAN
+  TRANS_WOMAN
+  GENDERQUEER
+  AGENDER
+  OTHER
+}
+
+enum Orientation {
+  GAY
+  LESBIAN
+  BISEXUAL
+  PANSEXUAL
+  QUEER
+  ASEXUAL
+  DEMISEXUAL
+  OTHER
+}
+
+enum OutnessStatus {
+  OUT_TO_ALL
+  OUT_TO_SELECT_FEW
+  DISCREET_NOT_OUT
+}
+
+enum InterestStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  CANCELLED
+}
+
+enum PhotoVisibility {
+  ALL_MEMBERS
+  MUTUAL_MATCHES_ONLY
+  REQUEST_REQUIRED
+}
+
+enum UserRole {
+  USER
+  MODERATOR
+  ADMIN
+}
+
+// ─────────────────────────────────────────────────────────────
+// Authentication & Core User
+// ─────────────────────────────────────────────────────────────
+
+model User {
+  id           String    @id @default(uuid())
+  phoneNumber  String?   @unique @map("phone_number")
+  email        String?   @unique
+  passwordHash String?   @map("password_hash")
+  role         UserRole  @default(USER)
+  isVerified   Boolean   @default(false) @map("is_verified")
+  isActive     Boolean   @default(true) @map("is_active")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  // Relationships
+  profile            Profile?
+  refreshTokens      RefreshToken[]
+  sentInterests      MatchInterest[]      @relation("SentInterests")
+  receivedInterests  MatchInterest[]      @relation("ReceivedInterests")
+  sentMessages       Message[]            @relation("SentMessages")
+  conversationsAsP1  Conversation[]       @relation("Participant1")
+  conversationsAsP2  Conversation[]       @relation("Participant2")
+  blockedUsers       BlockedUser[]        @relation("UserBlocks")
+  blockedBy          BlockedUser[]        @relation("BlockedByUsers")
+  photoAccessRequests PhotoAccessRequest[] @relation("SentPhotoRequests")
+  receivedPhotoRequests PhotoAccessRequest[] @relation("ReceivedPhotoRequests")
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  tokenHash String   @unique @map("token_hash")
+  userId    String   @map("user_id")
+  revoked   Boolean  @default(false)
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("refresh_tokens")
+}
+
+model PhoneVerification {
+  id          String   @id @default(uuid())
+  phoneNumber String   @unique @map("phone_number")
+  otpHash     String   @map("otp_hash")
+  attempts    Int      @default(0)
+  expiresAt   DateTime @map("expires_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("phone_verifications")
+}
+
+// ─────────────────────────────────────────────────────────────
+// Profile & Preferences (LGBTQ+ & Privacy Focused)
+// ─────────────────────────────────────────────────────────────
+
+model Profile {
+  id                 String          @id @default(uuid())
+  userId             String          @unique @map("user_id")
+  
+  // Names: Support display alias to safeguard identity
+  displayName        String          @map("display_name")
+  legalNameEncrypted String?         @map("legal_name_encrypted") // Optional KYC/verification only
+
+  // Identity & Orientation
+  gender             Gender
+  orientation        Orientation
+  pronouns           String?         // e.g. "they/them", "she/her", "he/him"
+  outnessStatus      OutnessStatus   @default(DISCREET_NOT_OUT) @map("outness_status")
+
+  // Vital & Demographics
+  dateOfBirth        DateTime        @map("date_of_birth")
+  heightCm           Int?            @map("height_cm")
+  nationality        String?         @default("Indian")
+  religion           String?
+  motherTongue       String?         @map("mother_tongue")
+  languagesSpoken    String[]        @default([]) @map("languages_spoken")
+  maritalStatus      String?         @map("marital_status")
+  
+  // Contact & Verification
+  phoneNumber        String?         @map("phone_number")
+  phoneVerified      Boolean         @default(false) @map("phone_verified")
+  backupEmail        String?         @map("backup_email")
+
+  // Location (Coordinates can be used for distance calculations; exact coords never sent to client)
+  city               String
+  state              String
+  country            String          @default("India")
+  latitude           Float?
+  longitude          Float?
+
+  // Professional & Education
+  education          String?         // Highest qualification
+  degree             String?
+  sector             String?         // Sector of work (IT, Healthcare, Govt, etc.)
+  profession         String?         // Job Title
+  company            String?
+  annualIncome       String?         @map("annual_income")
+
+  // Lifestyle
+  bio                String?
+  diet               String?         // Dietary preferences
+  drinking           String?
+  smoking            String?
+  pets               String?
+  hobbies            String[]        @default([])
+
+  // Privacy Preferences
+  photoVisibility    PhotoVisibility @default(MUTUAL_MATCHES_ONLY) @map("photo_visibility")
+  ghostModeEnabled   Boolean         @default(false) @map("ghost_mode_enabled") // Browse without leaving profile visitor trace
+
+  createdAt          DateTime        @default(now()) @map("created_at")
+  updatedAt          DateTime        @updatedAt @map("updated_at")
+
+  user               User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  photos             ProfilePhoto[]
+  partnerPreference  PartnerPreference?
+
+  @@map("profiles")
+}
+
+model ProfilePhoto {
+  id               String   @id @default(uuid())
+  profileId        String   @map("profile_id")
+  originalUrl      String   @map("original_url")
+  blurredUrl       String?  @map("blurred_url")
+  isPrimary        Boolean  @default(false) @map("is_primary")
+  isWatermarked    Boolean  @default(true) @map("is_watermarked")
+  isApproved       Boolean  @default(true) @map("is_approved")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@map("profile_photos")
+}
+
+model PhotoAccessRequest {
+  id          String         @id @default(uuid())
+  requesterId String         @map("requester_id")
+  targetId    String         @map("target_id")
+  status      InterestStatus @default(PENDING)
+  createdAt   DateTime       @default(now()) @map("created_at")
+  updatedAt   DateTime       @updatedAt @map("updated_at")
+
+  requester User @relation("SentPhotoRequests", fields: [requesterId], references: [id], onDelete: Cascade)
+  target    User @relation("ReceivedPhotoRequests", fields: [targetId], references: [id], onDelete: Cascade)
+
+  @@unique([requesterId, targetId])
+  @@map("photo_access_requests")
+}
+
+model PartnerPreference {
+  id                    String          @id @default(uuid())
+  profileId             String          @unique @map("profile_id")
+  
+  preferredGenders      Gender[]        @default([]) @map("preferred_genders")
+  preferredOrientations Orientation[]   @default([]) @map("preferred_orientations")
+  minAge                Int             @default(21) @map("min_age")
+  maxAge                Int             @default(50) @map("max_age")
+  minHeightCm           Int?            @map("min_height_cm")
+  maxHeightCm           Int?            @map("max_height_cm")
+  maxDistanceKm         Int?            @map("max_distance_km")
+  acceptableOutness     OutnessStatus[] @default([]) @map("acceptable_outness")
+
+  createdAt             DateTime        @default(now()) @map("created_at")
+  updatedAt             DateTime        @updatedAt @map("updated_at")
+
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@map("partner_preferences")
+}
+
+// ─────────────────────────────────────────────────────────────
+// Matchmaking, Interest & Chat
+// ─────────────────────────────────────────────────────────────
+
+model MatchInterest {
+  id          String         @id @default(uuid())
+  senderId    String         @map("sender_id")
+  receiverId  String         @map("receiver_id")
+  status      InterestStatus @default(PENDING)
+  message     String?
+  createdAt   DateTime       @default(now()) @map("created_at")
+  updatedAt   DateTime       @updatedAt @map("updated_at")
+
+  sender   User @relation("SentInterests", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver User @relation("ReceivedInterests", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  @@unique([senderId, receiverId])
+  @@map("match_interests")
+}
+
+model Conversation {
+  id             String    @id @default(uuid())
+  participant1Id String    @map("participant_1_id")
+  participant2Id String    @map("participant_2_id")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  participant1 User      @relation("Participant1", fields: [participant1Id], references: [id], onDelete: Cascade)
+  participant2 User      @relation("Participant2", fields: [participant2Id], references: [id], onDelete: Cascade)
+  messages     Message[]
+
+  @@unique([participant1Id, participant2Id])
+  @@map("conversations")
+}
+
+model Message {
+  id             String   @id @default(uuid())
+  conversationId String   @map("conversation_id")
+  senderId       String   @map("sender_id")
+  content        String
+  isRead         Boolean  @default(false) @map("is_read")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       User         @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@map("messages")
+}
+
+model BlockedUser {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  blockedId String   @map("blocked_id")
+  reason    String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user    User @relation("UserBlocks", fields: [userId], references: [id], onDelete: Cascade)
+  blocked User @relation("BlockedByUsers", fields: [blockedId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, blockedId])
+  @@map("blocked_users")
+}
