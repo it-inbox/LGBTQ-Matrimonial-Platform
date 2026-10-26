@@ -5,7 +5,7 @@ services:
     plan: free
     region: oregon
     rootDir: .
-    buildCommand: npm install -g pnpm@9.15.0 && pnpm install --frozen-lockfile && pnpm --filter @everpride/database db:generate && pnpm --filter @everpride/shared build && pnpm --filter @everpride/auth build && pnpm --filter @everpride/api build
+    buildCommand: npx pnpm@9.15.0 install --frozen-lockfile && npx pnpm@9.15.0 --filter @everpride/database db:generate && npx pnpm@9.15.0 --filter @everpride/shared build && npx pnpm@9.15.0 --filter @everpride/auth build && npx pnpm@9.15.0 --filter @everpride/api build
     startCommand: node apps/api/dist/main.js
     envVars:
       - key: NODE_ENV
