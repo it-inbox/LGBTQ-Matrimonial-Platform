@@ -16,6 +16,7 @@ import {
   Camera,
   UploadCloud,
   X,
+  Star,
 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { allCountries } from "../../data/countries";
@@ -180,8 +181,14 @@ const SECTION_TABS: SectionTab[] = [
     description: "Partner preferences & filters",
   },
   {
+    id: "photos",
+    label: "Pictures & Gallery",
+    icon: Camera,
+    description: "Manage photos & primary picture",
+  },
+  {
     id: "privacy",
-    label: "Privacy & Photos",
+    label: "Privacy & Visibility",
     icon: Shield,
     description: "Photo shields & ghost mode",
   },
@@ -254,7 +261,7 @@ export const EditProfilePage: React.FC = () => {
   useEffect(() => {
     if (profile) {
       const pref = (profile as any).partnerPreference;
-      const photoUrls = (profile as any).photos?.map((p: any) => p.url || p) || [];
+      const photoUrls = (profile as any).photos?.map((p: any) => p.originalUrl || p.url || p) || [];
       const nationalityVal = (profile as any).nationality || (profile as any).country || "India";
 
       setFormData({
@@ -389,11 +396,75 @@ export const EditProfilePage: React.FC = () => {
       "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80",
       "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80",
       "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=600&q=80",
+      "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=600&q=80",
+      "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=600&q=80",
+      "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=600&q=80",
     ];
-    const nextPhoto = samplePhotos[formData.photos.length % samplePhotos.length];
+    const unused = samplePhotos.filter((p) => !formData.photos.includes(p));
+    const nextPhoto = unused.length > 0 ? unused[0] : samplePhotos[formData.photos.length % samplePhotos.length];
     if (formData.photos.length < 6) {
       handleChange("photos", [...formData.photos, nextPhoto]);
     }
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    Array.from(files).forEach((file) => {
+      if (formData.photos.length >= 6) return;
+      if (!file.type.startsWith("image/")) return;
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const rawDataUrl = event.target?.result as string;
+        if (!rawDataUrl) return;
+
+        // Compress and optimize image to ensure fast network payload & reliable DB storage
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          const maxDim = 1200;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > maxDim || height > maxDim) {
+            if (width > height) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            } else {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, width, height);
+            const optimizedDataUrl = canvas.toDataURL("image/jpeg", 0.82);
+            setFormData((prev) => {
+              if (prev.photos.length >= 6) return prev;
+              return { ...prev, photos: [...prev.photos, optimizedDataUrl] };
+            });
+          }
+        };
+        img.src = rawDataUrl;
+      };
+      reader.readAsDataURL(file);
+    });
+    // Reset file input value
+    e.target.value = "";
+  };
+
+  const handleSetPrimaryPhoto = (index: number) => {
+    if (index === 0) return;
+    setFormData((prev) => {
+      const selected = prev.photos[index];
+      const remaining = prev.photos.filter((_, i) => i !== index);
+      return { ...prev, photos: [selected, ...remaining] };
+    });
   };
 
   const handleRemovePhoto = (index: number) => {
@@ -446,6 +517,7 @@ export const EditProfilePage: React.FC = () => {
         drinking: formData.drinking || undefined,
         smoking: formData.smoking || undefined,
         hobbies: formData.hobbies,
+        photos: formData.photos,
         photoVisibility: formData.photoVisibility,
         ghostModeEnabled: formData.ghostModeEnabled,
         partnerPreference: {
@@ -1223,7 +1295,121 @@ export const EditProfilePage: React.FC = () => {
           </div>
         </div>
 
-        {/* CARD 8: PRIVACY CENTER */}
+        {/* CARD 8: PICTURES & GALLERY */}
+        <div id="photos" className="scroll-mt-24 bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-7">
+          <div className="flex items-center justify-between pb-3 mb-5 border-b border-slate-100">
+            <div className="flex items-center gap-2.5">
+              <div className="w-7 h-7 rounded-lg bg-pink-50 text-brand-600 flex items-center justify-center">
+                <Camera className="w-4 h-4" />
+              </div>
+              <div>
+                <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
+                  Profile Pictures & Gallery
+                </h2>
+                <p className="text-[11px] text-slate-400">
+                  Add up to 6 pictures. Your primary photo appears as your main display avatar.
+                </p>
+              </div>
+            </div>
+            <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-100 text-slate-600">
+              {formData.photos.length} / 6 Photos
+            </span>
+          </div>
+
+          <div className="space-y-5">
+            {/* Gallery Grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3.5">
+              {formData.photos.map((url, idx) => (
+                <div
+                  key={idx}
+                  className="relative aspect-square rounded-2xl overflow-hidden border border-slate-200/90 shadow-xs group bg-slate-100"
+                >
+                  <img
+                    src={url}
+                    alt={`Profile photo ${idx + 1}`}
+                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+
+                  {/* Badges / Primary Tag */}
+                  {idx === 0 ? (
+                    <div className="absolute top-2 left-2 flex items-center gap-1 bg-brand-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">
+                      <Star className="w-3 h-3 fill-current" />
+                      <span>Primary Photo</span>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => handleSetPrimaryPhoto(idx)}
+                      className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900/80 hover:bg-brand-600 text-white text-[10px] font-medium px-2 py-0.5 rounded-full shadow-sm flex items-center gap-1 cursor-pointer"
+                    >
+                      <Star className="w-3 h-3" />
+                      Make Primary
+                    </button>
+                  )}
+
+                  {/* Remove Button */}
+                  <button
+                    type="button"
+                    onClick={() => handleRemovePhoto(idx)}
+                    title="Remove photo"
+                    className="absolute top-2 right-2 w-7 h-7 rounded-full bg-slate-900/70 hover:bg-rose-600 text-white flex items-center justify-center transition-all cursor-pointer shadow-sm"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+
+                  <div className="absolute bottom-0 inset-x-0 p-2 bg-gradient-to-t from-slate-900/60 to-transparent pointer-events-none">
+                    <span className="text-[10px] font-medium text-white/90">
+                      Photo {idx + 1}
+                    </span>
+                  </div>
+                </div>
+              ))}
+
+              {/* Upload Slots */}
+              {formData.photos.length < 6 && (
+                <label className="aspect-square rounded-2xl border-2 border-dashed border-slate-300 hover:border-brand-500 bg-slate-50/70 hover:bg-brand-50/20 transition-all flex flex-col items-center justify-center gap-1.5 cursor-pointer p-4 text-center group">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleFileUpload}
+                    className="hidden"
+                  />
+                  <div className="w-10 h-10 rounded-full bg-white shadow-xs border border-slate-200 flex items-center justify-center text-slate-500 group-hover:text-brand-600 group-hover:border-brand-200 transition-colors">
+                    <UploadCloud className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <span className="text-xs font-bold text-slate-800 block group-hover:text-brand-600">
+                      Upload from Device
+                    </span>
+                    <span className="text-[10px] text-slate-400">PNG, JPG or WebP</span>
+                  </div>
+                </label>
+              )}
+            </div>
+
+            {/* Quick Actions Bar */}
+            <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-100 text-xs">
+              <p className="text-slate-500 text-[11px]">
+                Tip: Click <strong>"Make Primary"</strong> on any picture to set it as your main profile cover.
+              </p>
+              <div className="flex items-center gap-2">
+                {formData.photos.length < 6 && (
+                  <button
+                    type="button"
+                    onClick={handleAddSamplePhoto}
+                    className="px-3 py-1.5 rounded-lg border border-slate-200 hover:border-brand-300 hover:bg-brand-50/40 text-slate-700 hover:text-brand-700 font-semibold text-[11px] flex items-center gap-1.5 transition-all cursor-pointer"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-brand-600" />
+                    + Add Sample Demo Picture
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* CARD 9: PRIVACY SAFEGUARDS */}
         <div id="privacy" className="scroll-mt-24 bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-7">
           <div className="flex items-center gap-2.5 mb-5 pb-3 border-b border-slate-100">
             <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
@@ -1231,7 +1417,7 @@ export const EditProfilePage: React.FC = () => {
             </div>
             <div>
               <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
-                Privacy Safeguards & Photos
+                Privacy Safeguards & Visibility
               </h2>
               <p className="text-[11px] text-slate-400">Controls and visibility of your photos and identity on EverPride</p>
             </div>

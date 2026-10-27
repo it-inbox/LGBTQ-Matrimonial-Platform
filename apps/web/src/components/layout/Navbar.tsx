@@ -54,9 +54,21 @@ export const Navbar: React.FC = () => {
                     title="Edit your profile details"
                     className="flex items-center gap-2 pl-2 pr-3 py-1.5 rounded-full hover:bg-slate-100 border border-slate-200 transition-colors"
                   >
-                    <div className="w-7 h-7 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center text-xs font-bold">
-                      {profile.displayName?.[0] || <User className="w-4 h-4" />}
-                    </div>
+                    {(() => {
+                      const primaryPhoto = profile.photos?.find((p) => p.isPrimary) || profile.photos?.[0];
+                      const primaryPhotoUrl = primaryPhoto?.originalUrl || primaryPhoto?.url;
+                      return primaryPhotoUrl ? (
+                        <img
+                          src={primaryPhotoUrl}
+                          alt={profile.displayName}
+                          className="w-7 h-7 rounded-full object-cover border border-brand-200"
+                        />
+                      ) : (
+                        <div className="w-7 h-7 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center text-xs font-bold">
+                          {profile.displayName?.[0] || <User className="w-4 h-4" />}
+                        </div>
+                      );
+                    })()}
                     <span className="text-sm font-medium text-slate-800 max-w-[100px] truncate">
                       {profile.displayName}
                     </span>
@@ -127,9 +139,21 @@ export const Navbar: React.FC = () => {
           >
           {profile && (
             <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-2xl border border-slate-200/80 mb-3">
-              <div className="w-10 h-10 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center font-bold text-sm">
-                {profile.displayName?.[0] || <User className="w-5 h-5" />}
-              </div>
+              {(() => {
+                const primaryPhoto = profile.photos?.find((p) => p.isPrimary) || profile.photos?.[0];
+                const primaryPhotoUrl = primaryPhoto?.originalUrl || primaryPhoto?.url;
+                return primaryPhotoUrl ? (
+                  <img
+                    src={primaryPhotoUrl}
+                    alt={profile.displayName}
+                    className="w-10 h-10 rounded-full object-cover border border-brand-200 shrink-0"
+                  />
+                ) : (
+                  <div className="w-10 h-10 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center font-bold text-sm shrink-0">
+                    {profile.displayName?.[0] || <User className="w-5 h-5" />}
+                  </div>
+                );
+              })()}
               <div className="min-w-0 flex-1">
                 <p className="font-bold text-slate-900 text-sm truncate">
                   {profile.displayName}

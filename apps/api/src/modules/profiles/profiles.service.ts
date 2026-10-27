@@ -22,7 +22,9 @@ export class ProfilesService {
     const profile = await this.prisma.client.profile.findUnique({
       where: { userId },
       include: {
-        photos: true,
+        photos: {
+          orderBy: [{ isPrimary: "desc" }, { createdAt: "asc" }],
+        },
         partnerPreference: true,
       },
     });
@@ -119,6 +121,24 @@ export class ProfilesService {
 
     const { dateOfBirth, gender, orientation, outnessStatus, photoVisibility, partnerPreference, photos, ...rest } = data;
 
+    // If photos are provided, replace existing photos with the updated photo list
+    if (photos && Array.isArray(photos)) {
+      await this.prisma.client.profilePhoto.deleteMany({
+        where: { profileId: profile.id },
+      });
+
+      if (photos.length > 0) {
+        await this.prisma.client.profilePhoto.createMany({
+          data: photos.map((url, idx) => ({
+            profileId: profile.id,
+            originalUrl: url,
+            isPrimary: idx === 0,
+            isApproved: true,
+          })),
+        });
+      }
+    }
+
     return this.prisma.client.profile.update({
       where: { userId },
       data: {
@@ -162,7 +182,9 @@ export class ProfilesService {
         }),
       },
       include: {
-        photos: true,
+        photos: {
+          orderBy: [{ isPrimary: "desc" }, { createdAt: "asc" }],
+        },
         partnerPreference: true,
       },
     });

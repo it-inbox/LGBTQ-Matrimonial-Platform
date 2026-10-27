@@ -22,7 +22,7 @@ interface Profile {
   city: string;
   state: string;
   bio?: string;
-  photos?: Array<{ id: string; url: string; isPrimary: boolean; isBlurred: boolean }>;
+  photos?: Array<{ id: string; url?: string; originalUrl?: string; blurredUrl?: string | null; isPrimary: boolean; isBlurred?: boolean }>;
 }
 
 interface AuthState {

@@ -53,6 +53,8 @@ export const ActivitySidebar: React.FC<ActivitySidebarProps> = ({ activeTab }) =
   };
 
   const memberId = user?.id || profile?.id;
+  const primaryPhoto = profile?.photos?.find((p) => p.isPrimary) || profile?.photos?.[0];
+  const primaryPhotoUrl = primaryPhoto?.originalUrl || primaryPhoto?.url;
 
   return (
     <aside className="hidden lg:block lg:w-64 shrink-0 space-y-4 self-start">
@@ -60,12 +62,20 @@ export const ActivitySidebar: React.FC<ActivitySidebarProps> = ({ activeTab }) =
       <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-xs">
         <div className="flex items-center gap-4">
           <div className="relative shrink-0">
-            <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-brand-600 to-pink-500 p-0.5 shadow-sm">
-              <div className="w-full h-full rounded-full bg-slate-100 flex items-center justify-center text-brand-700 font-extrabold text-base">
-                {profile?.displayName ? getInitials(profile.displayName) : <User className="w-6 h-6" />}
-              </div>
+            <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-brand-600 to-pink-500 p-0.5 shadow-sm overflow-hidden">
+              {primaryPhotoUrl ? (
+                <img
+                  src={primaryPhotoUrl}
+                  alt={profile?.displayName || "Profile"}
+                  className="w-full h-full rounded-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full rounded-full bg-slate-100 flex items-center justify-center text-brand-700 font-extrabold text-base">
+                  {profile?.displayName ? getInitials(profile.displayName) : <User className="w-6 h-6" />}
+                </div>
+              )}
             </div>
-            <span className="absolute bottom-0.5 right-0.5 w-4 h-4 bg-emerald-500 border-2 border-white rounded-full" />
+            <span className="absolute bottom-0.5 right-0.5 w-4 h-4 bg-emerald-500 border-2 border-white rounded-full z-10" />
           </div>
           <div className="min-w-0 flex-1">
             <h3 className="text-base font-bold text-slate-900 truncate" title={profile?.displayName || "Member"}>
