@@ -166,6 +166,7 @@ export const InterestsActivityPage: React.FC<InterestsActivityPageProps> = ({
                   <UniversalProfileCard
                     key={item.id}
                     profile={targetProfile}
+                    userId={currentTab === "received" ? item.sender?.id : item.receiver?.id}
                     badge="outness"
                     headerStatusLeft={
                       <span>

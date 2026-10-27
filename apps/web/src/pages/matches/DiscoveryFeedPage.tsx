@@ -262,6 +262,7 @@ export const DiscoveryFeedPage: React.FC = () => {
                   <UniversalProfileCard
                     key={profile.id}
                     profile={profile}
+                    userId={profile.userId || profile.id}
                     badge="outness"
                     headerStatusLeft={
                       <span className="text-xs font-semibold text-slate-500">

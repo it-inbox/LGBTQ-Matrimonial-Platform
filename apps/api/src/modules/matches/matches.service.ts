@@ -450,6 +450,8 @@ export class MatchesService {
             phoneNumber: true,
             profile: {
               select: {
+                id: true,
+                userId: true,
                 displayName: true,
                 gender: true,
                 orientation: true,
@@ -518,6 +520,8 @@ export class MatchesService {
             phoneNumber: true,
             profile: {
               select: {
+                id: true,
+                userId: true,
                 displayName: true,
                 gender: true,
                 orientation: true,
@@ -694,6 +698,8 @@ export class MatchesService {
             email: true,
             profile: {
               select: {
+                id: true,
+                userId: true,
                 displayName: true,
                 gender: true,
                 orientation: true,
@@ -739,6 +745,8 @@ export class MatchesService {
             email: true,
             profile: {
               select: {
+                id: true,
+                userId: true,
                 displayName: true,
                 gender: true,
                 orientation: true,

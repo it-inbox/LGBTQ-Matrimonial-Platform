@@ -72,6 +72,7 @@ export const MatchesPage: React.FC = () => {
                     <UniversalProfileCard
                       key={match.interestId}
                       profile={profile}
+                      userId={match.user?.id}
                       badge="matched"
                       headerStatusLeft={
                         <span className="text-xs font-semibold text-slate-500">

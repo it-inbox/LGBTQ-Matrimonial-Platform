@@ -38,6 +38,7 @@ export interface ProfileCardData {
 
 interface UniversalProfileCardProps {
   profile: ProfileCardData;
+  userId?: string;
   headerStatusLeft?: React.ReactNode;
   headerStatusRight?: React.ReactNode;
   messageSnippet?: string | null;
@@ -48,6 +49,7 @@ interface UniversalProfileCardProps {
 
 export const UniversalProfileCard: React.FC<UniversalProfileCardProps> = ({
   profile,
+  userId,
   headerStatusLeft,
   headerStatusRight,
   messageSnippet,
@@ -63,7 +65,7 @@ export const UniversalProfileCard: React.FC<UniversalProfileCardProps> = ({
     return Math.abs(new Date(diff).getUTCFullYear() - 1970);
   };
 
-  const targetUserId = profile.userId || profile.id;
+  const targetUserId = userId || profile.userId || profile.id;
 
   const handleNavigateToProfile = (e: React.MouseEvent) => {
     // Only navigate if click didn't come from a button, link or unblur request

@@ -36,8 +36,13 @@ export class ProfilesService {
   }
 
   async getProfileByUserId(targetUserId: string, currentUserId: string) {
-    const profile = await this.prisma.client.profile.findUnique({
-      where: { userId: targetUserId },
+    const profile = await this.prisma.client.profile.findFirst({
+      where: {
+        OR: [
+          { userId: targetUserId },
+          { id: targetUserId },
+        ],
+      },
       include: {
         photos: {
           orderBy: [{ isPrimary: "desc" }, { createdAt: "asc" }],
@@ -50,8 +55,11 @@ export class ProfilesService {
       throw new NotFoundException("Profile not found");
     }
 
+    // Always normalize targetUserId to the profile's underlying userId
+    const canonicalTargetUserId = profile.userId;
+
     // Check if viewing own profile
-    const isOwn = targetUserId === currentUserId;
+    const isOwn = canonicalTargetUserId === currentUserId;
 
     // Check photo visibility permissions
     let canViewOriginal = isOwn || profile.photoVisibility === "ALL_MEMBERS";
@@ -60,8 +68,8 @@ export class ProfilesService {
       const mutualInterest = await this.prisma.client.matchInterest.findFirst({
         where: {
           OR: [
-            { senderId: currentUserId, receiverId: targetUserId, status: "ACCEPTED" },
-            { senderId: targetUserId, receiverId: currentUserId, status: "ACCEPTED" },
+            { senderId: currentUserId, receiverId: canonicalTargetUserId, status: "ACCEPTED" },
+            { senderId: canonicalTargetUserId, receiverId: currentUserId, status: "ACCEPTED" },
           ],
         },
       });
@@ -74,7 +82,7 @@ export class ProfilesService {
       const photoGrant = await this.prisma.client.photoAccessRequest.findFirst({
         where: {
           requesterId: currentUserId,
-          targetId: targetUserId,
+          targetId: canonicalTargetUserId,
           status: "ACCEPTED",
         },
       });
@@ -86,13 +94,13 @@ export class ProfilesService {
     // Check current interaction status (sent/received interest, mutual match, photo access request)
     const [sentInterest, receivedInterest, photoRequest] = await Promise.all([
       this.prisma.client.matchInterest.findFirst({
-        where: { senderId: currentUserId, receiverId: targetUserId },
+        where: { senderId: currentUserId, receiverId: canonicalTargetUserId },
       }),
       this.prisma.client.matchInterest.findFirst({
-        where: { senderId: targetUserId, receiverId: currentUserId },
+        where: { senderId: canonicalTargetUserId, receiverId: currentUserId },
       }),
       this.prisma.client.photoAccessRequest.findFirst({
-        where: { requesterId: currentUserId, targetId: targetUserId },
+        where: { requesterId: currentUserId, targetId: canonicalTargetUserId },
       }),
     ]);
 

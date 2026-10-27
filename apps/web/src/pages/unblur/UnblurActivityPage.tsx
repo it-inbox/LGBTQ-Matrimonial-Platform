@@ -165,6 +165,7 @@ export const UnblurActivityPage: React.FC<UnblurActivityPageProps> = ({
                   <UniversalProfileCard
                     key={item.id}
                     profile={targetProfile}
+                    userId={currentTab === "received" ? item.requester?.id : item.target?.id}
                     badge="outness"
                     headerStatusLeft={
                       <span>
