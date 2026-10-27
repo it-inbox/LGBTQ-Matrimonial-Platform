@@ -4,6 +4,7 @@ import {
   Post,
   Patch,
   Body,
+  Param,
   UseGuards,
 } from "@nestjs/common";
 import { ApiTags, ApiOperation, ApiBearerAuth } from "@nestjs/swagger";
@@ -31,6 +32,15 @@ export class ProfilesController {
   @ApiOperation({ summary: "Get current user profile" })
   async getMyProfile(@CurrentUser("userId") userId: string) {
     return this.profilesService.getMyProfile(userId);
+  }
+
+  @Get("user/:userId")
+  @ApiOperation({ summary: "Get public/masked profile details of a member by their userId" })
+  async getProfileByUserId(
+    @CurrentUser("userId") currentUserId: string,
+    @Param("userId") targetUserId: string
+  ) {
+    return this.profilesService.getProfileByUserId(targetUserId, currentUserId);
   }
 
   @Post()

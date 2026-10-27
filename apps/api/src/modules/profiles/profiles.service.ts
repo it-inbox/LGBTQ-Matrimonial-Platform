@@ -35,6 +35,96 @@ export class ProfilesService {
     return profile;
   }
 
+  async getProfileByUserId(targetUserId: string, currentUserId: string) {
+    const profile = await this.prisma.client.profile.findUnique({
+      where: { userId: targetUserId },
+      include: {
+        photos: {
+          orderBy: [{ isPrimary: "desc" }, { createdAt: "asc" }],
+        },
+        partnerPreference: true,
+      },
+    });
+
+    if (!profile) {
+      throw new NotFoundException("Profile not found");
+    }
+
+    // Check if viewing own profile
+    const isOwn = targetUserId === currentUserId;
+
+    // Check photo visibility permissions
+    let canViewOriginal = isOwn || profile.photoVisibility === "ALL_MEMBERS";
+
+    if (!canViewOriginal && profile.photoVisibility === "MUTUAL_MATCHES_ONLY") {
+      const mutualInterest = await this.prisma.client.matchInterest.findFirst({
+        where: {
+          OR: [
+            { senderId: currentUserId, receiverId: targetUserId, status: "ACCEPTED" },
+            { senderId: targetUserId, receiverId: currentUserId, status: "ACCEPTED" },
+          ],
+        },
+      });
+      if (mutualInterest) {
+        canViewOriginal = true;
+      }
+    }
+
+    if (!canViewOriginal) {
+      const photoGrant = await this.prisma.client.photoAccessRequest.findFirst({
+        where: {
+          requesterId: currentUserId,
+          targetId: targetUserId,
+          status: "ACCEPTED",
+        },
+      });
+      if (photoGrant) {
+        canViewOriginal = true;
+      }
+    }
+
+    // Check current interaction status (sent/received interest, mutual match, photo access request)
+    const [sentInterest, receivedInterest, photoRequest] = await Promise.all([
+      this.prisma.client.matchInterest.findFirst({
+        where: { senderId: currentUserId, receiverId: targetUserId },
+      }),
+      this.prisma.client.matchInterest.findFirst({
+        where: { senderId: targetUserId, receiverId: currentUserId },
+      }),
+      this.prisma.client.photoAccessRequest.findFirst({
+        where: { requesterId: currentUserId, targetId: targetUserId },
+      }),
+    ]);
+
+    const isMutualMatch =
+      (sentInterest?.status === "ACCEPTED" || receivedInterest?.status === "ACCEPTED");
+
+    const sanitizedPhotos = profile.photos.map((p) => ({
+      id: p.id,
+      isPrimary: p.isPrimary,
+      url: canViewOriginal ? p.originalUrl : (p.blurredUrl || p.originalUrl),
+      originalUrl: canViewOriginal ? p.originalUrl : undefined,
+      blurredUrl: p.blurredUrl || undefined,
+      isBlurred: !canViewOriginal,
+    }));
+
+    return {
+      ...profile,
+      latitude: undefined,
+      longitude: undefined,
+      photos: sanitizedPhotos,
+      interaction: {
+        isOwn,
+        isMutualMatch,
+        sentInterestStatus: sentInterest?.status || null,
+        sentInterestId: sentInterest?.id || null,
+        receivedInterestStatus: receivedInterest?.status || null,
+        receivedInterestId: receivedInterest?.id || null,
+        photoAccessStatus: photoRequest?.status || null,
+      },
+    };
+  }
+
   async createProfile(userId: string, data: CreateProfileInput) {
     const existing = await this.prisma.client.profile.findUnique({
       where: { userId },

@@ -1,10 +1,12 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Heart,
   Lock,
   Briefcase,
   GraduationCap,
   Sparkles,
+  ChevronRight,
 } from "lucide-react";
 
 export interface ProfileCardData {
@@ -53,10 +55,25 @@ export const UniversalProfileCard: React.FC<UniversalProfileCardProps> = ({
   onRequestUnblur,
   badge = "outness",
 }) => {
+  const navigate = useNavigate();
+
   const calculateAge = (dobString?: string | Date | null) => {
     if (!dobString) return null;
     const diff = Date.now() - new Date(dobString).getTime();
     return Math.abs(new Date(diff).getUTCFullYear() - 1970);
+  };
+
+  const targetUserId = profile.userId || profile.id;
+
+  const handleNavigateToProfile = (e: React.MouseEvent) => {
+    // Only navigate if click didn't come from a button, link or unblur request
+    const target = e.target as HTMLElement;
+    if (target.closest("button") || target.closest("a") || target.closest("input")) {
+      return;
+    }
+    if (targetUserId) {
+      navigate(`/profile/${targetUserId}`);
+    }
   };
 
   const primaryPhoto =
@@ -90,14 +107,17 @@ export const UniversalProfileCard: React.FC<UniversalProfileCardProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200/90 overflow-hidden shadow-xs hover:shadow-md transition-all flex flex-row group w-full h-64 sm:h-72">
+    <div
+      onClick={handleNavigateToProfile}
+      className="bg-white rounded-2xl border border-slate-200/90 overflow-hidden shadow-xs hover:shadow-md transition-all flex flex-row group w-full h-64 sm:h-72 cursor-pointer"
+    >
       {/* Photo Section: Fixed horizontal aspect on mobile, tablet, and desktop */}
       <div className="relative w-36 xs:w-44 sm:w-56 md:w-60 h-full shrink-0 bg-slate-100 overflow-hidden">
         {photoUrl ? (
           <img
             src={photoUrl}
             alt={profile.displayName}
-            className={`w-full h-full object-cover object-top transition-all duration-300 ${
+            className={`w-full h-full object-cover object-top transition-all duration-300 group-hover:scale-105 ${
               isBlurred ? "filter blur-xl scale-110" : ""
             }`}
           />
@@ -138,7 +158,10 @@ export const UniversalProfileCard: React.FC<UniversalProfileCardProps> = ({
             {onRequestUnblur && (
               <button
                 type="button"
-                onClick={onRequestUnblur}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onRequestUnblur();
+                }}
                 className="mt-1.5 sm:mt-2.5 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-[11px] font-semibold bg-white text-slate-900 hover:bg-slate-100 shadow-xs transition-all cursor-pointer"
               >
                 Request Unblur
@@ -162,7 +185,7 @@ export const UniversalProfileCard: React.FC<UniversalProfileCardProps> = ({
           )}
 
           {/* Name & Age */}
-          <h2 className="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2 flex-wrap">
+          <h2 className="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2 flex-wrap group-hover:text-brand-600 transition-colors">
             <span>{profile.displayName || "Member"}</span>
             {age ? <span>, {age}</span> : ""}
             {profile.pronouns && (
@@ -170,6 +193,7 @@ export const UniversalProfileCard: React.FC<UniversalProfileCardProps> = ({
                 ({profile.pronouns})
               </span>
             )}
+            <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-brand-600 group-hover:translate-x-0.5 transition-all ml-auto hidden sm:block" />
           </h2>
 
           {/* Sexual / Gender Identity */}

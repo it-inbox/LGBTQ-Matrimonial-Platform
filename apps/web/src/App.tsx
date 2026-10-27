@@ -12,6 +12,7 @@ import { EditProfilePage } from "./pages/settings/EditProfilePage";
 import { InterestsActivityPage } from "./pages/interests/InterestsActivityPage";
 import { UnblurActivityPage } from "./pages/unblur/UnblurActivityPage";
 import { MessengerPage } from "./pages/chat/MessengerPage";
+import { MemberProfileDetailPage } from "./pages/matches/MemberProfileDetailPage";
 import { LoginModal } from "./components/auth/LoginModal";
 import { ChatNotificationToast } from "./components/chat/ChatNotificationToast";
 import { useAuthStore } from "./stores/auth.store";
@@ -125,6 +126,14 @@ export function App() {
                 element={
                   <ProtectedRoute requireProfile={true}>
                     <DiscoveryFeedPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/profile/:userId"
+                element={
+                  <ProtectedRoute requireProfile={true}>
+                    <MemberProfileDetailPage />
                   </ProtectedRoute>
                 }
               />
