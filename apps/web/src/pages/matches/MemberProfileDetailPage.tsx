@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "../../lib/api";
 import { useAuthStore } from "../../stores/auth.store";
+import { ActivitySidebar } from "../../components/layout/ActivitySidebar";
 import {
   ArrowLeft,
   Heart,
@@ -121,11 +122,16 @@ export const MemberProfileDetailPage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-8">
-        <div className="animate-pulse space-y-4">
-          <div className="h-96 bg-slate-200 rounded-3xl" />
-          <div className="h-24 bg-slate-200 rounded-2xl" />
-          <div className="h-64 bg-slate-200 rounded-2xl" />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 pb-28">
+        <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 items-start">
+          <ActivitySidebar />
+          <div className="flex-1 min-w-0 w-full max-w-3xl mx-auto">
+            <div className="animate-pulse space-y-4">
+              <div className="h-96 bg-slate-200 rounded-3xl" />
+              <div className="h-24 bg-slate-200 rounded-2xl" />
+              <div className="h-64 bg-slate-200 rounded-2xl" />
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -133,19 +139,24 @@ export const MemberProfileDetailPage: React.FC = () => {
 
   if (error || !profile) {
     return (
-      <div className="max-w-md mx-auto my-20 p-8 text-center bg-white rounded-3xl border border-slate-200 shadow-sm">
-        <ShieldAlert className="w-12 h-12 text-rose-500 mx-auto mb-3" />
-        <h2 className="text-lg font-bold text-slate-800">Profile Not Available</h2>
-        <p className="text-xs text-slate-500 mt-1 mb-6">
-          This profile might be hidden, set to private, or does not exist.
-        </p>
-        <button
-          type="button"
-          onClick={() => navigate(-1)}
-          className="px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs"
-        >
-          Go Back
-        </button>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 pb-28">
+        <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 items-start">
+          <ActivitySidebar />
+          <div className="flex-1 min-w-0 w-full max-w-md mx-auto my-12 p-8 text-center bg-white rounded-3xl border border-slate-200 shadow-sm">
+            <ShieldAlert className="w-12 h-12 text-rose-500 mx-auto mb-3" />
+            <h2 className="text-lg font-bold text-slate-800">Profile Not Available</h2>
+            <p className="text-xs text-slate-500 mt-1 mb-6">
+              This profile might be hidden, set to private, or does not exist.
+            </p>
+            <button
+              type="button"
+              onClick={() => navigate(-1)}
+              className="px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs cursor-pointer"
+            >
+              Go Back
+            </button>
+          </div>
+        </div>
       </div>
     );
   }
@@ -173,43 +184,51 @@ export const MemberProfileDetailPage: React.FC = () => {
         </div>
       )}
 
-      {/* Top Header / Back Button bar */}
-      <div className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-4 py-3">
-        <div className="max-w-2xl mx-auto flex items-center justify-between">
-          <button
-            type="button"
-            onClick={() => navigate(-1)}
-            className="flex items-center gap-1.5 text-xs font-bold text-slate-700 hover:text-slate-900 cursor-pointer p-1.5 -ml-1.5 rounded-xl hover:bg-slate-100 transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span>Back</span>
-          </button>
-          <div className="text-center min-w-0 px-2">
-            <h1 className="text-sm font-bold text-slate-900 truncate">
-              {profile.displayName}
-            </h1>
-            <p className="text-[10px] text-brand-600 font-semibold truncate">
-              {profile.city}, {profile.state}
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => {
-              if (navigator.clipboard) {
-                navigator.clipboard.writeText(window.location.href);
-                showToast("Profile link copied to clipboard!");
-              }
-            }}
-            title="Share profile"
-            className="p-2 text-slate-500 hover:text-slate-800 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
-          >
-            <Share2 className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
+      {/* Main Page Layout with Desktop Sidebar */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6">
+        <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 items-start">
+          {/* Left Navigation Sidebar - Desktop only via ActivitySidebar's hidden lg:block */}
+          <ActivitySidebar />
 
-      <div className="max-w-2xl mx-auto px-4 py-5 space-y-4">
-        {/* HERO CARD: FULL-WIDTH PHOTO CAROUSEL & BIO OVERLAY */}
+          {/* Profile Detail Content Area */}
+          <main className="flex-1 min-w-0 w-full max-w-3xl mx-auto">
+            {/* Top Header / Back Button bar */}
+            <div className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border border-slate-200/80 rounded-2xl px-4 py-3 mb-4 shadow-2xs">
+              <div className="flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={() => navigate(-1)}
+                  className="flex items-center gap-1.5 text-xs font-bold text-slate-700 hover:text-slate-900 cursor-pointer p-1.5 -ml-1 rounded-xl hover:bg-slate-100 transition-colors"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  <span>Back</span>
+                </button>
+                <div className="text-center min-w-0 px-2">
+                  <h1 className="text-sm font-bold text-slate-900 truncate">
+                    {profile.displayName}
+                  </h1>
+                  <p className="text-[10px] text-brand-600 font-semibold truncate">
+                    {profile.city}, {profile.state}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (navigator.clipboard) {
+                      navigator.clipboard.writeText(window.location.href);
+                      showToast("Profile link copied to clipboard!");
+                    }
+                  }}
+                  title="Share profile"
+                  className="p-2 text-slate-500 hover:text-slate-800 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
+                >
+                  <Share2 className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              {/* HERO CARD: FULL-WIDTH PHOTO CAROUSEL & BIO OVERLAY */}
         <div className="relative rounded-3xl overflow-hidden bg-slate-900 text-white shadow-md border border-slate-200/50 aspect-[4/5] sm:aspect-[4/4.5] flex flex-col justify-between">
           {/* Main Photo Display */}
           <div className="absolute inset-0 z-0 bg-slate-900">
@@ -713,20 +732,28 @@ export const MemberProfileDetailPage: React.FC = () => {
             </div>
           </div>
         )}
+            </div>
+          </main>
+        </div>
       </div>
 
       {/* STICKY BOTTOM INTERACTION DOCK */}
       {!isOwn && (
-        <div className="fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/90 py-3.5 px-4 shadow-lg">
-          <div className="max-w-2xl mx-auto flex items-center justify-between gap-3">
-            <div className="min-w-0 hidden sm:block">
-              <p className="text-xs font-bold text-slate-900 truncate">
-                {profile.displayName}
-              </p>
-              <p className="text-[10px] text-slate-500 truncate">
-                {profile.profession || "Member"} • {profile.city}
-              </p>
+        <div className="fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/90 py-3.5 shadow-lg">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-3">
+            <div className="min-w-0 hidden lg:block w-64 shrink-0 text-slate-400 text-xs font-semibold">
+              Profile Interaction
             </div>
+
+            <div className="flex-1 min-w-0 max-w-3xl mx-auto flex items-center justify-between gap-3">
+              <div className="min-w-0 hidden sm:block">
+                <p className="text-xs font-bold text-slate-900 truncate">
+                  {profile.displayName}
+                </p>
+                <p className="text-[10px] text-slate-500 truncate">
+                  {profile.profession || "Member"} • {profile.city}
+                </p>
+              </div>
 
             <div className="flex items-center gap-2.5 w-full sm:w-auto">
               {isMutualMatch ? (
@@ -785,6 +812,7 @@ export const MemberProfileDetailPage: React.FC = () => {
             </div>
           </div>
         </div>
+      </div>
       )}
 
       {/* Modal: Send Interest */}
