@@ -122,11 +122,11 @@ export const MemberProfileDetailPage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 pb-28">
-        <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 items-start">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 pb-0 h-full w-full flex flex-col">
+        <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 flex-1 min-h-0">
           <ActivitySidebar />
-          <div className="flex-1 min-w-0 w-full max-w-3xl mx-auto">
-            <div className="animate-pulse space-y-4">
+          <div className="flex-1 min-w-0 flex flex-col h-full overflow-hidden">
+            <div className="animate-pulse space-y-4 pr-2 sm:pr-3">
               <div className="h-96 bg-slate-200 rounded-3xl" />
               <div className="h-24 bg-slate-200 rounded-2xl" />
               <div className="h-64 bg-slate-200 rounded-2xl" />
@@ -139,22 +139,24 @@ export const MemberProfileDetailPage: React.FC = () => {
 
   if (error || !profile) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 pb-28">
-        <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 items-start">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 pb-0 h-full w-full flex flex-col">
+        <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 flex-1 min-h-0">
           <ActivitySidebar />
-          <div className="flex-1 min-w-0 w-full max-w-md mx-auto my-12 p-8 text-center bg-white rounded-3xl border border-slate-200 shadow-sm">
-            <ShieldAlert className="w-12 h-12 text-rose-500 mx-auto mb-3" />
-            <h2 className="text-lg font-bold text-slate-800">Profile Not Available</h2>
-            <p className="text-xs text-slate-500 mt-1 mb-6">
-              This profile might be hidden, set to private, or does not exist.
-            </p>
-            <button
-              type="button"
-              onClick={() => navigate(-1)}
-              className="px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs cursor-pointer"
-            >
-              Go Back
-            </button>
+          <div className="flex-1 min-w-0 flex items-center justify-center p-4">
+            <div className="max-w-md w-full p-8 text-center bg-white rounded-3xl border border-slate-200 shadow-sm">
+              <ShieldAlert className="w-12 h-12 text-rose-500 mx-auto mb-3" />
+              <h2 className="text-lg font-bold text-slate-800">Profile Not Available</h2>
+              <p className="text-xs text-slate-500 mt-1 mb-6">
+                This profile might be hidden, set to private, or does not exist.
+              </p>
+              <button
+                type="button"
+                onClick={() => navigate(-1)}
+                className="px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs cursor-pointer"
+              >
+                Go Back
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -175,7 +177,7 @@ export const MemberProfileDetailPage: React.FC = () => {
   const pref = profile.partnerPreference;
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-28">
+    <div className="h-full flex flex-col bg-slate-50 overflow-hidden relative">
       {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-white px-5 py-2.5 rounded-2xl shadow-xl text-xs font-semibold flex items-center gap-2 border border-slate-700 animate-slide-down">
@@ -184,16 +186,16 @@ export const MemberProfileDetailPage: React.FC = () => {
         </div>
       )}
 
-      {/* Main Page Layout with Desktop Sidebar */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6">
-        <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 items-start">
-          {/* Left Navigation Sidebar - Desktop only via ActivitySidebar's hidden lg:block */}
+      {/* Main Page Layout with Sticky Desktop Sidebar matching feed pages */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 pb-0 h-full w-full flex flex-col">
+        <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 flex-1 min-h-0">
+          {/* Left Navigation Sidebar - Stationary / sticky matching all other pages */}
           <ActivitySidebar />
 
-          {/* Profile Detail Content Area */}
-          <main className="flex-1 min-w-0 w-full max-w-3xl mx-auto">
-            {/* Top Header / Back Button bar */}
-            <div className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border border-slate-200/80 rounded-2xl px-4 py-3 mb-4 shadow-2xs">
+          {/* Profile Detail Content Area: independently scrollable */}
+          <main className="flex-1 min-w-0 flex flex-col h-full overflow-hidden">
+            {/* Top Header / Back Button bar: completely stationary */}
+            <div className="bg-white rounded-2xl border border-slate-200/90 px-4 py-3 mb-4 shadow-xs shrink-0">
               <div className="flex items-center justify-between">
                 <button
                   type="button"
@@ -227,7 +229,8 @@ export const MemberProfileDetailPage: React.FC = () => {
               </div>
             </div>
 
-            <div className="space-y-4">
+            {/* Profile Cards Container: Only profile cards scrollable */}
+            <div className="flex-1 overflow-y-auto pr-2 sm:pr-3 space-y-4 pb-28">
               {/* HERO CARD: FULL-WIDTH PHOTO CAROUSEL & BIO OVERLAY */}
         <div className="relative rounded-3xl overflow-hidden bg-slate-900 text-white shadow-md border border-slate-200/50 aspect-[4/5] sm:aspect-[4/4.5] flex flex-col justify-between">
           {/* Main Photo Display */}
