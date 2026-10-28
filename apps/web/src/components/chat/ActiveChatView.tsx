@@ -21,6 +21,7 @@ import { useAuthStore } from "../../stores/auth.store";
 import { EmojiPicker } from "./EmojiPicker";
 import { Modal } from "../ui/Modal";
 import { Button } from "../ui/Button";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 
 interface ActiveChatViewProps {
   conversation: ConversationItem;
@@ -422,58 +423,60 @@ export const ActiveChatView: React.FC<ActiveChatViewProps> = ({
           </div>
 
           {/* Options Dropdown Menu */}
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setShowOptionsMenu((prev) => !prev)}
-              className="p-1.5 text-slate-500 hover:text-slate-800 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
-              title="Chat Options"
-            >
-              <MoreVertical className="w-5 h-5" />
-            </button>
+          <DropdownMenu.Root>
+            <DropdownMenu.Trigger asChild>
+              <button
+                type="button"
+                className="p-1.5 text-slate-500 hover:text-slate-800 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                title="Chat Options"
+              >
+                <MoreVertical className="w-5 h-5" />
+              </button>
+            </DropdownMenu.Trigger>
 
-            {showOptionsMenu && (
-              <>
-                <div
-                  className="fixed inset-0 z-40"
-                  onClick={() => setShowOptionsMenu(false)}
-                />
-                <div className="absolute right-0 top-full mt-1.5 w-48 bg-white rounded-xl shadow-lg border border-slate-200 py-1 z-50 animate-scale-in">
+            <DropdownMenu.Portal>
+              <DropdownMenu.Content
+                align="end"
+                sideOffset={6}
+                className="w-48 bg-white rounded-2xl shadow-modal border border-slate-200/90 py-1.5 z-50 animate-in fade-in-0 zoom-in-95 data-[side=bottom]:slide-in-from-top-2"
+              >
+                <DropdownMenu.Item asChild>
                   <a
                     href={`/profile/${conversation.partner.id}`}
-                    className="flex items-center gap-2 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+                    className="flex items-center gap-2 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors cursor-pointer outline-none"
                   >
                     <User className="w-4 h-4 text-slate-400" />
                     <span>View Profile</span>
                   </a>
+                </DropdownMenu.Item>
 
-                  {isBlockedByMe ? (
+                {isBlockedByMe ? (
+                  <DropdownMenu.Item asChild>
                     <button
                       type="button"
                       onClick={handleUnblockUser}
                       disabled={isBlocking}
-                      className="w-full text-left flex items-center gap-2 px-3 py-2 text-xs font-semibold text-emerald-600 hover:bg-emerald-50 transition-colors cursor-pointer"
+                      className="w-full text-left flex items-center gap-2 px-3 py-2 text-xs font-semibold text-emerald-600 hover:bg-emerald-50 transition-colors cursor-pointer outline-none"
                     >
                       <UserCheck className="w-4 h-4" />
                       <span>{isBlocking ? "Unblocking..." : "Unblock Member"}</span>
                     </button>
-                  ) : (
+                  </DropdownMenu.Item>
+                ) : (
+                  <DropdownMenu.Item asChild>
                     <button
                       type="button"
-                      onClick={() => {
-                        setShowOptionsMenu(false);
-                        setShowBlockModal(true);
-                      }}
-                      className="w-full text-left flex items-center gap-2 px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                      onClick={() => setShowBlockModal(true)}
+                      className="w-full text-left flex items-center gap-2 px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer outline-none"
                     >
                       <Ban className="w-4 h-4" />
                       <span>Block Member</span>
                     </button>
-                  )}
-                </div>
-              </>
-            )}
-          </div>
+                  </DropdownMenu.Item>
+                )}
+              </DropdownMenu.Content>
+            </DropdownMenu.Portal>
+          </DropdownMenu.Root>
         </div>
       </div>
 
@@ -595,14 +598,14 @@ export const ActiveChatView: React.FC<ActiveChatViewProps> = ({
                       </div>
                     )}
 
-                    {/* Message Bubble */}
+                    {/* Message Bubble with sleek rounded edges and soft shadow */}
                     <div
                       className={`max-w-[78%] sm:max-w-md px-4 py-2.5 rounded-2xl text-xs sm:text-sm leading-relaxed transition-all ${
                         isDeleted
-                          ? "bg-slate-100/90 text-slate-400 italic border border-slate-200/60 rounded-2xl"
+                          ? "bg-slate-100 text-slate-400 italic border border-slate-200/60 rounded-2xl"
                           : isOwn
-                          ? "bg-gradient-to-r from-rose-500 to-brand-600 text-white rounded-br-xs shadow-xs"
-                          : "bg-white text-slate-800 border border-slate-200/80 rounded-bl-xs shadow-2xs"
+                          ? "bg-gradient-to-tr from-brand-600 via-rose-600 to-rose-500 text-white rounded-br-xs shadow-subtle selection:bg-white/20"
+                          : "bg-white text-slate-800 border border-slate-200/90 rounded-bl-xs shadow-subtle"
                       }`}
                     >
                       <p className="break-words whitespace-pre-wrap">{msg.content}</p>
@@ -708,7 +711,7 @@ export const ActiveChatView: React.FC<ActiveChatViewProps> = ({
             type="button"
             onClick={handleUnblockUser}
             disabled={isBlocking}
-            className="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs flex items-center gap-1 cursor-pointer transition-colors"
+            className="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs flex items-center gap-1 cursor-pointer transition-colors shadow-subtle"
           >
             <UserCheck className="w-3.5 h-3.5" />
             <span>{isBlocking ? "Unblocking..." : "Unblock"}</span>
@@ -745,16 +748,17 @@ export const ActiveChatView: React.FC<ActiveChatViewProps> = ({
               placeholder={`Message ${conversation.partner?.displayName || "Member"}...`}
               value={inputText}
               onChange={handleInputChange}
-              className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs sm:text-sm focus:outline-none focus:border-brand-500 text-slate-900 placeholder:text-slate-400"
+              className="flex-1 bg-slate-50 border border-slate-200/90 rounded-xl px-4 py-2.5 text-xs sm:text-sm focus:outline-none focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 text-slate-900 placeholder:text-slate-400 transition-all shadow-subtle"
             />
-            <button
+            <Button
               type="submit"
               disabled={!inputText.trim()}
-              className="px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 disabled:opacity-40 text-white font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+              size="sm"
+              icon={<Send className="w-4 h-4" />}
+              className="px-4 py-2.5"
             >
-              <Send className="w-4 h-4" />
               <span className="hidden sm:inline">Send</span>
-            </button>
+            </Button>
           </form>
         </div>
       )}
