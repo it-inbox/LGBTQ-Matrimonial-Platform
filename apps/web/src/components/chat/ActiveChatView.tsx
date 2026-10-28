@@ -19,6 +19,8 @@ import { ConversationItem, MessageItem, useChatStore } from "../../stores/chat.s
 import { api } from "../../lib/api";
 import { useAuthStore } from "../../stores/auth.store";
 import { EmojiPicker } from "./EmojiPicker";
+import { Modal } from "../ui/Modal";
+import { Button } from "../ui/Button";
 
 interface ActiveChatViewProps {
   conversation: ConversationItem;
@@ -634,74 +636,64 @@ export const ActiveChatView: React.FC<ActiveChatViewProps> = ({
       </div>
 
       {/* Delete Confirmation Modal */}
-      {deletingMessageId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
-          <div className="w-full max-w-sm bg-white rounded-2xl p-5 shadow-2xl border border-slate-100 animate-in fade-in zoom-in-95 duration-150">
-            <div className="w-10 h-10 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center mb-3">
-              <Trash2 className="w-5 h-5" />
-            </div>
-            <h4 className="text-sm font-bold text-slate-900 mb-1">
-              Delete Message?
-            </h4>
-            <p className="text-xs text-slate-500 mb-5 leading-relaxed">
-              Are you sure you want to delete this message? This action cannot be undone.
-            </p>
-            <div className="flex items-center justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setDeletingMessageId(null)}
-                disabled={isDeletingLoading}
-                className="px-3.5 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleConfirmDelete}
-                disabled={isDeletingLoading}
-                className="px-4 py-2 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 disabled:opacity-50 rounded-xl transition-colors cursor-pointer shadow-xs"
-              >
-                {isDeletingLoading ? "Deleting..." : "Delete"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <Modal
+        isOpen={!!deletingMessageId}
+        onClose={() => setDeletingMessageId(null)}
+        title="Delete Message?"
+        description="Are you sure you want to delete this message? This action cannot be undone."
+        icon={<Trash2 className="w-5 h-5" />}
+        iconVariant="danger"
+        footer={
+          <>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setDeletingMessageId(null)}
+              disabled={isDeletingLoading}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="danger"
+              size="sm"
+              onClick={handleConfirmDelete}
+              isLoading={isDeletingLoading}
+            >
+              Delete
+            </Button>
+          </>
+        }
+      />
 
       {/* Block Confirmation Modal */}
-      {showBlockModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
-          <div className="w-full max-w-sm bg-white rounded-2xl p-5 shadow-2xl border border-slate-100 animate-in fade-in zoom-in-95 duration-150">
-            <div className="w-10 h-10 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center mb-3">
-              <Ban className="w-5 h-5" />
-            </div>
-            <h4 className="text-sm font-bold text-slate-900 mb-1">
-              Block {conversation.partner?.displayName || "Member"}?
-            </h4>
-            <p className="text-xs text-slate-500 mb-5 leading-relaxed">
-              You will not be able to send or receive messages in this conversation while blocked. You can unblock anytime from options or privacy settings.
-            </p>
-            <div className="flex items-center justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setShowBlockModal(false)}
-                disabled={isBlocking}
-                className="px-3.5 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleBlockUser}
-                disabled={isBlocking}
-                className="px-4 py-2 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 disabled:opacity-50 rounded-xl transition-colors cursor-pointer shadow-xs"
-              >
-                {isBlocking ? "Blocking..." : "Block Member"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <Modal
+        isOpen={showBlockModal}
+        onClose={() => setShowBlockModal(false)}
+        title={`Block ${conversation.partner?.displayName || "Member"}?`}
+        description="You will not be able to send or receive messages in this conversation while blocked. You can unblock anytime from options or privacy settings."
+        icon={<Ban className="w-5 h-5" />}
+        iconVariant="danger"
+        footer={
+          <>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowBlockModal(false)}
+              disabled={isBlocking}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="danger"
+              size="sm"
+              onClick={handleBlockUser}
+              isLoading={isBlocking}
+            >
+              Block Member
+            </Button>
+          </>
+        }
+      />
 
       {/* Input Bar or Blocked Banner */}
       {isBlockedByMe ? (

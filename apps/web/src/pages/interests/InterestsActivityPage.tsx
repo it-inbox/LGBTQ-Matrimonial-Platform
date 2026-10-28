@@ -12,6 +12,7 @@ import {
   Clock,
   XCircle,
 } from "lucide-react";
+import { Badge } from "../../components/ui/Badge";
 
 interface InterestsActivityPageProps {
   initialTab?: "received" | "sent";
@@ -79,24 +80,21 @@ export const InterestsActivityPage: React.FC<InterestsActivityPageProps> = ({
     switch (status) {
       case "ACCEPTED":
         return (
-          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-xl bg-emerald-50 text-emerald-700 font-bold text-xs border border-emerald-200">
-            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-            <span>Accepted</span>
-          </span>
+          <Badge variant="success" icon={<CheckCircle2 className="w-3.5 h-3.5" />}>
+            Accepted
+          </Badge>
         );
       case "DECLINED":
         return (
-          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-xl bg-rose-50 text-rose-700 font-bold text-xs border border-rose-200">
-            <XCircle className="w-3.5 h-3.5 text-rose-600" />
-            <span>Declined</span>
-          </span>
+          <Badge variant="danger" icon={<XCircle className="w-3.5 h-3.5" />}>
+            Declined
+          </Badge>
         );
       default:
         return (
-          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-xl bg-amber-50 text-amber-700 font-bold text-xs border border-amber-200">
-            <Clock className="w-3.5 h-3.5 text-amber-600" />
-            <span>Pending</span>
-          </span>
+          <Badge variant="warning" icon={<Clock className="w-3.5 h-3.5" />}>
+            Pending
+          </Badge>
         );
     }
   };

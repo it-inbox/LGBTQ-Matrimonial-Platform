@@ -8,6 +8,7 @@ import {
   Sparkles,
   ChevronRight,
 } from "lucide-react";
+import { Badge } from "../ui/Badge";
 
 export interface ProfileCardData {
   id: string;
@@ -89,21 +90,21 @@ export const UniversalProfileCard: React.FC<UniversalProfileCardProps> = ({
     switch (status) {
       case "DISCREET_NOT_OUT":
         return (
-          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">
+          <Badge variant="warning" size="sm">
             Discreet
-          </span>
+          </Badge>
         );
       case "OUT_TO_SELECT_FEW":
         return (
-          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800">
+          <Badge variant="neutral" size="sm">
             Out to friends
-          </span>
+          </Badge>
         );
       default:
         return (
-          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
+          <Badge variant="success" size="sm">
             Openly Out
-          </span>
+          </Badge>
         );
     }
   };
@@ -139,10 +140,9 @@ export const UniversalProfileCard: React.FC<UniversalProfileCardProps> = ({
         {/* Top Right Badge */}
         <div className="absolute top-2 right-2 sm:top-2.5 sm:right-2.5">
           {badge === "matched" ? (
-            <span className="px-2 py-0.5 sm:px-2.5 rounded-full text-[9px] sm:text-[10px] font-bold bg-emerald-100 text-emerald-800 flex items-center gap-1 shadow-2xs">
-              <Sparkles className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+            <Badge variant="success" size="sm" icon={<Sparkles className="w-2.5 h-2.5" />}>
               Matched
-            </span>
+            </Badge>
           ) : badge === "outness" && profile.outnessStatus ? (
             getOutnessBadge(profile.outnessStatus)
           ) : null}

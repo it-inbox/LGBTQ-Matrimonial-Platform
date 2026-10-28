@@ -23,6 +23,8 @@ import {
 } from "lucide-react";
 import { UniversalProfileCard } from "../../components/activity/UniversalProfileCard";
 import { allCountries } from "../../data/countries";
+import { Modal } from "../../components/ui/Modal";
+import { Button } from "../../components/ui/Button";
 
 export const DiscoveryFeedPage: React.FC = () => {
   const queryClient = useQueryClient();
@@ -366,84 +368,77 @@ export const DiscoveryFeedPage: React.FC = () => {
       </div>
 
       {/* Modal: Send Interest */}
-      {modalType === "interest" && activeModalProfile && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl">
-            <h3 className="text-base font-bold text-slate-900 mb-1">
-              Express Interest in {activeModalProfile.displayName}
-            </h3>
-            <p className="text-xs text-slate-500 mb-4">
-              Add a respectful, sincere note to accompany your match request.
-            </p>
-
-            <textarea
-              rows={3}
-              value={interestMessage}
-              onChange={(e) => setInterestMessage(e.target.value)}
-              placeholder="Hi, I resonated with your profile and values..."
-              className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:border-brand-500 mb-4"
-            />
-
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={closeModal}
-                className="w-1/3 py-2.5 rounded-xl font-semibold text-xs text-slate-700 bg-slate-100 hover:bg-slate-200 cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={() =>
-                  sendInterestMutation.mutate({
-                    targetUserId: activeModalProfile.userId,
-                    message: interestMessage,
-                  })
-                }
-                disabled={sendInterestMutation.isPending}
-                className="w-2/3 py-2.5 rounded-xl font-bold text-xs text-white bg-rose-500 hover:bg-rose-600 disabled:opacity-50 cursor-pointer"
-              >
-                {sendInterestMutation.isPending ? "Sending..." : "Confirm & Send"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <Modal
+        isOpen={modalType === "interest" && !!activeModalProfile}
+        onClose={closeModal}
+        title={`Express Interest in ${activeModalProfile?.displayName || "Member"}`}
+        description="Add a respectful, sincere note to accompany your match request."
+        icon={<Heart className="w-5 h-5" />}
+        iconVariant="brand"
+        footer={
+          <>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={closeModal}
+              disabled={sendInterestMutation.isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() =>
+                sendInterestMutation.mutate({
+                  targetUserId: activeModalProfile.userId,
+                  message: interestMessage,
+                })
+              }
+              isLoading={sendInterestMutation.isPending}
+            >
+              Confirm & Send
+            </Button>
+          </>
+        }
+      >
+        <textarea
+          rows={3}
+          value={interestMessage}
+          onChange={(e) => setInterestMessage(e.target.value)}
+          placeholder="Hi, I resonated with your profile and values..."
+          className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:border-brand-500 mb-2"
+        />
+      </Modal>
 
       {/* Modal: Request Photo Access */}
-      {modalType === "photo" && activeModalProfile && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl">
-            <div className="w-10 h-10 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center mb-3">
-              <Unlock className="w-5 h-5" />
-            </div>
-            <h3 className="text-base font-bold text-slate-900 mb-1">
-              Request Photo Access
-            </h3>
-            <p className="text-xs text-slate-500 mb-6 leading-relaxed">
-              {activeModalProfile.displayName} has chosen to protect their identity. A private authorization request will be sent to them.
-            </p>
-
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={closeModal}
-                className="w-1/3 py-2.5 rounded-xl font-semibold text-xs text-slate-700 bg-slate-100 hover:bg-slate-200 cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={() => requestPhotoMutation.mutate(activeModalProfile.userId)}
-                disabled={requestPhotoMutation.isPending}
-                className="w-2/3 py-2.5 rounded-xl font-bold text-xs text-white bg-rose-500 hover:bg-rose-600 disabled:opacity-50 cursor-pointer"
-              >
-                {requestPhotoMutation.isPending ? "Requesting..." : "Send Unblur Request"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <Modal
+        isOpen={modalType === "photo" && !!activeModalProfile}
+        onClose={closeModal}
+        title="Request Photo Access"
+        description={`${activeModalProfile?.displayName || "Member"} has chosen to protect their identity. A private authorization request will be sent to them.`}
+        icon={<Unlock className="w-5 h-5" />}
+        iconVariant="brand"
+        footer={
+          <>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={closeModal}
+              disabled={requestPhotoMutation.isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => requestPhotoMutation.mutate(activeModalProfile.userId)}
+              isLoading={requestPhotoMutation.isPending}
+            >
+              Send Unblur Request
+            </Button>
+          </>
+        }
+      />
 
       {/* Modal: Filter Criteria */}
       {isFilterModalOpen && (

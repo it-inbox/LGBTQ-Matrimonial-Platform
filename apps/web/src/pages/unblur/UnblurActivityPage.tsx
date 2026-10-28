@@ -16,6 +16,9 @@ import {
   ShieldBan,
   AlertTriangle,
 } from "lucide-react";
+import { Badge } from "../../components/ui/Badge";
+import { Button } from "../../components/ui/Button";
+import { Modal } from "../../components/ui/Modal";
 
 interface UnblurActivityPageProps {
   initialTab?: "received" | "sent";
@@ -115,39 +118,34 @@ export const UnblurActivityPage: React.FC<UnblurActivityPageProps> = ({
       case "ACCEPTED":
         if (isHidden) {
           return (
-            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-xl bg-amber-50 text-amber-700 font-bold text-xs border border-amber-200">
-              <EyeOff className="w-3.5 h-3.5 text-amber-600" />
-              <span>Temporarily Hidden</span>
-            </span>
+            <Badge variant="warning" icon={<EyeOff className="w-3.5 h-3.5" />}>
+              Temporarily Hidden
+            </Badge>
           );
         }
         return (
-          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-xl bg-emerald-50 text-emerald-700 font-bold text-xs border border-emerald-200">
-            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-            <span>Approved</span>
-          </span>
+          <Badge variant="success" icon={<CheckCircle2 className="w-3.5 h-3.5" />}>
+            Approved
+          </Badge>
         );
       case "DECLINED":
         if (isRevoked) {
           return (
-            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-xl bg-rose-50 text-rose-700 font-bold text-xs border border-rose-200">
-              <ShieldBan className="w-3.5 h-3.5 text-rose-600" />
-              <span>Revoked</span>
-            </span>
+            <Badge variant="danger" icon={<ShieldBan className="w-3.5 h-3.5" />}>
+              Revoked
+            </Badge>
           );
         }
         return (
-          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-xl bg-rose-50 text-rose-700 font-bold text-xs border border-rose-200">
-            <XCircle className="w-3.5 h-3.5 text-rose-600" />
-            <span>Declined</span>
-          </span>
+          <Badge variant="danger" icon={<XCircle className="w-3.5 h-3.5" />}>
+            Declined
+          </Badge>
         );
       default:
         return (
-          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-xl bg-amber-50 text-amber-700 font-bold text-xs border border-amber-200">
-            <Clock className="w-3.5 h-3.5 text-amber-600" />
-            <span>Pending</span>
-          </span>
+          <Badge variant="warning" icon={<Clock className="w-3.5 h-3.5" />}>
+            Pending
+          </Badge>
         );
     }
   };
@@ -351,43 +349,44 @@ export const UnblurActivityPage: React.FC<UnblurActivityPageProps> = ({
       </div>
 
       {/* Revoke Confirmation Modal */}
-      {revokingRequest && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
-          <div className="w-full max-w-sm bg-white rounded-2xl p-5 shadow-2xl border border-slate-100 animate-in fade-in zoom-in-95 duration-150">
-            <div className="w-10 h-10 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center mb-3">
-              <ShieldBan className="w-5 h-5" />
-            </div>
-            <h4 className="text-sm font-bold text-slate-900 mb-1">
-              Revoke Photo Access?
-            </h4>
-            <p className="text-xs text-slate-500 mb-5 leading-relaxed">
-              Are you sure you want to revoke photo access for{" "}
-              <strong className="text-slate-700">
-                {revokingRequest?.requester?.profile?.displayName || "this member"}
-              </strong>
-              ? Their access to your pictures will be completely removed and they will have to send another unblur request for you to approve.
-            </p>
-            <div className="flex items-center justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setRevokingRequest(null)}
-                disabled={revokeMutation.isPending}
-                className="px-3.5 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={() => revokeMutation.mutate({ id: revokingRequest.id })}
-                disabled={revokeMutation.isPending}
-                className="px-4 py-2 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 disabled:opacity-50 rounded-xl transition-colors cursor-pointer shadow-xs flex items-center gap-1.5"
-              >
-                {revokeMutation.isPending ? "Revoking..." : "Revoke Access"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <Modal
+        isOpen={!!revokingRequest}
+        onClose={() => setRevokingRequest(null)}
+        icon={<ShieldBan className="w-5 h-5 text-rose-600" />}
+        iconContainerClassName="bg-rose-50 text-rose-600"
+        title="Revoke Photo Access?"
+        description={
+          <>
+            Are you sure you want to revoke photo access for{" "}
+            <strong className="text-zinc-800">
+              {revokingRequest?.requester?.profile?.displayName || "this member"}
+            </strong>
+            ? Their access to your pictures will be completely removed and they will have to send another unblur request for you to approve.
+          </>
+        }
+        footer={
+          <>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setRevokingRequest(null)}
+              disabled={revokeMutation.isPending}
+              className="flex-1"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="danger"
+              size="sm"
+              onClick={() => revokeMutation.mutate({ id: revokingRequest.id })}
+              isLoading={revokeMutation.isPending}
+              className="flex-1"
+            >
+              Revoke Access
+            </Button>
+          </>
+        }
+      />
     </div>
   );
 };

@@ -12,6 +12,7 @@ import {
   Ban,
 } from "lucide-react";
 import { useChatStore } from "../../stores/chat.store";
+import { Badge } from "../../components/ui/Badge";
 
 export const MatchesPage: React.FC = () => {
   const navigate = useNavigate();
@@ -82,15 +83,13 @@ export const MatchesPage: React.FC = () => {
                       }
                       headerStatusRight={
                         match.isBlockedByMe ? (
-                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-rose-50 text-rose-700 font-bold text-xs border border-rose-200/80">
-                            <Ban className="w-3.5 h-3.5 text-rose-600" />
-                            <span>Blocked</span>
-                          </span>
+                          <Badge variant="danger" icon={<Ban className="w-3.5 h-3.5" />}>
+                            Blocked
+                          </Badge>
                         ) : (
-                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-emerald-50 text-emerald-700 font-bold text-xs border border-emerald-200/80">
-                            <Heart className="w-3.5 h-3.5 fill-emerald-600 text-emerald-600" />
-                            <span>Connected</span>
-                          </span>
+                          <Badge variant="success" icon={<Heart className="w-3.5 h-3.5 fill-current" />}>
+                            Connected
+                          </Badge>
                         )
                       }
                       messageSnippet={match.message}

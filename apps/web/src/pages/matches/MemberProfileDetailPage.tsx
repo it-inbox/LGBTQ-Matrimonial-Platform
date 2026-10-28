@@ -29,6 +29,9 @@ import {
   Ban,
   UserCheck,
 } from "lucide-react";
+import { Button } from "../../components/ui/Button";
+import { Badge } from "../../components/ui/Badge";
+import { Modal } from "../../components/ui/Modal";
 
 export const MemberProfileDetailPage: React.FC = () => {
   const { userId } = useParams<{ userId: string }>();
@@ -961,117 +964,105 @@ export const MemberProfileDetailPage: React.FC = () => {
       )}
 
       {/* Modal: Send Interest */}
-      {isInterestModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl animate-scale-in">
-            <div className="w-10 h-10 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mb-3">
-              <Heart className="w-5 h-5 fill-rose-600" />
-            </div>
-            <h3 className="text-base font-bold text-slate-900 mb-1">
-              Connect with {profile.displayName}
-            </h3>
-            <p className="text-xs text-slate-500 mb-4 leading-relaxed">
-              Express your interest with a personalized introductory note.
-            </p>
-
-            <textarea
-              rows={3}
-              value={interestMessage}
-              onChange={(e) => setInterestMessage(e.target.value)}
-              placeholder="Hi, I resonated with your values and would love to connect..."
-              className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:border-brand-500 mb-4"
-            />
-
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => setIsInterestModalOpen(false)}
-                className="w-1/3 py-2.5 rounded-xl font-semibold text-xs text-slate-700 bg-slate-100 hover:bg-slate-200 cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={() => sendInterestMutation.mutate({ message: interestMessage })}
-                disabled={sendInterestMutation.isPending}
-                className="w-2/3 py-2.5 rounded-xl font-bold text-xs text-white bg-rose-600 hover:bg-rose-700 disabled:opacity-50 cursor-pointer shadow-sm"
-              >
-                {sendInterestMutation.isPending ? "Sending..." : "Confirm & Send"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <Modal
+        isOpen={isInterestModalOpen}
+        onClose={() => setIsInterestModalOpen(false)}
+        icon={<Heart className="w-5 h-5 fill-rose-600 text-rose-600" />}
+        iconContainerClassName="bg-rose-50 text-rose-600"
+        title={`Connect with ${profile.displayName}`}
+        description="Express your interest with a personalized introductory note."
+        footer={
+          <>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsInterestModalOpen(false)}
+              className="flex-1"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => sendInterestMutation.mutate({ message: interestMessage })}
+              isLoading={sendInterestMutation.isPending}
+              className="flex-1"
+            >
+              Confirm & Send
+            </Button>
+          </>
+        }
+      >
+        <textarea
+          rows={3}
+          value={interestMessage}
+          onChange={(e) => setInterestMessage(e.target.value)}
+          placeholder="Hi, I resonated with your values and would love to connect..."
+          className="w-full p-3 bg-white border border-zinc-200/90 rounded-xl text-xs sm:text-sm focus:outline-none focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 placeholder:text-zinc-400"
+        />
+      </Modal>
 
       {/* Modal: Request Photo Access */}
-      {isPhotoModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl animate-scale-in">
-            <div className="w-10 h-10 rounded-2xl bg-brand-50 text-brand-600 flex items-center justify-center mb-3">
-              <Unlock className="w-5 h-5" />
-            </div>
-            <h3 className="text-base font-bold text-slate-900 mb-1">
-              Request Photo Access
-            </h3>
-            <p className="text-xs text-slate-500 mb-6 leading-relaxed">
-              {profile.displayName} has protected their pictures under EverPride privacy safeguards. A private access approval request will be sent to them.
-            </p>
-
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => setIsPhotoModalOpen(false)}
-                className="w-1/3 py-2.5 rounded-xl font-semibold text-xs text-slate-700 bg-slate-100 hover:bg-slate-200 cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={() => requestPhotoMutation.mutate()}
-                disabled={requestPhotoMutation.isPending}
-                className="w-2/3 py-2.5 rounded-xl font-bold text-xs text-white bg-rose-600 hover:bg-rose-700 disabled:opacity-50 cursor-pointer shadow-sm"
-              >
-                {requestPhotoMutation.isPending ? "Requesting..." : "Send Unblur Request"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <Modal
+        isOpen={isPhotoModalOpen}
+        onClose={() => setIsPhotoModalOpen(false)}
+        icon={<Unlock className="w-5 h-5" />}
+        iconContainerClassName="bg-brand-50 text-brand-600"
+        title="Request Photo Access"
+        description={`${profile.displayName} has protected their pictures under EverPride privacy safeguards. A private access approval request will be sent to them.`}
+        footer={
+          <>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsPhotoModalOpen(false)}
+              className="flex-1"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => requestPhotoMutation.mutate()}
+              isLoading={requestPhotoMutation.isPending}
+              className="flex-1"
+            >
+              Send Unblur Request
+            </Button>
+          </>
+        }
+      />
 
       {/* Modal: Block Member Confirmation */}
-      {isBlockModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl animate-scale-in">
-            <div className="w-10 h-10 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mb-3">
-              <Ban className="w-5 h-5" />
-            </div>
-            <h3 className="text-base font-bold text-slate-900 mb-1">
-              Block {profile.displayName}?
-            </h3>
-            <p className="text-xs text-slate-500 mb-6 leading-relaxed">
-              They will no longer be able to message you, view your profile updates, or interact with you. Any active chat will be restricted. You can unblock them whenever you want from Privacy Settings.
-            </p>
-
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => setIsBlockModalOpen(false)}
-                className="w-1/3 py-2.5 rounded-xl font-semibold text-xs text-slate-700 bg-slate-100 hover:bg-slate-200 cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={() => blockMutation.mutate()}
-                disabled={blockMutation.isPending}
-                className="w-2/3 py-2.5 rounded-xl font-bold text-xs text-white bg-rose-600 hover:bg-rose-700 disabled:opacity-50 cursor-pointer shadow-sm"
-              >
-                {blockMutation.isPending ? "Blocking..." : "Yes, Block Member"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <Modal
+        isOpen={isBlockModalOpen}
+        onClose={() => setIsBlockModalOpen(false)}
+        icon={<Ban className="w-5 h-5 text-rose-600" />}
+        iconContainerClassName="bg-rose-50 text-rose-600"
+        title={`Block ${profile.displayName}?`}
+        description="They will no longer be able to message you, view your profile updates, or interact with you. Any active chat will be restricted. You can unblock them whenever you want from Privacy Settings."
+        footer={
+          <>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsBlockModalOpen(false)}
+              className="flex-1"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="danger"
+              size="sm"
+              onClick={() => blockMutation.mutate()}
+              isLoading={blockMutation.isPending}
+              className="flex-1"
+            >
+              Yes, Block Member
+            </Button>
+          </>
+        }
+      />
     </div>
   );
 };
