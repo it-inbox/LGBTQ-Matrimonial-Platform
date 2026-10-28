@@ -112,7 +112,7 @@ export const UniversalProfileCard: React.FC<UniversalProfileCardProps> = ({
   return (
     <div
       onClick={handleNavigateToProfile}
-      className="bg-white rounded-2xl border border-slate-200/90 overflow-hidden shadow-xs hover:shadow-md transition-all flex flex-row group w-full h-64 sm:h-72 cursor-pointer"
+      className="bg-white rounded-2xl border border-slate-200/90 overflow-hidden shadow-card hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-200 flex flex-row group w-full h-64 sm:h-72 cursor-pointer relative"
     >
       {/* Photo Section: Fixed horizontal aspect on mobile, tablet, and desktop */}
       <div className="relative w-36 xs:w-44 sm:w-56 md:w-60 h-full shrink-0 bg-slate-100 overflow-hidden">
@@ -120,7 +120,7 @@ export const UniversalProfileCard: React.FC<UniversalProfileCardProps> = ({
           <img
             src={photoUrl}
             alt={profile.displayName}
-            className={`w-full h-full object-cover object-top transition-all duration-300 group-hover:scale-105 ${
+            className={`w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-105 ${
               isBlurred ? "filter blur-xl scale-110" : ""
             }`}
           />
@@ -130,9 +130,12 @@ export const UniversalProfileCard: React.FC<UniversalProfileCardProps> = ({
           </div>
         )}
 
+        {/* Subtle Inner Ring Highlight to separate bright photos */}
+        <div className="absolute inset-0 ring-1 ring-inset ring-black/5 pointer-events-none" />
+
         {/* Photo Count badge */}
         {profile.photos && profile.photos.length > 1 && (
-          <span className="absolute top-2 left-2 sm:top-2.5 sm:left-2.5 bg-slate-900/70 text-white text-[9px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 rounded-md flex items-center gap-1 backdrop-blur-xs">
+          <span className="absolute top-2 left-2 sm:top-2.5 sm:left-2.5 bg-slate-900/75 text-white text-[9px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 rounded-md flex items-center gap-1 backdrop-blur-md shadow-subtle">
             📷 {profile.photos.length}
           </span>
         )}
@@ -148,13 +151,13 @@ export const UniversalProfileCard: React.FC<UniversalProfileCardProps> = ({
           ) : null}
         </div>
 
-        {/* Blur Shield Overlay */}
+        {/* Frosted Privacy Shield Vignette */}
         {isBlurred && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center p-2 sm:p-4 bg-slate-900/40 backdrop-blur-xs text-white text-center">
-            <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center mb-1">
+          <div className="absolute inset-0 flex flex-col items-center justify-center p-2 sm:p-4 bg-slate-950/45 backdrop-blur-md text-white text-center transition-colors">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-2xl bg-white/20 backdrop-blur-xl border border-white/30 flex items-center justify-center mb-1.5 shadow-sm">
               <Lock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
             </div>
-            <span className="text-[10px] sm:text-[11px] font-bold tracking-wide">
+            <span className="text-[10px] sm:text-[11px] font-bold tracking-wide text-white drop-shadow-xs">
               Photo Protected
             </span>
             {onRequestUnblur && (
@@ -164,7 +167,7 @@ export const UniversalProfileCard: React.FC<UniversalProfileCardProps> = ({
                   e.stopPropagation();
                   onRequestUnblur();
                 }}
-                className="mt-1.5 sm:mt-2.5 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-[11px] font-semibold bg-white text-slate-900 hover:bg-slate-100 shadow-xs transition-all cursor-pointer"
+                className="mt-2 sm:mt-2.5 px-3 py-1 rounded-full text-[10px] sm:text-[11px] font-bold bg-white text-slate-900 hover:bg-slate-100 shadow-md active:scale-95 transition-all cursor-pointer"
               >
                 Request Unblur
               </button>
@@ -186,10 +189,10 @@ export const UniversalProfileCard: React.FC<UniversalProfileCardProps> = ({
             </div>
           )}
 
-          {/* Name & Age */}
-          <h2 className="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2 flex-wrap group-hover:text-brand-600 transition-colors">
+          {/* Name & Age with Display Typography */}
+          <h2 className="text-base sm:text-lg font-display font-bold text-slate-900 flex items-center gap-2 flex-wrap group-hover:text-brand-600 transition-colors tracking-tight">
             <span>{profile.displayName || "Member"}</span>
-            {age ? <span>, {age}</span> : ""}
+            {age ? <span className="font-sans font-medium text-slate-600">, {age}</span> : ""}
             {profile.pronouns && (
               <span className="text-xs font-normal text-slate-400">
                 ({profile.pronouns})

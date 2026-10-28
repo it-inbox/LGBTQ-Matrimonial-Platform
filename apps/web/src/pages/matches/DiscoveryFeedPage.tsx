@@ -246,7 +246,30 @@ export const DiscoveryFeedPage: React.FC = () => {
             {isLoading ? (
               <div className="space-y-4">
                 {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-64 rounded-2xl bg-slate-100 animate-pulse border border-slate-200" />
+                  <div
+                    key={i}
+                    className="h-64 sm:h-72 rounded-2xl bg-white border border-slate-200/90 shadow-card flex flex-row overflow-hidden animate-pulse"
+                  >
+                    {/* Photo skeleton */}
+                    <div className="w-36 xs:w-44 sm:w-56 md:w-60 h-full shrink-0 bg-slate-200/70 relative" />
+                    {/* Content skeleton */}
+                    <div className="p-4 sm:p-6 flex-1 flex flex-col justify-between">
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div className="h-4 w-28 bg-slate-200 rounded-md" />
+                          <div className="h-4 w-16 bg-slate-100 rounded-full" />
+                        </div>
+                        <div className="h-5 w-44 bg-slate-200 rounded-md" />
+                        <div className="h-3.5 w-32 bg-slate-100 rounded-md" />
+                        <div className="space-y-2 pt-2">
+                          <div className="h-3 w-48 bg-slate-100 rounded-md" />
+                          <div className="h-3 w-40 bg-slate-100 rounded-md" />
+                          <div className="h-3 w-36 bg-slate-100 rounded-md" />
+                        </div>
+                      </div>
+                      <div className="h-10 -mx-4 sm:-mx-6 -mb-4 sm:-mb-6 border-t border-slate-100 bg-slate-50/70" />
+                    </div>
+                  </div>
                 ))}
               </div>
           ) : !filteredMatches || filteredMatches.length === 0 ? (

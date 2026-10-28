@@ -480,8 +480,14 @@ export const ActiveChatView: React.FC<ActiveChatViewProps> = ({
         </div>
       </div>
 
-      {/* Message Stream */}
-      <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-3 bg-slate-50/60">
+      {/* Message Stream with subtle texture & atmosphere */}
+      <div 
+        className="flex-1 min-h-0 overflow-y-auto p-4 space-y-3 bg-slate-50/50"
+        style={{
+          backgroundImage: "radial-gradient(#e2e8f0 0.8px, transparent 0.8px)",
+          backgroundSize: "16px 16px",
+        }}
+      >
         {loading ? (
           <div className="space-y-3 pt-4">
             {[1, 2, 3].map((i) => (
