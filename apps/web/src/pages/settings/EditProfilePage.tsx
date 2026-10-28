@@ -17,6 +17,8 @@ import {
   UploadCloud,
   X,
   Star,
+  AlertCircle,
+  CheckCircle2,
 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { allCountries } from "../../data/countries";
@@ -201,6 +203,15 @@ export const EditProfilePage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
+
+  const showToast = (type: "success" | "error", message: string) => {
+    setToast({ type, message });
+    setTimeout(() => {
+      setToast((current) => (current?.message === message ? null : current));
+    }, 4500);
+  };
+
   const [activeSection, setActiveSection] = useState<string>(() => {
     return window.location.hash.replace("#", "") || "demographics";
   });
@@ -477,15 +488,21 @@ export const EditProfilePage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.displayName.trim() || formData.displayName.trim().length < 2) {
-      setError("Display Name must be at least 2 characters.");
+      const msg = "Display Name must be at least 2 characters.";
+      setError(msg);
+      showToast("error", msg);
       return;
     }
     if (!formData.state.trim() || !formData.city.trim()) {
-      setError("State and City are required.");
+      const msg = "State and City are required.";
+      setError(msg);
+      showToast("error", msg);
       return;
     }
     if (formData.minAge > formData.maxAge) {
-      setError("Minimum partner age cannot be greater than maximum partner age.");
+      const msg = "Minimum partner age cannot be greater than maximum partner age.";
+      setError(msg);
+      showToast("error", msg);
       return;
     }
 
@@ -534,9 +551,12 @@ export const EditProfilePage: React.FC = () => {
       await api.patch("/profiles/me", payload);
       await fetchProfile();
       setSuccess(true);
+      showToast("success", "Profile updated successfully!");
       setTimeout(() => setSuccess(false), 3500);
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to update profile details");
+      const errorMessage = err.response?.data?.message || "Failed to update profile details";
+      setError(errorMessage);
+      showToast("error", errorMessage);
     } finally {
       setLoading(false);
     }
@@ -1508,6 +1528,42 @@ export const EditProfilePage: React.FC = () => {
       </form>
         </div>
       </div>
+
+      {/* Bottom-Right Toast Notification */}
+      {toast && (
+        <div
+          role="status"
+          aria-live="polite"
+          className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-2xl shadow-2xl border text-xs font-semibold backdrop-blur-md transition-all duration-300 animate-slide-up max-w-sm ${
+            toast.type === "success"
+              ? "bg-emerald-950/90 text-emerald-100 border-emerald-500/40 shadow-emerald-950/20"
+              : "bg-rose-950/90 text-rose-100 border-rose-500/40 shadow-rose-950/20"
+          }`}
+        >
+          <div
+            className={`w-7 h-7 rounded-xl flex items-center justify-center shrink-0 ${
+              toast.type === "success"
+                ? "bg-emerald-500 text-white"
+                : "bg-rose-500 text-white"
+            }`}
+          >
+            {toast.type === "success" ? (
+              <CheckCircle2 className="w-4 h-4" />
+            ) : (
+              <AlertCircle className="w-4 h-4" />
+            )}
+          </div>
+          <span className="flex-1 leading-snug">{toast.message}</span>
+          <button
+            type="button"
+            onClick={() => setToast(null)}
+            className="p-1 rounded-lg hover:bg-white/10 text-white/70 hover:text-white transition-colors cursor-pointer shrink-0 ml-1"
+            title="Dismiss notification"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
     </div>
   );
 };
