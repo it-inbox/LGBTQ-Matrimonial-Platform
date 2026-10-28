@@ -566,10 +566,10 @@ export const EditProfilePage: React.FC = () => {
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
-      <div className="flex flex-col lg:flex-row gap-8 items-start">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 pb-12">
+      <div className="flex flex-col lg:flex-row gap-6 sm:gap-8 items-start">
         {/* LEFT SIDEBAR: SECTION NAVIGATION TABS */}
-        <aside className="w-full lg:w-72 shrink-0 lg:sticky lg:top-24 space-y-4">
+        <aside className="w-full lg:w-72 shrink-0 lg:sticky lg:top-6 space-y-4">
           <div className="bg-white rounded-2xl border border-slate-200/90 p-3 shadow-xs">
             <div className="px-3 py-2 text-xs font-bold uppercase tracking-wider text-slate-400">
               Profile Sections
