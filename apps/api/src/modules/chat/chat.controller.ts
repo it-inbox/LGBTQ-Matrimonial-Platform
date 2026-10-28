@@ -2,19 +2,26 @@ import {
   Controller,
   Get,
   Post,
+  Patch,
+  Delete,
   Param,
   Query,
   Body,
   UseGuards,
+  Inject,
+  forwardRef,
 } from "@nestjs/common";
 import { ApiTags, ApiOperation, ApiBearerAuth } from "@nestjs/swagger";
 import { ChatService } from "./chat.service.js";
+import { ChatGateway } from "./chat.gateway.js";
 import { AuthGuard } from "../../common/guards/auth.guard.js";
 import { CurrentUser } from "../../common/decorators/current-user.decorator.js";
 import { ZodValidationPipe } from "../../common/pipes/zod-validation.pipe.js";
 import {
   sendMessageSchema,
   SendMessageInput,
+  editMessageSchema,
+  EditMessageInput,
 } from "@everpride/shared";
 
 @ApiTags("Chat & Messaging")
@@ -22,7 +29,11 @@ import {
 @UseGuards(AuthGuard)
 @Controller("chat")
 export class ChatController {
-  constructor(private readonly chatService: ChatService) {}
+  constructor(
+    private readonly chatService: ChatService,
+    @Inject(forwardRef(() => ChatGateway))
+    private readonly chatGateway: ChatGateway
+  ) {}
 
   @Get("conversations")
   @ApiOperation({ summary: "Get all user conversations with partner info, unread count, and last message" })
@@ -67,6 +78,31 @@ export class ChatController {
     return this.chatService.sendMessage(userId, dto);
   }
 
+  @Patch("messages/:id")
+  @ApiOperation({ summary: "Edit a message" })
+  async editMessage(
+    @CurrentUser("userId") userId: string,
+    @Param("id") messageId: string,
+    @Body(new ZodValidationPipe(editMessageSchema)) dto: EditMessageInput
+  ) {
+    const updated = await this.chatService.editMessage(userId, messageId, dto.content);
+    // Broadcast via socket to conversation room
+    this.chatGateway.emitToConversation(updated.conversationId, "message_edited", updated);
+    return updated;
+  }
+
+  @Delete("messages/:id")
+  @ApiOperation({ summary: "Delete a message" })
+  async deleteMessage(
+    @CurrentUser("userId") userId: string,
+    @Param("id") messageId: string
+  ) {
+    const result = await this.chatService.deleteMessage(userId, messageId);
+    // Broadcast via socket to conversation room
+    this.chatGateway.emitToConversation(result.conversationId, "message_deleted", result);
+    return result;
+  }
+
   @Post("conversations/:id/read")
   @ApiOperation({ summary: "Mark conversation messages as read" })
   async markAsRead(
@@ -82,3 +118,4 @@ export class ChatController {
     return this.chatService.getOnlineMatches(userId);
   }
 }
+

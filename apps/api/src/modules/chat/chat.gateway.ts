@@ -41,6 +41,12 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
+  emitToConversation(conversationId: string, event: string, data: any) {
+    if (this.server) {
+      this.server.to(`conversation:${conversationId}`).emit(event, data);
+    }
+  }
+
   // ─────────────────────────────────────────────────────────────
   // Connection Lifecycle
   // ─────────────────────────────────────────────────────────────
@@ -181,4 +187,47 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       return { status: "error" };
     }
   }
+
+  @SubscribeMessage("edit_message")
+  async handleEditMessage(
+    @ConnectedSocket() client: AuthenticatedSocket,
+    @MessageBody() data: { messageId: string; content: string }
+  ) {
+    if (!client.userId || !data?.messageId || !data?.content?.trim()) {
+      return { status: "error", message: "Invalid payload" };
+    }
+
+    try {
+      const updated = await this.chatService.editMessage(
+        client.userId,
+        data.messageId,
+        data.content.trim()
+      );
+
+      this.emitToConversation(updated.conversationId, "message_edited", updated);
+      return { status: "success", message: updated };
+    } catch (error: any) {
+      return { status: "error", message: error.message || "Failed to edit message" };
+    }
+  }
+
+  @SubscribeMessage("delete_message")
+  async handleDeleteMessage(
+    @ConnectedSocket() client: AuthenticatedSocket,
+    @MessageBody() data: { messageId: string }
+  ) {
+    if (!client.userId || !data?.messageId) {
+      return { status: "error", message: "Invalid payload" };
+    }
+
+    try {
+      const result = await this.chatService.deleteMessage(client.userId, data.messageId);
+
+      this.emitToConversation(result.conversationId, "message_deleted", result);
+      return { status: "success", ...result };
+    } catch (error: any) {
+      return { status: "error", message: error.message || "Failed to delete message" };
+    }
+  }
 }
+

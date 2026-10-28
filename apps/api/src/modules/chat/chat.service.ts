@@ -358,6 +358,71 @@ export class ChatService {
   }
 
   /**
+   * Edit a sent message
+   */
+  async editMessage(userId: string, messageId: string, content: string) {
+    const message = await this.prisma.client.message.findUnique({
+      where: { id: messageId },
+      include: { conversation: true },
+    });
+
+    if (!message) {
+      throw new NotFoundException("Message not found");
+    }
+
+    if (message.senderId !== userId) {
+      throw new ForbiddenException("You can only edit your own messages");
+    }
+
+    if (message.isDeleted) {
+      throw new BadRequestException("Cannot edit a deleted message");
+    }
+
+    const updated = await this.prisma.client.message.update({
+      where: { id: messageId },
+      data: {
+        content: content.trim(),
+        isEdited: true,
+      },
+    });
+
+    return updated;
+  }
+
+  /**
+   * Delete a sent message (soft delete so conversation continuity is maintained, or for both participants)
+   */
+  async deleteMessage(userId: string, messageId: string) {
+    const message = await this.prisma.client.message.findUnique({
+      where: { id: messageId },
+      include: { conversation: true },
+    });
+
+    if (!message) {
+      throw new NotFoundException("Message not found");
+    }
+
+    if (message.senderId !== userId) {
+      throw new ForbiddenException("You can only delete your own messages");
+    }
+
+    const updated = await this.prisma.client.message.update({
+      where: { id: messageId },
+      data: {
+        isDeleted: true,
+        content: "This message was deleted",
+      },
+    });
+
+    return {
+      success: true,
+      messageId: updated.id,
+      conversationId: updated.conversationId,
+      message: updated,
+    };
+  }
+
+  /**
    * Get online matches list for the top strip
    */
   async getOnlineMatches(userId: string) {
@@ -410,3 +475,4 @@ export class ChatService {
     return onlineMatches;
   }
 }
+

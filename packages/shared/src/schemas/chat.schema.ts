@@ -15,3 +15,9 @@ export const conversationFilterSchema = z.object({
   filter: z.enum(["all", "unread", "online"]).default("all"),
 });
 export type ConversationFilterInput = z.infer<typeof conversationFilterSchema>;
+
+export const editMessageSchema = z.object({
+  content: z.string().min(1, "Message cannot be empty").max(2000, "Message cannot exceed 2000 characters").trim(),
+});
+export type EditMessageInput = z.infer<typeof editMessageSchema>;
+

@@ -1,5 +1,18 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Send, ArrowLeft, Shield, Check, CheckCheck, User, Sparkles, Smile } from "lucide-react";
+import {
+  Send,
+  ArrowLeft,
+  Shield,
+  Check,
+  CheckCheck,
+  User,
+  Sparkles,
+  Smile,
+  Pencil,
+  Trash2,
+  X,
+  MoreVertical,
+} from "lucide-react";
 import { ConversationItem, MessageItem, useChatStore } from "../../stores/chat.store";
 import { api } from "../../lib/api";
 import { useAuthStore } from "../../stores/auth.store";
@@ -17,6 +30,8 @@ export const ActiveChatView: React.FC<ActiveChatViewProps> = ({
   const user = useAuthStore((s) => s.user);
   const socket = useChatStore((s) => s.socket);
   const sendMessage = useChatStore((s) => s.sendMessage);
+  const editMessage = useChatStore((s) => s.editMessage);
+  const deleteMessage = useChatStore((s) => s.deleteMessage);
   const emitTyping = useChatStore((s) => s.emitTyping);
   const typingUsers = useChatStore((s) => s.typingUsers);
   const onlineUserIds = useChatStore((s) => s.onlineUserIds);
@@ -25,9 +40,24 @@ export const ActiveChatView: React.FC<ActiveChatViewProps> = ({
   const [inputText, setInputText] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  // Editing state
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [editContent, setEditContent] = useState("");
+  const [isEditingSaving, setIsEditingSaving] = useState(false);
+
+  // Deleting confirmation state
+  const [deletingMessageId, setDeletingMessageId] = useState<string | null>(null);
+  const [isDeletingLoading, setIsDeletingLoading] = useState(false);
+
+  // Active message actions menu on mobile/hover
+  const [activeMenuMessageId, setActiveMenuMessageId] = useState<string | null>(null);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const editInputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<any>(null);
+
 
   const profile = useAuthStore((s) => s.profile);
   const currentUserId = user?.id || profile?.userId;
@@ -101,12 +131,36 @@ export const ActiveChatView: React.FC<ActiveChatViewProps> = ({
       }
     };
 
+    const handleMessageEdited = (editedMsg: MessageItem) => {
+      if (editedMsg.conversationId === conversation.id) {
+        setMessages((prev) =>
+          prev.map((m) => (m.id === editedMsg.id ? { ...m, ...editedMsg } : m))
+        );
+      }
+    };
+
+    const handleMessageDeleted = (payload: { messageId: string; conversationId: string; message?: MessageItem }) => {
+      if (payload.conversationId === conversation.id) {
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === payload.messageId
+              ? payload.message || { ...m, isDeleted: true, content: "This message was deleted" }
+              : m
+          )
+        );
+      }
+    };
+
     socket.on("new_message", handleNewMessage);
     socket.on("messages_read", handleMessagesRead);
+    socket.on("message_edited", handleMessageEdited);
+    socket.on("message_deleted", handleMessageDeleted);
 
     return () => {
       socket.off("new_message", handleNewMessage);
       socket.off("messages_read", handleMessagesRead);
+      socket.off("message_edited", handleMessageEdited);
+      socket.off("message_deleted", handleMessageDeleted);
     };
   }, [socket, conversation.id, conversation.partner.id]);
 
@@ -196,6 +250,67 @@ export const ActiveChatView: React.FC<ActiveChatViewProps> = ({
       setInputText((prev) => prev + emoji);
     }
   };
+
+  const handleStartEdit = (msg: MessageItem) => {
+    setEditingMessageId(msg.id);
+    setEditContent(msg.content);
+    setActiveMenuMessageId(null);
+    setTimeout(() => {
+      editInputRef.current?.focus();
+      editInputRef.current?.select();
+    }, 50);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingMessageId(null);
+    setEditContent("");
+  };
+
+  const handleSaveEdit = async (msgId: string) => {
+    const trimmed = editContent.trim();
+    if (!trimmed || isEditingSaving) return;
+
+    setIsEditingSaving(true);
+    try {
+      // Optimistic update
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === msgId ? { ...m, content: trimmed, isEdited: true } : m
+        )
+      );
+      setEditingMessageId(null);
+      await editMessage(msgId, trimmed);
+    } catch (err) {
+      console.error("Failed to edit message:", err);
+    } finally {
+      setIsEditingSaving(false);
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deletingMessageId || isDeletingLoading) return;
+
+    setIsDeletingLoading(true);
+    const targetId = deletingMessageId;
+    try {
+      // Optimistic update
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === targetId
+            ? { ...m, isDeleted: true, content: "This message was deleted" }
+            : m
+        )
+      );
+      setDeletingMessageId(null);
+      setActiveMenuMessageId(null);
+      await deleteMessage(targetId);
+    } catch (err) {
+      console.error("Failed to delete message:", err);
+    } finally {
+      setIsDeletingLoading(false);
+    }
+  };
+
 
   return (
     <div className="flex flex-col h-full bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden">
@@ -292,23 +407,111 @@ export const ActiveChatView: React.FC<ActiveChatViewProps> = ({
               minute: "2-digit",
             });
 
+            const isEditing = editingMessageId === msg.id;
+            const isDeleted = !!msg.isDeleted;
+            const isEdited = !isDeleted && !!msg.isEdited;
+
             return (
               <div
                 key={msg.id}
-                className={`flex flex-col ${isOwn ? "items-end" : "items-start"}`}
+                className={`group relative flex flex-col ${isOwn ? "items-end" : "items-start"}`}
+                onMouseLeave={() => {
+                  if (activeMenuMessageId === msg.id) setActiveMenuMessageId(null);
+                }}
               >
-                <div
-                  className={`max-w-[78%] sm:max-w-md px-4 py-2.5 rounded-2xl text-xs sm:text-sm leading-relaxed ${
-                    isOwn
-                      ? "bg-gradient-to-r from-rose-500 to-brand-600 text-white rounded-br-xs shadow-xs"
-                      : "bg-white text-slate-800 border border-slate-200/80 rounded-bl-xs shadow-2xs"
-                  }`}
-                >
-                  <p className="break-words whitespace-pre-wrap">{msg.content}</p>
-                </div>
-                <div className={`flex items-center gap-1 mt-1 px-1 ${isOwn ? "justify-end" : "justify-start"}`}>
+                {/* Editing Inline Form */}
+                {isEditing ? (
+                  <div className="w-full max-w-sm sm:max-w-md p-2.5 rounded-2xl bg-white border-2 border-brand-500 shadow-md flex flex-col gap-2">
+                    <div className="text-[11px] font-semibold text-brand-600 flex items-center justify-between">
+                      <span className="flex items-center gap-1">
+                        <Pencil className="w-3 h-3" /> Edit message
+                      </span>
+                      <span className="text-slate-400 font-normal text-[10px]">Esc to cancel • Enter to save</span>
+                    </div>
+                    <input
+                      ref={editInputRef}
+                      type="text"
+                      value={editContent}
+                      onChange={(e) => setEditContent(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleSaveEdit(msg.id);
+                        } else if (e.key === "Escape") {
+                          e.preventDefault();
+                          handleCancelEdit();
+                        }
+                      }}
+                      className="w-full px-3 py-1.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-brand-500 text-slate-900"
+                    />
+                    <div className="flex items-center justify-end gap-1.5">
+                      <button
+                        type="button"
+                        onClick={handleCancelEdit}
+                        disabled={isEditingSaving}
+                        className="px-2.5 py-1 text-xs text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleSaveEdit(msg.id)}
+                        disabled={!editContent.trim() || isEditingSaving}
+                        className="px-3 py-1 text-xs font-semibold text-white bg-brand-600 hover:bg-brand-700 disabled:opacity-50 rounded-lg transition-colors cursor-pointer shadow-xs flex items-center gap-1"
+                      >
+                        <Check className="w-3 h-3" />
+                        <span>Save</span>
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="relative group/bubble flex items-center gap-1.5">
+                    {/* Action buttons for sender's own message (visible on hover or when action menu active) */}
+                    {isOwn && !isDeleted && (
+                      <div className="opacity-0 group-hover/bubble:opacity-100 transition-opacity flex items-center gap-0.5 bg-white/90 backdrop-blur-xs border border-slate-200 shadow-xs rounded-lg p-0.5 order-first">
+                        <button
+                          type="button"
+                          onClick={() => handleStartEdit(msg)}
+                          className="p-1 text-slate-400 hover:text-brand-600 hover:bg-brand-50 rounded transition-colors cursor-pointer"
+                          title="Edit message"
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setDeletingMessageId(msg.id)}
+                          className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded transition-colors cursor-pointer"
+                          title="Delete message"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Message Bubble */}
+                    <div
+                      className={`max-w-[78%] sm:max-w-md px-4 py-2.5 rounded-2xl text-xs sm:text-sm leading-relaxed transition-all ${
+                        isDeleted
+                          ? "bg-slate-100/90 text-slate-400 italic border border-slate-200/60 rounded-2xl"
+                          : isOwn
+                          ? "bg-gradient-to-r from-rose-500 to-brand-600 text-white rounded-br-xs shadow-xs"
+                          : "bg-white text-slate-800 border border-slate-200/80 rounded-bl-xs shadow-2xs"
+                      }`}
+                    >
+                      <p className="break-words whitespace-pre-wrap">{msg.content}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Timestamp and Edited/Read Badges */}
+                <div className={`flex items-center gap-1.5 mt-1 px-1 ${isOwn ? "justify-end" : "justify-start"}`}>
+                  {isEdited && (
+                    <span className="text-[10px] text-slate-400 font-medium italic">
+                      (edited)
+                    </span>
+                  )}
                   <span className="text-[10px] text-slate-400">{timeStr}</span>
-                  {isOwn && (
+                  {isOwn && !isDeleted && (
                     <span>
                       {msg.isRead ? (
                         <CheckCheck className="w-3.5 h-3.5 text-brand-600" />
@@ -324,6 +527,41 @@ export const ActiveChatView: React.FC<ActiveChatViewProps> = ({
         )}
         <div ref={messagesEndRef} />
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {deletingMessageId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
+          <div className="w-full max-w-sm bg-white rounded-2xl p-5 shadow-2xl border border-slate-100 animate-in fade-in zoom-in-95 duration-150">
+            <div className="w-10 h-10 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center mb-3">
+              <Trash2 className="w-5 h-5" />
+            </div>
+            <h4 className="text-sm font-bold text-slate-900 mb-1">
+              Delete Message?
+            </h4>
+            <p className="text-xs text-slate-500 mb-5 leading-relaxed">
+              Are you sure you want to delete this message? This action cannot be undone.
+            </p>
+            <div className="flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setDeletingMessageId(null)}
+                disabled={isDeletingLoading}
+                className="px-3.5 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDelete}
+                disabled={isDeletingLoading}
+                className="px-4 py-2 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 disabled:opacity-50 rounded-xl transition-colors cursor-pointer shadow-xs"
+              >
+                {isDeletingLoading ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Input Bar with Emoji Picker */}
       <div className="relative bg-white border-t border-slate-100">

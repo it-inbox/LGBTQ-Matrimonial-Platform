@@ -275,7 +275,10 @@ model Message {
   senderId       String   @map("sender_id")
   content        String
   isRead         Boolean  @default(false) @map("is_read")
+  isEdited       Boolean  @default(false) @map("is_edited")
+  isDeleted      Boolean  @default(false) @map("is_deleted")
   createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @default(now()) @updatedAt @map("updated_at")
 
   conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   sender       User         @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)

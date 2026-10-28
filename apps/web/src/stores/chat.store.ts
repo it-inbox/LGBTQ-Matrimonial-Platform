@@ -8,7 +8,10 @@ export interface MessageItem {
   senderId: string;
   content: string;
   isRead: boolean;
+  isEdited?: boolean;
+  isDeleted?: boolean;
   createdAt: string;
+  updatedAt?: string;
 }
 
 export interface ConversationPartner {
@@ -33,6 +36,8 @@ export interface ConversationItem {
     senderId: string;
     isRead: boolean;
     isOwn: boolean;
+    isEdited?: boolean;
+    isDeleted?: boolean;
   } | null;
   unreadCount: number;
 }
@@ -67,6 +72,8 @@ interface ChatState {
   joinConversation: (conversationId: string) => void;
   leaveConversation: (conversationId: string) => void;
   sendMessage: (conversationId: string, content: string) => Promise<MessageItem | null>;
+  editMessage: (messageId: string, content: string) => Promise<MessageItem | null>;
+  deleteMessage: (messageId: string) => Promise<boolean>;
   emitTyping: (conversationId: string, isTyping: boolean) => void;
   markConversationAsRead: (conversationId: string) => void;
   setTotalUnreadCount: (count: number) => void;
@@ -74,6 +81,7 @@ interface ChatState {
   setNewMatchesCount: (count: number) => void;
   clearNotification: () => void;
 }
+
 
 export const useChatStore = create<ChatState>((set, get) => ({
   socket: null,
@@ -297,6 +305,75 @@ export const useChatStore = create<ChatState>((set, get) => ({
       return null;
     }
   },
+
+  editMessage: async (messageId: string, content: string): Promise<MessageItem | null> => {
+    const socket = get().socket;
+    const trimmed = content.trim();
+    if (!trimmed) return null;
+
+    // 1. Try WebSocket if connected
+    if (socket && socket.connected) {
+      try {
+        const response: any = await new Promise((resolve) => {
+          const timeout = setTimeout(() => resolve(null), 3500);
+          socket.emit("edit_message", { messageId, content: trimmed }, (res: any) => {
+            clearTimeout(timeout);
+            resolve(res);
+          });
+        });
+
+        if (response?.status === "success" && response?.message) {
+          return response.message;
+        }
+      } catch (err) {
+        console.warn("[ChatStore] Socket edit error, falling back to REST...", err);
+      }
+    }
+
+    // 2. REST API fallback
+    try {
+      const res = await api.patch(`/chat/messages/${messageId}`, {
+        content: trimmed,
+      });
+      return res.data;
+    } catch (apiErr) {
+      console.error("[ChatStore] Failed to edit message via REST fallback:", apiErr);
+      return null;
+    }
+  },
+
+  deleteMessage: async (messageId: string): Promise<boolean> => {
+    const socket = get().socket;
+
+    // 1. Try WebSocket if connected
+    if (socket && socket.connected) {
+      try {
+        const response: any = await new Promise((resolve) => {
+          const timeout = setTimeout(() => resolve(null), 3500);
+          socket.emit("delete_message", { messageId }, (res: any) => {
+            clearTimeout(timeout);
+            resolve(res);
+          });
+        });
+
+        if (response?.status === "success") {
+          return true;
+        }
+      } catch (err) {
+        console.warn("[ChatStore] Socket delete error, falling back to REST...", err);
+      }
+    }
+
+    // 2. REST API fallback
+    try {
+      await api.delete(`/chat/messages/${messageId}`);
+      return true;
+    } catch (apiErr) {
+      console.error("[ChatStore] Failed to delete message via REST fallback:", apiErr);
+      return false;
+    }
+  },
+
 
   emitTyping: (conversationId, isTyping) => {
     const socket = get().socket;
