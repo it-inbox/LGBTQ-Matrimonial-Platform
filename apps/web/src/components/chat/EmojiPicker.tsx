@@ -198,7 +198,23 @@ export const EmojiPicker: React.FC<EmojiPickerProps> = ({
   const [searchQuery, setSearchQuery] = useState("");
   const popoverRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const tabsContainerRef = useRef<HTMLDivElement>(null);
   const isClickScrollingRef = useRef<boolean>(false);
+
+  // Automatically scroll tabs container to keep the active category tab in view
+  useEffect(() => {
+    if (!tabsContainerRef.current) return;
+    const activeTabButton = tabsContainerRef.current.querySelector<HTMLButtonElement>(
+      `[data-category-id="${activeCategory}"]`
+    );
+    if (activeTabButton) {
+      activeTabButton.scrollIntoView({
+        behavior: "smooth",
+        inline: "nearest",
+        block: "nearest",
+      });
+    }
+  }, [activeCategory]);
 
   // Close when clicking outside
   useEffect(() => {
@@ -325,15 +341,19 @@ export const EmojiPicker: React.FC<EmojiPickerProps> = ({
         </button>
       </div>
 
-      {/* Category Icons Tabs: Highlights active section dynamically */}
+      {/* Category Icons Tabs: Highlights active section dynamically & auto-scrolls without horizontal scrollbars */}
       {!searchQuery && (
-        <div className="flex items-center px-2 py-1.5 border-b border-slate-100 bg-white/60 gap-1 overflow-x-auto scrollbar-none">
+        <div
+          ref={tabsContainerRef}
+          className="flex items-center px-2 py-1.5 border-b border-slate-100 bg-white/60 gap-1 overflow-x-auto no-scrollbar"
+        >
           {EMOJI_CATEGORIES.map((cat) => {
             const Icon = cat.icon;
             const isActive = activeCategory === cat.id;
             return (
               <button
                 key={cat.id}
+                data-category-id={cat.id}
                 type="button"
                 onClick={() => handleTabClick(cat.id)}
                 className={`flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-semibold transition-all cursor-pointer shrink-0 ${
@@ -355,7 +375,7 @@ export const EmojiPicker: React.FC<EmojiPickerProps> = ({
       <div
         ref={scrollContainerRef}
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto p-2.5 space-y-4 scrollbar-thin relative"
+        className="flex-1 overflow-y-auto p-2.5 space-y-4 no-scrollbar relative"
       >
         {filteredCategories.length === 0 ? (
           <div className="text-center py-10 text-xs text-slate-400">
