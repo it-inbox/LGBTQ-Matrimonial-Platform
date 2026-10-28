@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Send, ArrowLeft, Shield, Check, CheckCheck, User, Sparkles } from "lucide-react";
+import { Send, ArrowLeft, Shield, Check, CheckCheck, User, Sparkles, Smile } from "lucide-react";
 import { ConversationItem, MessageItem, useChatStore } from "../../stores/chat.store";
 import { api } from "../../lib/api";
 import { useAuthStore } from "../../stores/auth.store";
+import { EmojiPicker } from "./EmojiPicker";
 
 interface ActiveChatViewProps {
   conversation: ConversationItem;
@@ -22,8 +23,10 @@ export const ActiveChatView: React.FC<ActiveChatViewProps> = ({
 
   const [messages, setMessages] = useState<MessageItem[]>([]);
   const [inputText, setInputText] = useState("");
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [loading, setLoading] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<any>(null);
 
   const profile = useAuthStore((s) => s.profile);
@@ -168,6 +171,32 @@ export const ActiveChatView: React.FC<ActiveChatViewProps> = ({
     }
   };
 
+  const handleSelectEmoji = (emoji: string) => {
+    const input = inputRef.current;
+    if (input) {
+      const start = input.selectionStart ?? inputText.length;
+      const end = input.selectionEnd ?? inputText.length;
+      const newText = inputText.substring(0, start) + emoji + inputText.substring(end);
+      setInputText(newText);
+
+      // Trigger typing indicator
+      emitTyping(conversation.id, true);
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+      typingTimeoutRef.current = setTimeout(() => {
+        emitTyping(conversation.id, false);
+      }, 2000);
+
+      // Restore cursor position right after the inserted emoji
+      setTimeout(() => {
+        input.focus();
+        const nextPos = start + emoji.length;
+        input.setSelectionRange(nextPos, nextPos);
+      }, 0);
+    } else {
+      setInputText((prev) => prev + emoji);
+    }
+  };
+
   return (
     <div className="flex flex-col h-full bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden">
       {/* Chat Header */}
@@ -296,27 +325,49 @@ export const ActiveChatView: React.FC<ActiveChatViewProps> = ({
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input Bar */}
-      <form
-        onSubmit={handleSend}
-        className="p-3 sm:p-4 bg-white border-t border-slate-100 flex items-center gap-2 shrink-0"
-      >
-        <input
-          type="text"
-          placeholder={`Message ${conversation.partner?.displayName || "Member"}...`}
-          value={inputText}
-          onChange={handleInputChange}
-          className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs sm:text-sm focus:outline-none focus:border-brand-500 text-slate-900 placeholder:text-slate-400"
+      {/* Input Bar with Emoji Picker */}
+      <div className="relative bg-white border-t border-slate-100">
+        <EmojiPicker
+          isOpen={showEmojiPicker}
+          onClose={() => setShowEmojiPicker(false)}
+          onSelectEmoji={handleSelectEmoji}
         />
-        <button
-          type="submit"
-          disabled={!inputText.trim()}
-          className="px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 disabled:opacity-40 text-white font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+
+        <form
+          onSubmit={handleSend}
+          className="p-3 sm:p-4 flex items-center gap-2 shrink-0"
         >
-          <Send className="w-4 h-4" />
-          <span className="hidden sm:inline">Send</span>
-        </button>
-      </form>
+          <button
+            type="button"
+            onClick={() => setShowEmojiPicker((prev) => !prev)}
+            className={`p-2.5 rounded-xl border transition-colors cursor-pointer shrink-0 flex items-center justify-center ${
+              showEmojiPicker
+                ? "bg-rose-50 border-rose-200 text-rose-600 shadow-2xs"
+                : "bg-slate-50 border-slate-200 text-slate-500 hover:text-slate-800 hover:bg-slate-100"
+            }`}
+            title="Insert emoji"
+          >
+            <Smile className="w-4 h-4" />
+          </button>
+
+          <input
+            ref={inputRef}
+            type="text"
+            placeholder={`Message ${conversation.partner?.displayName || "Member"}...`}
+            value={inputText}
+            onChange={handleInputChange}
+            className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs sm:text-sm focus:outline-none focus:border-brand-500 text-slate-900 placeholder:text-slate-400"
+          />
+          <button
+            type="submit"
+            disabled={!inputText.trim()}
+            className="px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 disabled:opacity-40 text-white font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+          >
+            <Send className="w-4 h-4" />
+            <span className="hidden sm:inline">Send</span>
+          </button>
+        </form>
+      </div>
     </div>
   );
 };
