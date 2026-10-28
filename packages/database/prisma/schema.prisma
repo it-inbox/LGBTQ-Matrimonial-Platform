@@ -203,6 +203,7 @@ model PhotoAccessRequest {
   requesterId String         @map("requester_id")
   targetId    String         @map("target_id")
   status      InterestStatus @default(PENDING)
+  isHidden    Boolean        @default(false) @map("is_hidden")
   createdAt   DateTime       @default(now()) @map("created_at")
   updatedAt   DateTime       @updatedAt @map("updated_at")
 

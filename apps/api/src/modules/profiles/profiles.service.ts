@@ -84,6 +84,7 @@ export class ProfilesService {
           requesterId: currentUserId,
           targetId: canonicalTargetUserId,
           status: "ACCEPTED",
+          isHidden: false,
         },
       });
       if (photoGrant) {
@@ -91,8 +92,8 @@ export class ProfilesService {
       }
     }
 
-    // Check current interaction status (sent/received interest, mutual match, photo access request)
-    const [sentInterest, receivedInterest, photoRequest] = await Promise.all([
+    // Check current interaction status (sent/received interest, sent/received photo access request)
+    const [sentInterest, receivedInterest, sentPhotoRequest, receivedPhotoRequest] = await Promise.all([
       this.prisma.client.matchInterest.findFirst({
         where: { senderId: currentUserId, receiverId: canonicalTargetUserId },
       }),
@@ -101,6 +102,9 @@ export class ProfilesService {
       }),
       this.prisma.client.photoAccessRequest.findFirst({
         where: { requesterId: currentUserId, targetId: canonicalTargetUserId },
+      }),
+      this.prisma.client.photoAccessRequest.findFirst({
+        where: { requesterId: canonicalTargetUserId, targetId: currentUserId },
       }),
     ]);
 
@@ -128,7 +132,12 @@ export class ProfilesService {
         sentInterestId: sentInterest?.id || null,
         receivedInterestStatus: receivedInterest?.status || null,
         receivedInterestId: receivedInterest?.id || null,
-        photoAccessStatus: photoRequest?.status || null,
+        photoAccessStatus: sentPhotoRequest?.status || null,
+        photoAccessId: sentPhotoRequest?.id || null,
+        photoAccessIsHidden: sentPhotoRequest?.isHidden || false,
+        receivedPhotoAccessStatus: receivedPhotoRequest?.status || null,
+        receivedPhotoAccessId: receivedPhotoRequest?.id || null,
+        receivedPhotoAccessIsHidden: receivedPhotoRequest?.isHidden || false,
       },
     };
   }

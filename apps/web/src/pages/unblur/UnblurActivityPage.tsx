@@ -11,6 +11,10 @@ import {
   CheckCircle2,
   Clock,
   XCircle,
+  Eye,
+  EyeOff,
+  ShieldBan,
+  AlertTriangle,
 } from "lucide-react";
 
 interface UnblurActivityPageProps {
@@ -24,6 +28,9 @@ export const UnblurActivityPage: React.FC<UnblurActivityPageProps> = ({
   const [currentTab, setCurrentTab] = useState<"received" | "sent">(initialTab);
   const [statusFilter, setStatusFilter] = useState<"ALL" | "PENDING" | "ACCEPTED" | "DECLINED">("ALL");
   const [successToast, setSuccessToast] = useState<string | null>(null);
+
+  // Revoke confirmation modal state
+  const [revokingRequest, setRevokingRequest] = useState<any | null>(null);
 
   // Sync tab if prop changes
   React.useEffect(() => {
@@ -66,6 +73,35 @@ export const UnblurActivityPage: React.FC<UnblurActivityPageProps> = ({
     },
   });
 
+  const toggleHideMutation = useMutation({
+    mutationFn: async ({ id, isHidden }: { id: string; isHidden?: boolean }) => {
+      return api.post(`/matches/photo-access/${id}/toggle-hide`, { isHidden });
+    },
+    onSuccess: (res) => {
+      const isNowHidden = res.data?.isHidden;
+      setSuccessToast(
+        isNowHidden
+          ? "Photos temporarily hidden from this member. They will see blurred photos until you unhide."
+          : "Photos unhidden. The member can now view your original photos again."
+      );
+      queryClient.invalidateQueries({ queryKey: ["received-unblur"] });
+      setTimeout(() => setSuccessToast(null), 4000);
+    },
+  });
+
+  const revokeMutation = useMutation({
+    mutationFn: async ({ id }: { id: string }) => {
+      return api.post(`/matches/photo-access/${id}/revoke`);
+    },
+    onSuccess: () => {
+      setSuccessToast("Photo access completely revoked. They must send a new unblur request to view your pictures.");
+      setRevokingRequest(null);
+      queryClient.invalidateQueries({ queryKey: ["received-unblur"] });
+      setTimeout(() => setSuccessToast(null), 4000);
+    },
+  });
+
+
   const rawList = currentTab === "received" ? receivedData : sentData;
   const isLoading = currentTab === "received" ? isLoadingReceived : isLoadingSent;
 
@@ -74,9 +110,17 @@ export const UnblurActivityPage: React.FC<UnblurActivityPageProps> = ({
     return item.status === statusFilter;
   });
 
-  const renderStatusBadge = (status: string) => {
+  const renderStatusBadge = (status: string, isHidden?: boolean) => {
     switch (status) {
       case "ACCEPTED":
+        if (isHidden) {
+          return (
+            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-xl bg-amber-50 text-amber-700 font-bold text-xs border border-amber-200">
+              <EyeOff className="w-3.5 h-3.5 text-amber-600" />
+              <span>Temporarily Hidden</span>
+            </span>
+          );
+        }
         return (
           <span className="inline-flex items-center gap-1 px-3 py-1 rounded-xl bg-emerald-50 text-emerald-700 font-bold text-xs border border-emerald-200">
             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
@@ -202,22 +246,83 @@ export const UnblurActivityPage: React.FC<UnblurActivityPageProps> = ({
                             </button>
                           </>
                         ) : (
-                          <div className="flex-1 flex items-center justify-center py-2 px-3 text-slate-500 font-medium text-xs text-center">
-                            {item.status === "ACCEPTED"
-                              ? "You approved photo unblur access for this member."
-                              : "You declined this unblur photo request."}
+                          <div className="flex-1 flex flex-col sm:flex-row items-center justify-between gap-2 py-2 px-3 bg-slate-50/70 rounded-xl">
+                            <div className="text-xs text-slate-600 font-medium text-center sm:text-left">
+                              {item.status === "ACCEPTED" ? (
+                                item.isHidden ? (
+                                  <span className="text-amber-700 font-semibold flex items-center gap-1.5 justify-center sm:justify-start">
+                                    <EyeOff className="w-3.5 h-3.5 text-amber-600" />
+                                    <span>Photos temporarily hidden from this member</span>
+                                  </span>
+                                ) : (
+                                  <span className="text-emerald-700 font-semibold flex items-center gap-1.5 justify-center sm:justify-start">
+                                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                                    <span>Unblur access active</span>
+                                  </span>
+                                )
+                              ) : (
+                                "You declined this unblur photo request."
+                              )}
+                            </div>
+
+                            {/* Management Actions for ACCEPTED requests */}
+                            {item.status === "ACCEPTED" && (
+                              <div className="flex items-center gap-2 shrink-0">
+                                <button
+                                  type="button"
+                                  disabled={toggleHideMutation.isPending}
+                                  onClick={() =>
+                                    toggleHideMutation.mutate({
+                                      id: item.id,
+                                      isHidden: !item.isHidden,
+                                    })
+                                  }
+                                  className={`px-3 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer border ${
+                                    item.isHidden
+                                      ? "bg-amber-50 hover:bg-amber-100 text-amber-800 border-amber-200"
+                                      : "bg-white hover:bg-slate-100 text-slate-700 border-slate-200"
+                                  }`}
+                                  title={item.isHidden ? "Unhide pictures" : "Temporarily hide pictures"}
+                                >
+                                  {item.isHidden ? (
+                                    <>
+                                      <Eye className="w-3.5 h-3.5 text-amber-600" />
+                                      <span>Unhide Pictures</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <EyeOff className="w-3.5 h-3.5 text-slate-500" />
+                                      <span>Temporarily Hide</span>
+                                    </>
+                                  )}
+                                </button>
+
+                                <button
+                                  type="button"
+                                  disabled={revokeMutation.isPending}
+                                  onClick={() => setRevokingRequest(item)}
+                                  className="px-3 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 text-rose-600 hover:bg-rose-50 border border-rose-200 transition-colors cursor-pointer"
+                                  title="Completely revoke photo access"
+                                >
+                                  <ShieldBan className="w-3.5 h-3.5 text-rose-600" />
+                                  <span>Revoke</span>
+                                </button>
+                              </div>
+                            )}
                           </div>
                         )
                       ) : (
                         <div className="flex-1 flex items-center justify-between px-4 py-2">
                           <span className="text-slate-600 font-medium text-xs truncate">
                             {item.status === "ACCEPTED"
-                              ? "Member approved your request! Their original photos are now visible."
+                              ? item.isHidden
+                                ? "Member has temporarily hidden their photos."
+                                : "Member approved your request! Their original photos are visible."
                               : item.status === "DECLINED"
                               ? "Member declined your unblur request."
                               : "Waiting for the member to approve photo access."}
                           </span>
-                          <div className="shrink-0 ml-2">{renderStatusBadge(item.status)}</div>
+                          <div className="shrink-0 ml-2">{renderStatusBadge(item.status, item.isHidden)}</div>
                         </div>
                       )
                     }
@@ -229,6 +334,45 @@ export const UnblurActivityPage: React.FC<UnblurActivityPageProps> = ({
           </div>
         </main>
       </div>
+
+      {/* Revoke Confirmation Modal */}
+      {revokingRequest && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
+          <div className="w-full max-w-sm bg-white rounded-2xl p-5 shadow-2xl border border-slate-100 animate-in fade-in zoom-in-95 duration-150">
+            <div className="w-10 h-10 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center mb-3">
+              <ShieldBan className="w-5 h-5" />
+            </div>
+            <h4 className="text-sm font-bold text-slate-900 mb-1">
+              Revoke Photo Access?
+            </h4>
+            <p className="text-xs text-slate-500 mb-5 leading-relaxed">
+              Are you sure you want to revoke photo access for{" "}
+              <strong className="text-slate-700">
+                {revokingRequest?.requester?.profile?.displayName || "this member"}
+              </strong>
+              ? Their access to your pictures will be completely removed and they will have to send another unblur request for you to approve.
+            </p>
+            <div className="flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setRevokingRequest(null)}
+                disabled={revokeMutation.isPending}
+                className="px-3.5 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => revokeMutation.mutate({ id: revokingRequest.id })}
+                disabled={revokeMutation.isPending}
+                className="px-4 py-2 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 disabled:opacity-50 rounded-xl transition-colors cursor-pointer shadow-xs flex items-center gap-1.5"
+              >
+                {revokeMutation.isPending ? "Revoking..." : "Revoke Access"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

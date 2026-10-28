@@ -117,6 +117,7 @@ export class MatchesService {
       where: {
         requesterId: userId,
         status: "ACCEPTED",
+        isHidden: false,
       },
       select: { targetId: true },
     });
@@ -406,7 +407,7 @@ export class MatchesService {
         orderBy: { createdAt: "desc" },
       }),
       this.prisma.client.photoAccessRequest.findMany({
-        where: { requesterId: userId, status: "ACCEPTED" },
+        where: { requesterId: userId, status: "ACCEPTED", isHidden: false },
         select: { targetId: true },
       }),
     ]);
@@ -483,7 +484,7 @@ export class MatchesService {
     });
 
     const photoGrants = await this.prisma.client.photoAccessRequest.findMany({
-      where: { requesterId: userId, status: "ACCEPTED" },
+      where: { requesterId: userId, status: "ACCEPTED", isHidden: false },
       select: { targetId: true },
     });
     const grantedIds = new Set(photoGrants.map((g) => g.targetId));
@@ -492,7 +493,7 @@ export class MatchesService {
       if (!req.requester?.profile) return req;
       const canView =
         req.requester.profile.photoVisibility === "ALL_MEMBERS" ||
-        req.status === "ACCEPTED" ||
+        (req.status === "ACCEPTED" && !req.isHidden) ||
         grantedIds.has(req.requester.id);
 
       return {
@@ -555,7 +556,8 @@ export class MatchesService {
     return requests.map((req) => {
       if (!req.target?.profile) return req;
       const canView =
-        req.target.profile.photoVisibility === "ALL_MEMBERS" || req.status === "ACCEPTED";
+        req.target.profile.photoVisibility === "ALL_MEMBERS" ||
+        (req.status === "ACCEPTED" && !req.isHidden);
 
       return {
         ...req,
@@ -608,6 +610,42 @@ export class MatchesService {
     });
   }
 
+  async toggleHidePhotoAccess(targetId: string, requestId: string, isHidden?: boolean) {
+    const request = await this.prisma.client.photoAccessRequest.findUnique({
+      where: { id: requestId },
+    });
+    if (!request || request.targetId !== targetId) {
+      throw new NotFoundException("Photo access request not found");
+    }
+
+    const nextHidden = isHidden !== undefined ? isHidden : !request.isHidden;
+
+    return this.prisma.client.photoAccessRequest.update({
+      where: { id: requestId },
+      data: { isHidden: nextHidden },
+    });
+  }
+
+  async revokePhotoAccess(targetId: string, requestId: string) {
+    const request = await this.prisma.client.photoAccessRequest.findUnique({
+      where: { id: requestId },
+    });
+    if (!request || request.targetId !== targetId) {
+      throw new NotFoundException("Photo access request not found");
+    }
+
+    // Completely revoke access (set to DECLINED and reset isHidden)
+    // Requester will need to send a new request if they want to ask for unblur again
+    return this.prisma.client.photoAccessRequest.update({
+      where: { id: requestId },
+      data: {
+        status: "DECLINED",
+        isHidden: false,
+      },
+    });
+  }
+
+
   async getSentInterests(userId: string) {
     const [interests, photoGrants] = await Promise.all([
       this.prisma.client.matchInterest.findMany({
@@ -656,7 +694,7 @@ export class MatchesService {
         orderBy: { createdAt: "desc" },
       }),
       this.prisma.client.photoAccessRequest.findMany({
-        where: { requesterId: userId, status: "ACCEPTED" },
+        where: { requesterId: userId, status: "ACCEPTED", isHidden: false },
         select: { targetId: true },
       }),
     ]);

@@ -145,4 +145,24 @@ export class MatchesController {
   ) {
     return this.matchesService.respondPhotoAccess(userId, requestId, dto);
   }
+
+  @Post("photo-access/:id/toggle-hide")
+  @ApiOperation({ summary: "Temporarily hide or unhide photos for an approved unblur request" })
+  async toggleHidePhotoAccess(
+    @CurrentUser("userId") userId: string,
+    @Param("id") requestId: string,
+    @Body() body?: { isHidden?: boolean }
+  ) {
+    return this.matchesService.toggleHidePhotoAccess(userId, requestId, body?.isHidden);
+  }
+
+  @Post("photo-access/:id/revoke")
+  @ApiOperation({ summary: "Completely revoke granted unblur photo access" })
+  async revokePhotoAccess(
+    @CurrentUser("userId") userId: string,
+    @Param("id") requestId: string
+  ) {
+    return this.matchesService.revokePhotoAccess(userId, requestId);
+  }
 }
+

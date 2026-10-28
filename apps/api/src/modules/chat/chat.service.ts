@@ -105,7 +105,7 @@ export class ChatService {
         const canViewOriginal =
           partner.profile?.photoVisibility === "ALL_MEMBERS" ||
           (partner.profile?.photoVisibility === "MUTUAL_MATCHES_ONLY") ||
-          photoRequest?.status === "ACCEPTED";
+          (photoRequest?.status === "ACCEPTED" && !photoRequest?.isHidden);
 
         const primaryPhoto = partner.profile?.photos?.[0];
         const displayPhotoUrl = primaryPhoto
