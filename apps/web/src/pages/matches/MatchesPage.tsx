@@ -9,6 +9,7 @@ import {
   Heart,
   MessageCircle,
   Phone,
+  Ban,
 } from "lucide-react";
 import { useChatStore } from "../../stores/chat.store";
 
@@ -80,44 +81,59 @@ export const MatchesPage: React.FC = () => {
                         </span>
                       }
                       headerStatusRight={
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-emerald-50 text-emerald-700 font-bold text-xs border border-emerald-200/80">
-                          <Heart className="w-3.5 h-3.5 fill-emerald-600 text-emerald-600" />
-                          <span>Connected</span>
-                        </span>
+                        match.isBlocked ? (
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-rose-50 text-rose-700 font-bold text-xs border border-rose-200/80">
+                            <Ban className="w-3.5 h-3.5 text-rose-600" />
+                            <span>Blocked</span>
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-emerald-50 text-emerald-700 font-bold text-xs border border-emerald-200/80">
+                            <Heart className="w-3.5 h-3.5 fill-emerald-600 text-emerald-600" />
+                            <span>Connected</span>
+                          </span>
+                        )
                       }
                       messageSnippet={match.message}
                       actionsFooter={
-                        <>
-                          <button
-                            type="button"
-                            onClick={() => handleOpenChat(match.user?.id)}
-                            className="flex-1 flex items-center justify-center gap-1.5 py-2 px-1 text-rose-600 hover:bg-rose-100/60 transition-colors font-bold text-xs cursor-pointer group"
-                          >
-                            <MessageCircle className="w-3.5 h-3.5 text-rose-600 group-hover:scale-110 transition-transform" />
-                            <span>Message</span>
-                          </button>
-
-                          {match.user?.phoneNumber ? (
-                            <a
-                              href={`tel:${match.user.phoneNumber}`}
-                              className="flex-1 flex items-center justify-center gap-1.5 py-2 px-1 text-emerald-600 hover:bg-emerald-50 transition-colors font-bold text-xs cursor-pointer group"
-                            >
-                              <Phone className="w-3.5 h-3.5 text-emerald-600 group-hover:scale-110 transition-transform" />
-                              <span>Call</span>
-                            </a>
-                          ) : (
+                        match.isBlocked ? (
+                          <div className="py-2 px-3 text-center text-xs font-semibold text-rose-600 bg-rose-50/50 rounded-xl w-full">
+                            {match.isBlockedByMe
+                              ? "You blocked this member. Tap profile to manage."
+                              : "Communication is currently restricted."}
+                          </div>
+                        ) : (
+                          <>
                             <button
                               type="button"
-                              onClick={() =>
-                                alert(`Call audio/video invitation sent to ${profile.displayName || "Member"}!`)
-                              }
-                              className="flex-1 flex items-center justify-center gap-1.5 py-2 px-1 text-emerald-600 hover:bg-emerald-50 transition-colors font-bold text-xs cursor-pointer group"
+                              onClick={() => handleOpenChat(match.user?.id)}
+                              className="flex-1 flex items-center justify-center gap-1.5 py-2 px-1 text-rose-600 hover:bg-rose-100/60 transition-colors font-bold text-xs cursor-pointer group"
                             >
-                              <Phone className="w-3.5 h-3.5 text-emerald-600 group-hover:scale-110 transition-transform" />
-                              <span>Call</span>
+                              <MessageCircle className="w-3.5 h-3.5 text-rose-600 group-hover:scale-110 transition-transform" />
+                              <span>Message</span>
                             </button>
-                          )}
-                        </>
+
+                            {match.user?.phoneNumber ? (
+                              <a
+                                href={`tel:${match.user.phoneNumber}`}
+                                className="flex-1 flex items-center justify-center gap-1.5 py-2 px-1 text-emerald-600 hover:bg-emerald-50 transition-colors font-bold text-xs cursor-pointer group"
+                              >
+                                <Phone className="w-3.5 h-3.5 text-emerald-600 group-hover:scale-110 transition-transform" />
+                                <span>Call</span>
+                              </a>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  alert(`Call audio/video invitation sent to ${profile.displayName || "Member"}!`)
+                                }
+                                className="flex-1 flex items-center justify-center gap-1.5 py-2 px-1 text-emerald-600 hover:bg-emerald-50 transition-colors font-bold text-xs cursor-pointer group"
+                              >
+                                <Phone className="w-3.5 h-3.5 text-emerald-600 group-hover:scale-110 transition-transform" />
+                                <span>Call</span>
+                              </button>
+                            )}
+                          </>
+                        )
                       }
                     />
                   );

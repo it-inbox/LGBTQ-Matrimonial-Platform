@@ -827,6 +827,20 @@ export class MatchesService {
   }
 
   async getAcceptedMatches(userId: string) {
+    // 0. Query blocked accounts for current user (both directions)
+    const blockedList = await this.prisma.client.blockedUser.findMany({
+      where: {
+        OR: [{ userId }, { blockedId: userId }],
+      },
+    });
+
+    const blockedByMeSet = new Set(
+      blockedList.filter((b) => b.userId === userId).map((b) => b.blockedId)
+    );
+    const blockedMeSet = new Set(
+      blockedList.filter((b) => b.blockedId === userId).map((b) => b.userId)
+    );
+
     // 1. Interests sent by me that got ACCEPTED
     const sentAccepted = await this.prisma.client.matchInterest.findMany({
       where: {
@@ -924,37 +938,53 @@ export class MatchesService {
     });
 
     // Map each into a unified MutualMatch item with sanitized photos (mutual matches are allowed original view)
-    const formattedSent = sentAccepted.map((item) => ({
-      interestId: item.id,
-      matchType: "ACCEPTED_BY_THEM" as const,
-      matchedAt: item.updatedAt,
-      message: item.message,
-      user: {
-        ...item.receiver,
-        profile: item.receiver?.profile
-          ? {
-              ...item.receiver.profile,
-              photos: this.sanitizePhotos(item.receiver.profile.photos, true),
-            }
-          : undefined,
-      },
-    }));
+    const formattedSent = sentAccepted.map((item) => {
+      const partnerId = item.receiver?.id;
+      const isBlockedByMe = partnerId ? blockedByMeSet.has(partnerId) : false;
+      const hasBlockedMe = partnerId ? blockedMeSet.has(partnerId) : false;
+      return {
+        interestId: item.id,
+        matchType: "ACCEPTED_BY_THEM" as const,
+        matchedAt: item.updatedAt,
+        message: item.message,
+        isBlocked: isBlockedByMe || hasBlockedMe,
+        isBlockedByMe,
+        hasBlockedMe,
+        user: {
+          ...item.receiver,
+          profile: item.receiver?.profile
+            ? {
+                ...item.receiver.profile,
+                photos: this.sanitizePhotos(item.receiver.profile.photos, true),
+              }
+            : undefined,
+        },
+      };
+    });
 
-    const formattedReceived = receivedAccepted.map((item) => ({
-      interestId: item.id,
-      matchType: "ACCEPTED_BY_ME" as const,
-      matchedAt: item.updatedAt,
-      message: item.message,
-      user: {
-        ...item.sender,
-        profile: item.sender?.profile
-          ? {
-              ...item.sender.profile,
-              photos: this.sanitizePhotos(item.sender.profile.photos, true),
-            }
-          : undefined,
-      },
-    }));
+    const formattedReceived = receivedAccepted.map((item) => {
+      const partnerId = item.sender?.id;
+      const isBlockedByMe = partnerId ? blockedByMeSet.has(partnerId) : false;
+      const hasBlockedMe = partnerId ? blockedMeSet.has(partnerId) : false;
+      return {
+        interestId: item.id,
+        matchType: "ACCEPTED_BY_ME" as const,
+        matchedAt: item.updatedAt,
+        message: item.message,
+        isBlocked: isBlockedByMe || hasBlockedMe,
+        isBlockedByMe,
+        hasBlockedMe,
+        user: {
+          ...item.sender,
+          profile: item.sender?.profile
+            ? {
+                ...item.sender.profile,
+                photos: this.sanitizePhotos(item.sender.profile.photos, true),
+              }
+            : undefined,
+        },
+      };
+    });
 
     const combined = [...formattedSent, ...formattedReceived].sort(
       (a, b) => new Date(b.matchedAt).getTime() - new Date(a.matchedAt).getTime()

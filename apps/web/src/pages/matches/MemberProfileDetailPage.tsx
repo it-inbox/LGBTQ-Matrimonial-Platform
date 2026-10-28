@@ -239,6 +239,34 @@ export const MemberProfileDetailPage: React.FC = () => {
 
           {/* Profile Detail Content Area: independently scrollable */}
           <main className="flex-1 min-w-0 flex flex-col h-full overflow-hidden">
+            {/* Blocked Member Alert Card: Positioned above the Back / Title / Unblock bar */}
+            {!isOwn && isBlockedByMe && (
+              <div className="bg-rose-50/90 rounded-2xl border border-rose-200/90 p-3.5 sm:p-4 mb-3 shadow-xs flex flex-wrap items-center justify-between gap-3 shrink-0 animate-fade-in">
+                <div className="min-w-0 flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
+                    <Ban className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <span className="text-xs font-bold text-rose-900 block">
+                      You have blocked this member
+                    </span>
+                    <span className="text-[11px] text-rose-600">
+                      They cannot message you or see your active status. You can unblock them at any time.
+                    </span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => unblockMutation.mutate()}
+                  disabled={unblockMutation.isPending}
+                  className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-sm transition-all"
+                >
+                  <UserCheck className="w-4 h-4" />
+                  <span>{unblockMutation.isPending ? "Unblocking..." : "Unblock Member"}</span>
+                </button>
+              </div>
+            )}
+
             {/* Top Header / Back Button bar: completely stationary */}
             <div className="bg-white rounded-2xl border border-slate-200/90 px-4 py-3 mb-4 shadow-xs shrink-0">
               <div className="flex items-center justify-between">
@@ -480,33 +508,8 @@ export const MemberProfileDetailPage: React.FC = () => {
         </div>
 
         {/* INTERACTION ACTION BAR / BANNER */}
-        {!isOwn && (
-          isBlockedByMe ? (
-            <div className="bg-rose-50 rounded-2xl border border-rose-200 p-4 shadow-xs flex flex-wrap items-center justify-between gap-3">
-              <div className="min-w-0 flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
-                  <Ban className="w-4 h-4" />
-                </div>
-                <div>
-                  <span className="text-xs font-bold text-rose-900 block">
-                    You have blocked this member
-                  </span>
-                  <span className="text-[11px] text-rose-600">
-                    They cannot message you or see your active status. You can unblock them at any time.
-                  </span>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => unblockMutation.mutate()}
-                disabled={unblockMutation.isPending}
-                className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-sm transition-all"
-              >
-                <UserCheck className="w-4 h-4" />
-                <span>{unblockMutation.isPending ? "Unblocking..." : "Unblock Member"}</span>
-              </button>
-            </div>
-          ) : hasBlockedMe ? (
+        {!isOwn && !isBlockedByMe && (
+          hasBlockedMe ? (
             <div className="bg-slate-100 rounded-2xl border border-slate-200 p-4 shadow-xs flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-xl bg-slate-200 text-slate-600 flex items-center justify-center shrink-0">
                 <Ban className="w-4 h-4" />
