@@ -8,6 +8,8 @@ import {
   User,
   ChevronRight,
 } from "lucide-react";
+import { Badge } from "../ui/Badge";
+import { Button } from "../ui/Button";
 
 interface ActivitySidebarProps {
   activeTab?: "received" | "sent" | "iDeclined" | "theyDeclined" | "matches" | "messenger";
@@ -96,10 +98,11 @@ export const ActivitySidebar: React.FC<ActivitySidebarProps> = ({ activeTab }) =
         <nav className="divide-y divide-slate-100/80">
           <Link
             to="/discover"
-            className={`flex items-center justify-between px-4 py-3.5 text-xs font-semibold transition-colors ${location.pathname === "/discover"
-                ? "text-brand-600 bg-brand-50/50"
+            className={`flex items-center justify-between px-4 py-3.5 text-xs font-semibold transition-all relative ${
+              location.pathname === "/discover"
+                ? "text-brand-600 bg-brand-50/70 font-bold border-r-2 border-brand-600"
                 : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
-              }`}
+            }`}
           >
             <span>Discover</span>
             <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
@@ -107,17 +110,18 @@ export const ActivitySidebar: React.FC<ActivitySidebarProps> = ({ activeTab }) =
 
           <Link
             to="/matches"
-            className={`flex items-center justify-between px-4 py-3.5 text-xs font-semibold transition-colors ${activeTab === "matches" || location.pathname === "/matches"
-                ? "text-brand-600 bg-brand-50/50"
+            className={`flex items-center justify-between px-4 py-3.5 text-xs font-semibold transition-all relative ${
+              activeTab === "matches" || location.pathname === "/matches"
+                ? "text-brand-600 bg-brand-50/70 font-bold border-r-2 border-brand-600"
                 : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
-              }`}
+            }`}
           >
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-2">
               <span>Matches</span>
               {totalMatchesCount > 0 && (
-                <span className="px-1.5 py-0.2 rounded-full bg-rose-100 text-rose-700 text-[10px] font-bold">
+                <Badge variant="brand" size="sm">
                   {totalMatchesCount}
-                </span>
+                </Badge>
               )}
             </div>
             <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
@@ -125,17 +129,18 @@ export const ActivitySidebar: React.FC<ActivitySidebarProps> = ({ activeTab }) =
 
           <Link
             to="/messages"
-            className={`flex items-center justify-between px-4 py-3.5 text-xs font-semibold transition-colors ${activeTab === "messenger" || location.pathname.startsWith("/messages")
-                ? "text-brand-600 bg-brand-50/50"
+            className={`flex items-center justify-between px-4 py-3.5 text-xs font-semibold transition-all relative ${
+              activeTab === "messenger" || location.pathname.startsWith("/messages")
+                ? "text-brand-600 bg-brand-50/70 font-bold border-r-2 border-brand-600"
                 : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
-              }`}
+            }`}
           >
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-2">
               <span>Connect</span>
               {totalUnreadCount > 0 && (
-                <span className="w-4 h-4 rounded-full bg-rose-600 text-white text-[10px] font-bold flex items-center justify-center">
+                <Badge variant="danger" size="sm">
                   {totalUnreadCount}
-                </span>
+                </Badge>
               )}
             </div>
             <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
@@ -143,19 +148,19 @@ export const ActivitySidebar: React.FC<ActivitySidebarProps> = ({ activeTab }) =
 
           <Link
             to="/interests/received"
-            className={`flex items-center justify-between px-4 py-3.5 text-xs font-semibold transition-colors ${
+            className={`flex items-center justify-between px-4 py-3.5 text-xs font-semibold transition-all relative ${
               (location.pathname.startsWith("/interests") || location.pathname.startsWith("/interest")) &&
               !location.pathname.startsWith("/unblur")
-                ? "text-brand-600 bg-brand-50/50"
+                ? "text-brand-600 bg-brand-50/70 font-bold border-r-2 border-brand-600"
                 : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
             }`}
           >
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-2">
               <span>Interests</span>
               {pendingInterestsCount > 0 && (
-                <span className="px-1.5 py-0.2 rounded-full bg-rose-600 text-white text-[10px] font-bold">
+                <Badge variant="brand" size="sm">
                   {pendingInterestsCount}
-                </span>
+                </Badge>
               )}
             </div>
             <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
@@ -163,10 +168,11 @@ export const ActivitySidebar: React.FC<ActivitySidebarProps> = ({ activeTab }) =
 
           <Link
             to="/unblur/received"
-            className={`flex items-center justify-between px-4 py-3.5 text-xs font-semibold transition-colors ${location.pathname.startsWith("/unblur") || location.pathname.startsWith("/photo-access")
-                ? "text-brand-600 bg-brand-50/50"
+            className={`flex items-center justify-between px-4 py-3.5 text-xs font-semibold transition-all relative ${
+              location.pathname.startsWith("/unblur") || location.pathname.startsWith("/photo-access")
+                ? "text-brand-600 bg-brand-50/70 font-bold border-r-2 border-brand-600"
                 : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
-              }`}
+            }`}
           >
             <span>Unblur Requests</span>
             <ChevronRight className="w-3.5 h-3.5 text-slate-400" />

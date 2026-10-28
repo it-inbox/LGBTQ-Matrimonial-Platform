@@ -722,8 +722,10 @@ export const DiscoveryFeedPage: React.FC = () => {
 
             {/* Modal Actions */}
             <div className="flex items-center gap-3 pt-5 mt-5 border-t border-slate-100">
-              <button
+              <Button
                 type="button"
+                variant="secondary"
+                size="sm"
                 onClick={() => {
                   setSelectedNationalities([]);
                   setNationalitySearchInput("");
@@ -732,17 +734,19 @@ export const DiscoveryFeedPage: React.FC = () => {
                   setFilterAgeMin(18);
                   setFilterAgeMax(60);
                 }}
-                className="w-1/3 py-2.5 rounded-xl font-semibold text-xs text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 transition-colors cursor-pointer"
+                className="w-1/3"
               >
                 Reset All
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
+                variant="primary"
+                size="sm"
                 onClick={() => setIsFilterModalOpen(false)}
-                className="w-2/3 py-2.5 rounded-xl font-bold text-xs text-white bg-rose-600 hover:bg-rose-700 transition-colors shadow-xs cursor-pointer"
+                className="w-2/3"
               >
                 Apply Criteria ({filteredMatches?.length || 0} Matches)
-              </button>
+              </Button>
             </div>
           </div>
         </div>
