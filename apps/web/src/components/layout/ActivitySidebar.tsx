@@ -7,6 +7,7 @@ import { useChatStore } from "../../stores/chat.store";
 import {
   User,
   ChevronRight,
+  Pencil,
 } from "lucide-react";
 import { Badge } from "../ui/Badge";
 import { Button } from "../ui/Button";
@@ -60,11 +61,12 @@ export const ActivitySidebar: React.FC<ActivitySidebarProps> = ({ activeTab }) =
 
   return (
     <aside className="hidden lg:block lg:w-64 shrink-0 space-y-4 self-start">
-      {/* Profile Card */}
-      <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-xs">
-        <div className="flex items-center gap-4">
+      {/* Combined Profile & Navigation Card */}
+      <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden">
+        {/* Profile Header Section */}
+        <div className="p-4 flex items-center gap-3.5">
           <div className="relative shrink-0">
-            <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-brand-600 to-pink-500 p-0.5 shadow-sm overflow-hidden">
+            <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-brand-600 to-pink-500 p-0.5 shadow-sm overflow-hidden">
               {primaryPhotoUrl ? (
                 <img
                   src={primaryPhotoUrl}
@@ -72,29 +74,32 @@ export const ActivitySidebar: React.FC<ActivitySidebarProps> = ({ activeTab }) =
                   className="w-full h-full rounded-full object-cover"
                 />
               ) : (
-                <div className="w-full h-full rounded-full bg-slate-100 flex items-center justify-center text-brand-700 font-extrabold text-base">
-                  {profile?.displayName ? getInitials(profile.displayName) : <User className="w-6 h-6" />}
+                <div className="w-full h-full rounded-full bg-slate-100 flex items-center justify-center text-brand-700 font-extrabold text-sm">
+                  {profile?.displayName ? getInitials(profile.displayName) : <User className="w-5 h-5" />}
                 </div>
               )}
             </div>
-            <span className="absolute bottom-0.5 right-0.5 w-4 h-4 bg-emerald-500 border-2 border-white rounded-full z-10" />
+            <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-500 border-2 border-white rounded-full z-10" />
           </div>
-          <div className="min-w-0 flex-1">
-            <h3 className="text-base font-bold text-slate-900 truncate" title={profile?.displayName || "Member"}>
+
+          <div className="min-w-0 flex-1 flex items-center justify-between gap-1.5">
+            <h3 className="text-sm font-bold text-slate-900 truncate" title={profile?.displayName || "Member"}>
               {profile?.displayName || "Member"}
             </h3>
             <Link
               to="/profile/edit"
-              className="text-xs font-bold text-brand-600 hover:text-brand-700 inline-flex items-center gap-0.5 mt-1 transition-colors"
+              title="Edit Profile"
+              className="p-1.5 text-slate-400 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-colors shrink-0"
             >
-              Edit Profile
+              <Pencil className="w-3.5 h-3.5" />
             </Link>
           </div>
         </div>
-      </div>
 
-      {/* Navigation Card */}
-      <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden">
+        {/* Divider */}
+        <div className="border-t border-slate-100" />
+
+        {/* Navigation Links */}
         <nav className="divide-y divide-slate-100/80">
           <Link
             to="/discover"
