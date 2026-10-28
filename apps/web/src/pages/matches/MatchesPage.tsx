@@ -81,7 +81,7 @@ export const MatchesPage: React.FC = () => {
                         </span>
                       }
                       headerStatusRight={
-                        match.isBlocked ? (
+                        match.isBlockedByMe ? (
                           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-rose-50 text-rose-700 font-bold text-xs border border-rose-200/80">
                             <Ban className="w-3.5 h-3.5 text-rose-600" />
                             <span>Blocked</span>
@@ -95,11 +95,9 @@ export const MatchesPage: React.FC = () => {
                       }
                       messageSnippet={match.message}
                       actionsFooter={
-                        match.isBlocked ? (
+                        match.isBlockedByMe ? (
                           <div className="py-2 px-3 text-center text-xs font-semibold text-rose-600 bg-rose-50/50 rounded-xl w-full">
-                            {match.isBlockedByMe
-                              ? "You blocked this member. Tap profile to manage."
-                              : "Communication is currently restricted."}
+                            You blocked this member. Tap profile to manage.
                           </div>
                         ) : (
                           <>
