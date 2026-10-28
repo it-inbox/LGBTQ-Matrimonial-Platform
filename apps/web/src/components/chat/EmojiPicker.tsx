@@ -375,7 +375,7 @@ export const EmojiPicker: React.FC<EmojiPickerProps> = ({
       <div
         ref={scrollContainerRef}
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto p-2.5 space-y-4 no-scrollbar relative"
+        className="flex-1 overflow-y-auto px-2.5 pb-2.5 pt-0 space-y-4 no-scrollbar relative"
       >
         {filteredCategories.length === 0 ? (
           <div className="text-center py-10 text-xs text-slate-400">
@@ -383,11 +383,11 @@ export const EmojiPicker: React.FC<EmojiPickerProps> = ({
           </div>
         ) : (
           filteredCategories.map((cat) => (
-            <div key={cat.id} id={`emoji-cat-${cat.id}`} className="space-y-1.5 scroll-mt-2">
-              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-1 sticky top-0 bg-white/95 backdrop-blur-xs py-0.5 z-10">
+            <div key={cat.id} id={`emoji-cat-${cat.id}`} className="space-y-1.5 scroll-mt-0">
+              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-3.5 py-1.5 sticky top-0 bg-white border-b border-slate-100 -mx-2.5 z-20 shadow-2xs">
                 {cat.name} ({cat.emojis.length})
               </div>
-              <div className="grid grid-cols-7 sm:grid-cols-9 gap-1">
+              <div className="grid grid-cols-7 sm:grid-cols-9 gap-1 pt-1">
                 {cat.emojis.map((emoji, idx) => (
                   <button
                     key={`${cat.id}-${idx}`}
