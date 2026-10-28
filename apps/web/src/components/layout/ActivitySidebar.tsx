@@ -103,9 +103,9 @@ export const ActivitySidebar: React.FC<ActivitySidebarProps> = ({ activeTab }) =
         <nav className="divide-y divide-slate-100/80">
           <Link
             to="/discover"
-            className={`flex items-center justify-between px-4 py-3.5 text-xs font-semibold transition-all relative ${
+            className={`flex items-center justify-between px-4 py-3.5 text-xs font-semibold transition-all ${
               location.pathname === "/discover"
-                ? "text-brand-600 bg-brand-50/70 font-bold border-r-2 border-brand-600"
+                ? "text-brand-600 bg-brand-50/70 font-bold"
                 : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
             }`}
           >
@@ -115,9 +115,9 @@ export const ActivitySidebar: React.FC<ActivitySidebarProps> = ({ activeTab }) =
 
           <Link
             to="/matches"
-            className={`flex items-center justify-between px-4 py-3.5 text-xs font-semibold transition-all relative ${
-              activeTab === "matches" || location.pathname.startsWith("/matches")
-                ? "text-brand-600 bg-brand-50/70 font-bold border-r-2 border-brand-600"
+            className={`flex items-center justify-between px-4 py-3.5 text-xs font-semibold transition-all ${
+              activeTab === "matches" || location.pathname === "/matches"
+                ? "text-brand-600 bg-brand-50/70 font-bold"
                 : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
             }`}
           >
@@ -134,9 +134,9 @@ export const ActivitySidebar: React.FC<ActivitySidebarProps> = ({ activeTab }) =
 
           <Link
             to="/messages"
-            className={`flex items-center justify-between px-4 py-3.5 text-xs font-semibold transition-all relative ${
+            className={`flex items-center justify-between px-4 py-3.5 text-xs font-semibold transition-all ${
               activeTab === "messenger" || location.pathname.startsWith("/messages")
-                ? "text-brand-600 bg-brand-50/70 font-bold border-r-2 border-brand-600"
+                ? "text-brand-600 bg-brand-50/70 font-bold"
                 : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
             }`}
           >
@@ -153,14 +153,10 @@ export const ActivitySidebar: React.FC<ActivitySidebarProps> = ({ activeTab }) =
 
           <Link
             to="/interests/received"
-            className={`flex items-center justify-between px-4 py-3.5 text-xs font-semibold transition-all relative ${
-              activeTab === "received" ||
-              activeTab === "sent" ||
-              activeTab === "iDeclined" ||
-              activeTab === "theyDeclined" ||
+            className={`flex items-center justify-between px-4 py-3.5 text-xs font-semibold transition-all ${
               (location.pathname.startsWith("/interests") || location.pathname.startsWith("/interest")) &&
               !location.pathname.startsWith("/unblur")
-                ? "text-brand-600 bg-brand-50/70 font-bold border-r-2 border-brand-600"
+                ? "text-brand-600 bg-brand-50/70 font-bold"
                 : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
             }`}
           >
@@ -177,9 +173,9 @@ export const ActivitySidebar: React.FC<ActivitySidebarProps> = ({ activeTab }) =
 
           <Link
             to="/unblur/received"
-            className={`flex items-center justify-between px-4 py-3.5 text-xs font-semibold transition-all relative ${
+            className={`flex items-center justify-between px-4 py-3.5 text-xs font-semibold transition-all ${
               location.pathname.startsWith("/unblur") || location.pathname.startsWith("/photo-access")
-                ? "text-brand-600 bg-brand-50/70 font-bold border-r-2 border-brand-600"
+                ? "text-brand-600 bg-brand-50/70 font-bold"
                 : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
             }`}
           >

@@ -210,7 +210,7 @@ export const MessengerPage: React.FC = () => {
                           onClick={() => setActiveConversationId(conv.id)}
                           className={`w-full text-left p-3.5 flex items-center gap-3 transition-colors cursor-pointer ${
                             isSelected
-                              ? "bg-rose-50/60 border-l-4 border-rose-500"
+                              ? "bg-rose-50/70"
                               : "hover:bg-slate-50"
                           }`}
                         >
