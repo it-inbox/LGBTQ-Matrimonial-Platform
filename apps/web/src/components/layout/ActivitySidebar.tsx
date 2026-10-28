@@ -116,7 +116,7 @@ export const ActivitySidebar: React.FC<ActivitySidebarProps> = ({ activeTab }) =
           <Link
             to="/matches"
             className={`flex items-center justify-between px-4 py-3.5 text-xs font-semibold transition-all relative ${
-              activeTab === "matches" || location.pathname === "/matches"
+              activeTab === "matches" || location.pathname.startsWith("/matches")
                 ? "text-brand-600 bg-brand-50/70 font-bold border-r-2 border-brand-600"
                 : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
             }`}
@@ -154,6 +154,10 @@ export const ActivitySidebar: React.FC<ActivitySidebarProps> = ({ activeTab }) =
           <Link
             to="/interests/received"
             className={`flex items-center justify-between px-4 py-3.5 text-xs font-semibold transition-all relative ${
+              activeTab === "received" ||
+              activeTab === "sent" ||
+              activeTab === "iDeclined" ||
+              activeTab === "theyDeclined" ||
               (location.pathname.startsWith("/interests") || location.pathname.startsWith("/interest")) &&
               !location.pathname.startsWith("/unblur")
                 ? "text-brand-600 bg-brand-50/70 font-bold border-r-2 border-brand-600"
