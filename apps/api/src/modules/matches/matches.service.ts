@@ -972,4 +972,139 @@ export class MatchesService {
 
     return deduplicated;
   }
+
+  /**
+   * Block a user
+   */
+  async blockUser(userId: string, targetUserId: string, reason?: string) {
+    if (userId === targetUserId) {
+      throw new BadRequestException("You cannot block yourself");
+    }
+
+    // Verify target exists
+    const targetUser = await this.prisma.client.user.findUnique({
+      where: { id: targetUserId },
+      select: { id: true },
+    });
+    if (!targetUser) {
+      throw new NotFoundException("Target user not found");
+    }
+
+    const blocked = await this.prisma.client.blockedUser.upsert({
+      where: {
+        userId_blockedId: {
+          userId,
+          blockedId: targetUserId,
+        },
+      },
+      create: {
+        userId,
+        blockedId: targetUserId,
+        reason: reason || "User blocked via safety controls",
+      },
+      update: {
+        reason: reason || "User blocked via safety controls",
+      },
+    });
+
+    return {
+      success: true,
+      message: "User successfully blocked",
+      blocked,
+    };
+  }
+
+  /**
+   * Unblock a user
+   */
+  async unblockUser(userId: string, targetUserId: string) {
+    if (userId === targetUserId) {
+      throw new BadRequestException("You cannot unblock yourself");
+    }
+
+    const existing = await this.prisma.client.blockedUser.findUnique({
+      where: {
+        userId_blockedId: {
+          userId,
+          blockedId: targetUserId,
+        },
+      },
+    });
+
+    if (!existing) {
+      return {
+        success: true,
+        message: "User is not currently blocked",
+      };
+    }
+
+    await this.prisma.client.blockedUser.delete({
+      where: {
+        userId_blockedId: {
+          userId,
+          blockedId: targetUserId,
+        },
+      },
+    });
+
+    return {
+      success: true,
+      message: "User successfully unblocked",
+    };
+  }
+
+  /**
+   * Get list of users blocked by the current user
+   */
+  async getBlockedUsers(userId: string) {
+    const blockedList = await this.prisma.client.blockedUser.findMany({
+      where: { userId },
+      include: {
+        blocked: {
+          select: {
+            id: true,
+            email: true,
+            createdAt: true,
+            profile: {
+              select: {
+                id: true,
+                displayName: true,
+                city: true,
+                state: true,
+                profession: true,
+                gender: true,
+                photos: {
+                  select: {
+                    id: true,
+                    isPrimary: true,
+                    originalUrl: true,
+                    blurredUrl: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    return blockedList.map((item) => {
+      const primaryPhoto = item.blocked.profile?.photos?.find((p) => p.isPrimary) || item.blocked.profile?.photos?.[0];
+      return {
+        id: item.id,
+        blockedUserId: item.blockedId,
+        reason: item.reason,
+        createdAt: item.createdAt,
+        user: {
+          id: item.blocked.id,
+          displayName: item.blocked.profile?.displayName || "Member",
+          city: item.blocked.profile?.city,
+          state: item.blocked.profile?.state,
+          profession: item.blocked.profile?.profession,
+          avatarUrl: primaryPhoto ? (primaryPhoto.blurredUrl || primaryPhoto.originalUrl) : null,
+        },
+      };
+    });
+  }
 }

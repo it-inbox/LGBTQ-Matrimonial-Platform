@@ -92,8 +92,8 @@ export class ProfilesService {
       }
     }
 
-    // Check current interaction status (sent/received interest, sent/received photo access request)
-    const [sentInterest, receivedInterest, sentPhotoRequest, receivedPhotoRequest] = await Promise.all([
+    // Check current interaction status (sent/received interest, sent/received photo access request, block status)
+    const [sentInterest, receivedInterest, sentPhotoRequest, receivedPhotoRequest, blockedByMe, blockedMe] = await Promise.all([
       this.prisma.client.matchInterest.findFirst({
         where: { senderId: currentUserId, receiverId: canonicalTargetUserId },
       }),
@@ -105,6 +105,22 @@ export class ProfilesService {
       }),
       this.prisma.client.photoAccessRequest.findFirst({
         where: { requesterId: canonicalTargetUserId, targetId: currentUserId },
+      }),
+      this.prisma.client.blockedUser.findUnique({
+        where: {
+          userId_blockedId: {
+            userId: currentUserId,
+            blockedId: canonicalTargetUserId,
+          },
+        },
+      }),
+      this.prisma.client.blockedUser.findUnique({
+        where: {
+          userId_blockedId: {
+            userId: canonicalTargetUserId,
+            blockedId: currentUserId,
+          },
+        },
       }),
     ]);
 
@@ -128,6 +144,9 @@ export class ProfilesService {
       interaction: {
         isOwn,
         isMutualMatch,
+        isBlocked: !!(blockedByMe || blockedMe),
+        isBlockedByMe: !!blockedByMe,
+        hasBlockedMe: !!blockedMe,
         sentInterestStatus: sentInterest?.status || null,
         sentInterestId: sentInterest?.id || null,
         receivedInterestStatus: receivedInterest?.status || null,

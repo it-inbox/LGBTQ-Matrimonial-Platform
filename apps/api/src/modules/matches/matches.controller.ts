@@ -164,5 +164,30 @@ export class MatchesController {
   ) {
     return this.matchesService.revokePhotoAccess(userId, requestId);
   }
+
+  @Post("block/:targetUserId")
+  @ApiOperation({ summary: "Block a member" })
+  async blockUser(
+    @CurrentUser("userId") userId: string,
+    @Param("targetUserId") targetUserId: string,
+    @Body() body?: { reason?: string }
+  ) {
+    return this.matchesService.blockUser(userId, targetUserId, body?.reason);
+  }
+
+  @Post("unblock/:targetUserId")
+  @ApiOperation({ summary: "Unblock a member" })
+  async unblockUser(
+    @CurrentUser("userId") userId: string,
+    @Param("targetUserId") targetUserId: string
+  ) {
+    return this.matchesService.unblockUser(userId, targetUserId);
+  }
+
+  @Get("blocked")
+  @ApiOperation({ summary: "Get all members blocked by current user" })
+  async getBlockedUsers(@CurrentUser("userId") userId: string) {
+    return this.matchesService.getBlockedUsers(userId);
+  }
 }
 

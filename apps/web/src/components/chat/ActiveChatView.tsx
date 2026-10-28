@@ -12,6 +12,8 @@ import {
   Trash2,
   X,
   MoreVertical,
+  Ban,
+  UserCheck,
 } from "lucide-react";
 import { ConversationItem, MessageItem, useChatStore } from "../../stores/chat.store";
 import { api } from "../../lib/api";
@@ -53,11 +55,17 @@ export const ActiveChatView: React.FC<ActiveChatViewProps> = ({
   // Active message actions menu on mobile/hover
   const [activeMenuMessageId, setActiveMenuMessageId] = useState<string | null>(null);
 
+  // Chat options dropdown menu (for Block Member)
+  const [showOptionsMenu, setShowOptionsMenu] = useState(false);
+  const [showBlockModal, setShowBlockModal] = useState(false);
+  const [isBlocking, setIsBlocking] = useState(false);
+  const [isBlockedByMe, setIsBlockedByMe] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const editInputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<any>(null);
-
 
   const profile = useAuthStore((s) => s.profile);
   const currentUserId = user?.id || profile?.userId;
@@ -67,6 +75,49 @@ export const ActiveChatView: React.FC<ActiveChatViewProps> = ({
     onlineUserIds.has(conversation.partner.id);
 
   const isPartnerTyping = !!typingUsers[conversation.partner.id];
+
+  // Check initial block status
+  useEffect(() => {
+    let isMounted = true;
+    api.get(`/profiles/user/${conversation.partner.id}`)
+      .then((res) => {
+        if (isMounted) {
+          setIsBlockedByMe(!!res.data?.interaction?.isBlockedByMe);
+        }
+      })
+      .catch(() => {});
+
+    return () => {
+      isMounted = false;
+    };
+  }, [conversation.partner.id]);
+
+  const handleBlockUser = async () => {
+    setIsBlocking(true);
+    try {
+      await api.post(`/matches/block/${conversation.partner.id}`);
+      setIsBlockedByMe(true);
+      setShowBlockModal(false);
+      setShowOptionsMenu(false);
+    } catch (err: any) {
+      setErrorMessage(err.response?.data?.message || "Failed to block user");
+    } finally {
+      setIsBlocking(false);
+    }
+  };
+
+  const handleUnblockUser = async () => {
+    setIsBlocking(true);
+    try {
+      await api.post(`/matches/unblock/${conversation.partner.id}`);
+      setIsBlockedByMe(false);
+      setShowOptionsMenu(false);
+    } catch (err: any) {
+      setErrorMessage(err.response?.data?.message || "Failed to unblock user");
+    } finally {
+      setIsBlocking(false);
+    }
+  };
 
   // 1. Fetch initial message history
   useEffect(() => {
@@ -367,6 +418,60 @@ export const ActiveChatView: React.FC<ActiveChatViewProps> = ({
             <Shield className="w-3.5 h-3.5 text-brand-600" />
             <span>End-to-end safe</span>
           </div>
+
+          {/* Options Dropdown Menu */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setShowOptionsMenu((prev) => !prev)}
+              className="p-1.5 text-slate-500 hover:text-slate-800 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
+              title="Chat Options"
+            >
+              <MoreVertical className="w-5 h-5" />
+            </button>
+
+            {showOptionsMenu && (
+              <>
+                <div
+                  className="fixed inset-0 z-40"
+                  onClick={() => setShowOptionsMenu(false)}
+                />
+                <div className="absolute right-0 top-full mt-1.5 w-48 bg-white rounded-xl shadow-lg border border-slate-200 py-1 z-50 animate-scale-in">
+                  <a
+                    href={`/profile/${conversation.partner.id}`}
+                    className="flex items-center gap-2 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+                  >
+                    <User className="w-4 h-4 text-slate-400" />
+                    <span>View Profile</span>
+                  </a>
+
+                  {isBlockedByMe ? (
+                    <button
+                      type="button"
+                      onClick={handleUnblockUser}
+                      disabled={isBlocking}
+                      className="w-full text-left flex items-center gap-2 px-3 py-2 text-xs font-semibold text-emerald-600 hover:bg-emerald-50 transition-colors cursor-pointer"
+                    >
+                      <UserCheck className="w-4 h-4" />
+                      <span>{isBlocking ? "Unblocking..." : "Unblock Member"}</span>
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowOptionsMenu(false);
+                        setShowBlockModal(true);
+                      }}
+                      className="w-full text-left flex items-center gap-2 px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                    >
+                      <Ban className="w-4 h-4" />
+                      <span>Block Member</span>
+                    </button>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
 
@@ -563,49 +668,104 @@ export const ActiveChatView: React.FC<ActiveChatViewProps> = ({
         </div>
       )}
 
-      {/* Input Bar with Emoji Picker */}
-      <div className="relative bg-white border-t border-slate-100">
-        <EmojiPicker
-          isOpen={showEmojiPicker}
-          onClose={() => setShowEmojiPicker(false)}
-          onSelectEmoji={handleSelectEmoji}
-        />
+      {/* Block Confirmation Modal */}
+      {showBlockModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
+          <div className="w-full max-w-sm bg-white rounded-2xl p-5 shadow-2xl border border-slate-100 animate-in fade-in zoom-in-95 duration-150">
+            <div className="w-10 h-10 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center mb-3">
+              <Ban className="w-5 h-5" />
+            </div>
+            <h4 className="text-sm font-bold text-slate-900 mb-1">
+              Block {conversation.partner?.displayName || "Member"}?
+            </h4>
+            <p className="text-xs text-slate-500 mb-5 leading-relaxed">
+              You will not be able to send or receive messages in this conversation while blocked. You can unblock anytime from options or privacy settings.
+            </p>
+            <div className="flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setShowBlockModal(false)}
+                disabled={isBlocking}
+                className="px-3.5 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleBlockUser}
+                disabled={isBlocking}
+                className="px-4 py-2 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 disabled:opacity-50 rounded-xl transition-colors cursor-pointer shadow-xs"
+              >
+                {isBlocking ? "Blocking..." : "Block Member"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
-        <form
-          onSubmit={handleSend}
-          className="p-3 sm:p-4 flex items-center gap-2 shrink-0"
-        >
+      {/* Input Bar or Blocked Banner */}
+      {isBlockedByMe ? (
+        <div className="p-4 bg-rose-50 border-t border-rose-200 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <Ban className="w-4 h-4 text-rose-600" />
+            <span className="text-xs font-bold text-rose-900">
+              You have blocked this member
+            </span>
+          </div>
           <button
             type="button"
-            onClick={() => setShowEmojiPicker((prev) => !prev)}
-            className={`p-2.5 rounded-xl border transition-colors cursor-pointer shrink-0 flex items-center justify-center ${
-              showEmojiPicker
-                ? "bg-rose-50 border-rose-200 text-rose-600 shadow-2xs"
-                : "bg-slate-50 border-slate-200 text-slate-500 hover:text-slate-800 hover:bg-slate-100"
-            }`}
-            title="Insert emoji"
+            onClick={handleUnblockUser}
+            disabled={isBlocking}
+            className="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs flex items-center gap-1 cursor-pointer transition-colors"
           >
-            <Smile className="w-4 h-4" />
+            <UserCheck className="w-3.5 h-3.5" />
+            <span>{isBlocking ? "Unblocking..." : "Unblock"}</span>
           </button>
-
-          <input
-            ref={inputRef}
-            type="text"
-            placeholder={`Message ${conversation.partner?.displayName || "Member"}...`}
-            value={inputText}
-            onChange={handleInputChange}
-            className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs sm:text-sm focus:outline-none focus:border-brand-500 text-slate-900 placeholder:text-slate-400"
+        </div>
+      ) : (
+        <div className="relative bg-white border-t border-slate-100">
+          <EmojiPicker
+            isOpen={showEmojiPicker}
+            onClose={() => setShowEmojiPicker(false)}
+            onSelectEmoji={handleSelectEmoji}
           />
-          <button
-            type="submit"
-            disabled={!inputText.trim()}
-            className="px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 disabled:opacity-40 text-white font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+
+          <form
+            onSubmit={handleSend}
+            className="p-3 sm:p-4 flex items-center gap-2 shrink-0"
           >
-            <Send className="w-4 h-4" />
-            <span className="hidden sm:inline">Send</span>
-          </button>
-        </form>
-      </div>
+            <button
+              type="button"
+              onClick={() => setShowEmojiPicker((prev) => !prev)}
+              className={`p-2.5 rounded-xl border transition-colors cursor-pointer shrink-0 flex items-center justify-center ${
+                showEmojiPicker
+                  ? "bg-rose-50 border-rose-200 text-rose-600 shadow-2xs"
+                  : "bg-slate-50 border-slate-200 text-slate-500 hover:text-slate-800 hover:bg-slate-100"
+              }`}
+              title="Insert emoji"
+            >
+              <Smile className="w-4 h-4" />
+            </button>
+
+            <input
+              ref={inputRef}
+              type="text"
+              placeholder={`Message ${conversation.partner?.displayName || "Member"}...`}
+              value={inputText}
+              onChange={handleInputChange}
+              className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs sm:text-sm focus:outline-none focus:border-brand-500 text-slate-900 placeholder:text-slate-400"
+            />
+            <button
+              type="submit"
+              disabled={!inputText.trim()}
+              className="px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 disabled:opacity-40 text-white font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+            >
+              <Send className="w-4 h-4" />
+              <span className="hidden sm:inline">Send</span>
+            </button>
+          </form>
+        </div>
+      )}
     </div>
   );
 };
