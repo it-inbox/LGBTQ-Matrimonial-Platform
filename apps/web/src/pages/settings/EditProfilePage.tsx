@@ -23,6 +23,9 @@ import {
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { allCountries } from "../../data/countries";
 import { getStatesForCountry, getCitiesForState } from "../../data/locations";
+import { Input } from "../../components/ui/Input";
+import { Select } from "../../components/ui/Select";
+import { Button } from "../../components/ui/Button";
 
 const TOP_LANGUAGES = [
   "Amharic",
@@ -662,147 +665,112 @@ export const EditProfilePage: React.FC = () => {
 
           <div className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                Name / Display Alias <span className="text-rose-500">*</span>
-              </label>
-              <input
+              <Input
+                label="Name / Display Alias *"
                 type="text"
                 required
                 value={formData.displayName}
                 onChange={(e) => handleChange("displayName", e.target.value)}
-                className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-500"
+                helperText="Note: You do not need to use your legal name. You may use your chosen name or alias."
               />
-              <p className="text-[11px] text-slate-400 mt-1">
-                Note: You do not need to use your legal name. You may use your chosen name or alias.
-              </p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                  Date of Birth <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  type="date"
-                  required
-                  value={formData.dateOfBirth}
-                  onChange={(e) => handleChange("dateOfBirth", e.target.value)}
-                  className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-500"
-                />
-              </div>
+              <Input
+                label="Date of Birth *"
+                type="date"
+                required
+                value={formData.dateOfBirth}
+                onChange={(e) => handleChange("dateOfBirth", e.target.value)}
+              />
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                  Height (cm)
-                </label>
-                <input
-                  type="number"
-                  value={formData.heightCm}
-                  onChange={(e) => handleChange("heightCm", parseInt(e.target.value) || 170)}
-                  className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-500"
-                />
-              </div>
+              <Input
+                label="Height (cm)"
+                type="number"
+                value={formData.heightCm}
+                onChange={(e) => handleChange("heightCm", parseInt(e.target.value) || 170)}
+              />
             </div>
 
             {/* Nationality & State */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                  Nationality
-                </label>
-                <select
-                  value={formData.nationality}
-                  onChange={(e) => {
-                    const newNat = e.target.value;
-                    handleChange("nationality", newNat);
-                    if (newNat) {
-                      handleChange("country", newNat);
-                      handleChange("state", "");
-                      handleChange("city", "");
-                    }
-                  }}
-                  className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-500"
-                >
-                  <option value="">Select Country</option>
-                  {allCountries.map((c) => (
-                    <option key={c.code} value={c.name}>
-                      {c.name}
+              <Select
+                label="Nationality"
+                value={formData.nationality}
+                onChange={(e) => {
+                  const newNat = e.target.value;
+                  handleChange("nationality", newNat);
+                  if (newNat) {
+                    handleChange("country", newNat);
+                    handleChange("state", "");
+                    handleChange("city", "");
+                  }
+                }}
+              >
+                <option value="">Select Country</option>
+                {allCountries.map((c) => (
+                  <option key={c.code} value={c.name}>
+                    {c.name}
+                  </option>
+                ))}
+              </Select>
+
+              <Select
+                label="State / Province *"
+                value={formData.state}
+                disabled={!formData.nationality}
+                onChange={(e) => {
+                  handleChange("state", e.target.value);
+                  handleChange("city", "");
+                }}
+              >
+                <option value="">{formData.nationality ? "Select State" : "Select Nationality First"}</option>
+                {formData.nationality &&
+                  getStatesForCountry(formData.nationality).map((st) => (
+                    <option key={st} value={st}>
+                      {st}
                     </option>
                   ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                  State / Province <span className="text-rose-500">*</span>
-                </label>
-                <select
-                  value={formData.state}
-                  disabled={!formData.nationality}
-                  onChange={(e) => {
-                    handleChange("state", e.target.value);
-                    handleChange("city", "");
-                  }}
-                  className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-500 disabled:opacity-50"
-                >
-                  <option value="">{formData.nationality ? "Select State" : "Select Nationality First"}</option>
-                  {formData.nationality &&
-                    getStatesForCountry(formData.nationality).map((st) => (
-                      <option key={st} value={st}>
-                        {st}
-                      </option>
-                    ))}
-                </select>
-              </div>
+              </Select>
             </div>
 
             {/* City & Religion */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                  City <span className="text-rose-500">*</span>
-                </label>
-                <select
-                  value={formData.city}
-                  disabled={!formData.state}
-                  onChange={(e) => handleChange("city", e.target.value)}
-                  className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-500 disabled:opacity-50"
-                >
-                  <option value="">{formData.state ? "Select City" : "Select State First"}</option>
-                  {formData.nationality &&
-                    formData.state &&
-                    getCitiesForState(formData.nationality, formData.state).map((ct) => (
-                      <option key={ct} value={ct}>
-                        {ct}
-                      </option>
-                    ))}
-                </select>
-              </div>
+              <Select
+                label="City *"
+                value={formData.city}
+                disabled={!formData.state}
+                onChange={(e) => handleChange("city", e.target.value)}
+              >
+                <option value="">{formData.state ? "Select City" : "Select State First"}</option>
+                {formData.nationality &&
+                  formData.state &&
+                  getCitiesForState(formData.nationality, formData.state).map((ct) => (
+                    <option key={ct} value={ct}>
+                      {ct}
+                    </option>
+                  ))}
+              </Select>
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                  Religion / Beliefs
-                </label>
-                <select
-                  value={formData.religion}
-                  onChange={(e) => handleChange("religion", e.target.value)}
-                  className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-500"
-                >
-                  <option value="">Select</option>
-                  <option value="Christianity">Christianity</option>
-                  <option value="Islam">Islam</option>
-                  <option value="Hinduism">Hinduism</option>
-                  <option value="Buddhism">Buddhism</option>
-                  <option value="Folk Religion / Shinto / Taoism">Folk Religion / Shinto / Taoism</option>
-                  <option value="Sikhism">Sikhism</option>
-                  <option value="Judaism">Judaism</option>
-                  <option value="Jainism">Jainism</option>
-                  <option value="Baháʼí">Baháʼí</option>
-                  <option value="Spiritual but not religious">Spiritual but not religious</option>
-                  <option value="Atheist / Agnostic">Atheist / Agnostic</option>
-                  <option value="Other">Other</option>
-                </select>
-              </div>
+              <Select
+                label="Religion / Beliefs"
+                value={formData.religion}
+                onChange={(e) => handleChange("religion", e.target.value)}
+              >
+                <option value="">Select</option>
+                <option value="Christianity">Christianity</option>
+                <option value="Islam">Islam</option>
+                <option value="Hinduism">Hinduism</option>
+                <option value="Buddhism">Buddhism</option>
+                <option value="Folk Religion / Shinto / Taoism">Folk Religion / Shinto / Taoism</option>
+                <option value="Sikhism">Sikhism</option>
+                <option value="Judaism">Judaism</option>
+                <option value="Jainism">Jainism</option>
+                <option value="Baháʼí">Baháʼí</option>
+                <option value="Spiritual but not religious">Spiritual but not religious</option>
+                <option value="Atheist / Agnostic">Atheist / Agnostic</option>
+                <option value="Other">Other</option>
+              </Select>
             </div>
 
             {/* Languages Spoken (Alphabetical Top 50 Chips) */}
@@ -853,73 +821,52 @@ export const EditProfilePage: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                Gender Identity <span className="text-rose-500">*</span>
-              </label>
-              <select
-                value={formData.gender}
-                onChange={(e) => handleChange("gender", e.target.value)}
-                className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-500"
-              >
-                <option value="MAN">Man</option>
-                <option value="WOMAN">Woman</option>
-                <option value="NON_BINARY">Non-Binary</option>
-                <option value="TRANS_MAN">Trans Man</option>
-                <option value="TRANS_WOMAN">Trans Woman</option>
-                <option value="GENDERQUEER">Genderqueer</option>
-                <option value="AGENDER">Agender</option>
-                <option value="OTHER">Other</option>
-              </select>
-            </div>
+            <Select
+              label="Gender Identity *"
+              value={formData.gender}
+              onChange={(e) => handleChange("gender", e.target.value)}
+            >
+              <option value="MAN">Man</option>
+              <option value="WOMAN">Woman</option>
+              <option value="NON_BINARY">Non-Binary</option>
+              <option value="TRANS_MAN">Trans Man</option>
+              <option value="TRANS_WOMAN">Trans Woman</option>
+              <option value="GENDERQUEER">Genderqueer</option>
+              <option value="AGENDER">Agender</option>
+              <option value="OTHER">Other</option>
+            </Select>
 
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                Orientation <span className="text-rose-500">*</span>
-              </label>
-              <select
-                value={formData.orientation}
-                onChange={(e) => handleChange("orientation", e.target.value)}
-                className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-500"
-              >
-                <option value="GAY">Gay</option>
-                <option value="LESBIAN">Lesbian</option>
-                <option value="BISEXUAL">Bisexual</option>
-                <option value="PANSEXUAL">Pansexual</option>
-                <option value="QUEER">Queer</option>
-                <option value="ASEXUAL">Asexual</option>
-                <option value="DEMISEXUAL">Demisexual</option>
-                <option value="OTHER">Other</option>
-              </select>
-            </div>
+            <Select
+              label="Orientation *"
+              value={formData.orientation}
+              onChange={(e) => handleChange("orientation", e.target.value)}
+            >
+              <option value="GAY">Gay</option>
+              <option value="LESBIAN">Lesbian</option>
+              <option value="BISEXUAL">Bisexual</option>
+              <option value="PANSEXUAL">Pansexual</option>
+              <option value="QUEER">Queer</option>
+              <option value="ASEXUAL">Asexual</option>
+              <option value="DEMISEXUAL">Demisexual</option>
+              <option value="OTHER">Other</option>
+            </Select>
 
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                Pronouns
-              </label>
-              <input
-                type="text"
-                placeholder="e.g. they/them, she/her, he/him"
-                value={formData.pronouns}
-                onChange={(e) => handleChange("pronouns", e.target.value)}
-                className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-500"
-              />
-            </div>
+            <Input
+              label="Pronouns"
+              placeholder="e.g. they/them, she/her, he/him"
+              value={formData.pronouns}
+              onChange={(e) => handleChange("pronouns", e.target.value)}
+            />
 
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                Outness Status <span className="text-rose-500">*</span>
-              </label>
-              <select
-                value={formData.outnessStatus}
-                onChange={(e) => handleChange("outnessStatus", e.target.value)}
-                className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-500"
-              >
-                <option value="DISCREET_NOT_OUT">Discreet / Not out</option>
-                <option value="OUT_TO_SELECT_FEW">Out to select few friends</option>
-                <option value="OUT_TO_ALL">Openly out</option>
-              </select>
-            </div>
+            <Select
+              label="Outness Status *"
+              value={formData.outnessStatus}
+              onChange={(e) => handleChange("outnessStatus", e.target.value)}
+            >
+              <option value="DISCREET_NOT_OUT">Discreet / Not out</option>
+              <option value="OUT_TO_SELECT_FEW">Out to select few friends</option>
+              <option value="OUT_TO_ALL">Openly out</option>
+            </Select>
           </div>
         </div>
 
@@ -983,72 +930,50 @@ export const EditProfilePage: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                Highest Qualification
-              </label>
-              <select
-                value={formData.education}
-                onChange={(e) => handleChange("education", e.target.value)}
-                className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-500"
-              >
-                <option value="">Select</option>
-                <option value="Doctorate / Ph.D">Doctorate / Ph.D</option>
-                <option value="Master's Degree">Master's Degree (MBA, MTech, MS, etc.)</option>
-                <option value="Bachelor's Degree">Bachelor's Degree (BTech, BA, BSc, etc.)</option>
-                <option value="Diploma">Diploma / Associate Degree</option>
-                <option value="High School">High School</option>
-                <option value="Other">Other</option>
-              </select>
-            </div>
+            <Select
+              label="Highest Qualification"
+              value={formData.education}
+              onChange={(e) => handleChange("education", e.target.value)}
+            >
+              <option value="">Select</option>
+              <option value="Doctorate / Ph.D">Doctorate / Ph.D</option>
+              <option value="Master's Degree">Master's Degree (MBA, MTech, MS, etc.)</option>
+              <option value="Bachelor's Degree">Bachelor's Degree (BTech, BA, BSc, etc.)</option>
+              <option value="Diploma">Diploma / Associate Degree</option>
+              <option value="High School">High School</option>
+              <option value="Other">Other</option>
+            </Select>
 
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                Degree / Major
-              </label>
-              <input
-                type="text"
-                placeholder="e.g. Computer Science, Economics"
-                value={formData.degree}
-                onChange={(e) => handleChange("degree", e.target.value)}
-                className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-500"
-              />
-            </div>
+            <Input
+              label="Degree / Major"
+              placeholder="e.g. Computer Science, Economics"
+              value={formData.degree}
+              onChange={(e) => handleChange("degree", e.target.value)}
+            />
 
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                Sector of Work
-              </label>
-              <select
-                value={formData.sector}
-                onChange={(e) => handleChange("sector", e.target.value)}
-                className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-500"
-              >
-                <option value="">Select</option>
-                <option value="Private / IT">Technology & IT</option>
-                <option value="Finance & Banking">Finance & Banking</option>
-                <option value="Healthcare & Medicine">Healthcare & Medicine</option>
-                <option value="Education & Academia">Education & Academia</option>
-                <option value="Government / PSU">Government / Public Sector</option>
-                <option value="Business / Entrepreneur">Business / Entrepreneur</option>
-                <option value="Media & Creative">Media, Design & Creative</option>
-                <option value="Legal & Law">Legal & Law</option>
-                <option value="Other">Other</option>
-              </select>
-            </div>
+            <Select
+              label="Sector of Work"
+              value={formData.sector}
+              onChange={(e) => handleChange("sector", e.target.value)}
+            >
+              <option value="">Select</option>
+              <option value="Private / IT">Technology & IT</option>
+              <option value="Finance & Banking">Finance & Banking</option>
+              <option value="Healthcare & Medicine">Healthcare & Medicine</option>
+              <option value="Education & Academia">Education & Academia</option>
+              <option value="Government / PSU">Government / Public Sector</option>
+              <option value="Business / Entrepreneur">Business / Entrepreneur</option>
+              <option value="Media & Creative">Media, Design & Creative</option>
+              <option value="Legal & Law">Legal & Law</option>
+              <option value="Other">Other</option>
+            </Select>
 
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                Job Title / Profession
-              </label>
-              <input
-                type="text"
-                placeholder="e.g. Senior Product Designer, Architect"
-                value={formData.profession}
-                onChange={(e) => handleChange("profession", e.target.value)}
-                className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-500"
-              />
-            </div>
+            <Input
+              label="Job Title / Profession"
+              placeholder="e.g. Senior Product Designer, Architect"
+              value={formData.profession}
+              onChange={(e) => handleChange("profession", e.target.value)}
+            />
           </div>
         </div>
 
@@ -1285,32 +1210,22 @@ export const EditProfilePage: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                  Min Partner Age
-                </label>
-                <input
-                  type="number"
-                  min={18}
-                  max={80}
-                  value={formData.minAge}
-                  onChange={(e) => handleChange("minAge", parseInt(e.target.value) || 18)}
-                  className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-500"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                  Max Partner Age
-                </label>
-                <input
-                  type="number"
-                  min={18}
-                  max={90}
-                  value={formData.maxAge}
-                  onChange={(e) => handleChange("maxAge", parseInt(e.target.value) || 50)}
-                  className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-500"
-                />
-              </div>
+              <Input
+                label="Min Partner Age"
+                type="number"
+                min={18}
+                max={80}
+                value={formData.minAge}
+                onChange={(e) => handleChange("minAge", parseInt(e.target.value) || 18)}
+              />
+              <Input
+                label="Max Partner Age"
+                type="number"
+                min={18}
+                max={90}
+                value={formData.maxAge}
+                onChange={(e) => handleChange("maxAge", parseInt(e.target.value) || 50)}
+              />
             </div>
           </div>
         </div>
@@ -1516,14 +1431,15 @@ export const EditProfilePage: React.FC = () => {
           <span className="text-xs text-slate-500 font-medium hidden sm:inline">
             Make sure to save after updating your preferences.
           </span>
-          <button
+          <Button
             type="submit"
-            disabled={loading}
-            className="w-full sm:w-auto px-7 py-2.5 rounded-xl font-bold text-xs text-white bg-brand-600 hover:bg-brand-700 disabled:opacity-50 cursor-pointer shadow-md shadow-brand-500/20 flex items-center justify-center gap-1.5 transition-all ml-auto"
+            isLoading={loading}
+            icon={<Save className="w-4 h-4" />}
+            size="md"
+            className="w-full sm:w-auto px-7 ml-auto shadow-md shadow-brand-500/20"
           >
-            <Save className="w-4 h-4" />
-            {loading ? "Saving Changes..." : "Save All Changes"}
-          </button>
+            Save All Changes
+          </Button>
         </div>
       </form>
         </div>
