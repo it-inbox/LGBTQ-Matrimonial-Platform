@@ -352,10 +352,16 @@ export class MatchesService {
           targetId: data.targetUserId,
         },
       },
-      update: { status: "PENDING" },
+      update: {
+        status: "PENDING",
+        isRevoked: false,
+        isHidden: false,
+      },
       create: {
         requesterId,
         targetId: data.targetUserId,
+        isRevoked: false,
+        isHidden: false,
       },
     });
   }
@@ -606,7 +612,10 @@ export class MatchesService {
 
     return this.prisma.client.photoAccessRequest.update({
       where: { id: requestId },
-      data: { status: data.status },
+      data: {
+        status: data.status,
+        isRevoked: false,
+      },
     });
   }
 
@@ -634,13 +643,14 @@ export class MatchesService {
       throw new NotFoundException("Photo access request not found");
     }
 
-    // Completely revoke access (set to DECLINED and reset isHidden)
+    // Completely revoke access (set to DECLINED with isRevoked: true and reset isHidden)
     // Requester will need to send a new request if they want to ask for unblur again
     return this.prisma.client.photoAccessRequest.update({
       where: { id: requestId },
       data: {
         status: "DECLINED",
         isHidden: false,
+        isRevoked: true,
       },
     });
   }

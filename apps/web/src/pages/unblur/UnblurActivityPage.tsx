@@ -110,7 +110,7 @@ export const UnblurActivityPage: React.FC<UnblurActivityPageProps> = ({
     return item.status === statusFilter;
   });
 
-  const renderStatusBadge = (status: string, isHidden?: boolean) => {
+  const renderStatusBadge = (status: string, isHidden?: boolean, isRevoked?: boolean) => {
     switch (status) {
       case "ACCEPTED":
         if (isHidden) {
@@ -128,6 +128,14 @@ export const UnblurActivityPage: React.FC<UnblurActivityPageProps> = ({
           </span>
         );
       case "DECLINED":
+        if (isRevoked) {
+          return (
+            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-xl bg-rose-50 text-rose-700 font-bold text-xs border border-rose-200">
+              <ShieldBan className="w-3.5 h-3.5 text-rose-600" />
+              <span>Revoked</span>
+            </span>
+          );
+        }
         return (
           <span className="inline-flex items-center gap-1 px-3 py-1 rounded-xl bg-rose-50 text-rose-700 font-bold text-xs border border-rose-200">
             <XCircle className="w-3.5 h-3.5 text-rose-600" />
@@ -217,7 +225,7 @@ export const UnblurActivityPage: React.FC<UnblurActivityPageProps> = ({
                         {new Date(item.createdAt).toLocaleDateString()}
                       </span>
                     }
-                    headerStatusRight={renderStatusBadge(item.status)}
+                    headerStatusRight={renderStatusBadge(item.status, item.isHidden, item.isRevoked)}
                     actionsFooter={
                       currentTab === "received" ? (
                         item.status === "PENDING" ? (
@@ -260,6 +268,11 @@ export const UnblurActivityPage: React.FC<UnblurActivityPageProps> = ({
                                     <span>Unblur access active</span>
                                   </span>
                                 )
+                              ) : item.isRevoked ? (
+                                <span className="text-rose-700 font-semibold flex items-center gap-1.5 justify-center sm:justify-start">
+                                  <ShieldBan className="w-3.5 h-3.5 text-rose-600" />
+                                  <span>You revoked photo unblur access for this member.</span>
+                                </span>
                               ) : (
                                 "You declined this unblur photo request."
                               )}
@@ -318,11 +331,13 @@ export const UnblurActivityPage: React.FC<UnblurActivityPageProps> = ({
                               ? item.isHidden
                                 ? "Member has temporarily hidden their photos."
                                 : "Member approved your request! Their original photos are visible."
+                              : item.isRevoked
+                              ? "Member revoked your unblur request."
                               : item.status === "DECLINED"
                               ? "Member declined your unblur request."
                               : "Waiting for the member to approve photo access."}
                           </span>
-                          <div className="shrink-0 ml-2">{renderStatusBadge(item.status, item.isHidden)}</div>
+                          <div className="shrink-0 ml-2">{renderStatusBadge(item.status, item.isHidden, item.isRevoked)}</div>
                         </div>
                       )
                     }

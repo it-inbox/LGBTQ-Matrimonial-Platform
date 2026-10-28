@@ -172,6 +172,8 @@ export const MemberProfileDetailPage: React.FC = () => {
   const sentInterestStatus = profile.interaction?.sentInterestStatus;
   const receivedInterestStatus = profile.interaction?.receivedInterestStatus;
   const photoAccessStatus = profile.interaction?.photoAccessStatus;
+  const photoAccessIsHidden = profile.interaction?.photoAccessIsHidden;
+  const photoAccessIsRevoked = profile.interaction?.photoAccessIsRevoked;
 
   // Partner Preferences criteria match helpers
   const pref = profile.partnerPreference;
@@ -290,9 +292,30 @@ export const MemberProfileDetailPage: React.FC = () => {
                   Access Request Pending
                 </span>
               ) : photoAccessStatus === "ACCEPTED" ? (
-                <span className="inline-block px-3 py-1.5 rounded-xl bg-emerald-500/20 text-emerald-300 font-semibold text-xs border border-emerald-500/30">
-                  Access Approved
-                </span>
+                photoAccessIsHidden ? (
+                  <span className="inline-block px-3 py-1.5 rounded-xl bg-amber-500/20 text-amber-300 font-semibold text-xs border border-amber-500/30">
+                    Access temporarily revoked
+                  </span>
+                ) : (
+                  <span className="inline-block px-3 py-1.5 rounded-xl bg-emerald-500/20 text-emerald-300 font-semibold text-xs border border-emerald-500/30">
+                    Access Approved
+                  </span>
+                )
+              ) : photoAccessIsRevoked ? (
+                <div className="space-y-2">
+                  <span className="inline-block px-3 py-1.5 rounded-xl bg-rose-500/20 text-rose-300 font-semibold text-xs border border-rose-500/30">
+                    Access Revoked
+                  </span>
+                  <div>
+                    <button
+                      type="button"
+                      onClick={() => setIsPhotoModalOpen(true)}
+                      className="px-4 py-2 rounded-xl bg-white text-slate-900 font-bold text-xs hover:bg-slate-100 transition-colors shadow-sm cursor-pointer"
+                    >
+                      Request Photo Access Again
+                    </button>
+                  </div>
+                </div>
               ) : (
                 <button
                   type="button"
@@ -802,14 +825,21 @@ export const MemberProfileDetailPage: React.FC = () => {
                 </button>
               )}
 
-              {isBlurred && photoAccessStatus !== "ACCEPTED" && (
+              {isBlurred && (photoAccessStatus !== "ACCEPTED" || photoAccessIsHidden) && (
                 <button
                   type="button"
                   onClick={() => setIsPhotoModalOpen(true)}
-                  className="px-4 py-2.5 rounded-xl border border-slate-200 hover:border-slate-300 bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold text-xs flex items-center gap-1.5 cursor-pointer transition-all"
+                  disabled={photoAccessStatus === "PENDING" || photoAccessIsHidden}
+                  className="px-4 py-2.5 rounded-xl border border-slate-200 hover:border-slate-300 bg-slate-50 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed text-slate-700 font-bold text-xs flex items-center gap-1.5 cursor-pointer transition-all"
                 >
                   <Lock className="w-3.5 h-3.5" />
-                  <span className="hidden xs:inline">Request Photos</span>
+                  <span className="hidden xs:inline">
+                    {photoAccessIsHidden
+                      ? "Access Hidden"
+                      : photoAccessIsRevoked
+                      ? "Request Photos Again"
+                      : "Request Photos"}
+                  </span>
                 </button>
               )}
             </div>

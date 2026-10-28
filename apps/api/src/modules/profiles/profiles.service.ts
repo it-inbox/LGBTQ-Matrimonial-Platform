@@ -135,9 +135,11 @@ export class ProfilesService {
         photoAccessStatus: sentPhotoRequest?.status || null,
         photoAccessId: sentPhotoRequest?.id || null,
         photoAccessIsHidden: sentPhotoRequest?.isHidden || false,
+        photoAccessIsRevoked: sentPhotoRequest?.isRevoked || false,
         receivedPhotoAccessStatus: receivedPhotoRequest?.status || null,
         receivedPhotoAccessId: receivedPhotoRequest?.id || null,
         receivedPhotoAccessIsHidden: receivedPhotoRequest?.isHidden || false,
+        receivedPhotoAccessIsRevoked: receivedPhotoRequest?.isRevoked || false,
       },
     };
   }
