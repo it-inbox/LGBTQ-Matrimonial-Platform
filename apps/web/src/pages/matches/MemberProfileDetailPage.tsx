@@ -707,17 +707,35 @@ export const MemberProfileDetailPage: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-            <div className="flex items-start gap-3 p-3.5 bg-slate-50/80 rounded-2xl border border-slate-100">
+            <div className="flex items-start gap-3 p-3.5 bg-slate-50/80 rounded-2xl border border-slate-100 sm:col-span-2">
               <GraduationCap className="w-5 h-5 text-indigo-500 shrink-0 mt-0.5" />
-              <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
-                  Highest Education
+              <div className="flex-1">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                  Education & Qualifications
                 </span>
-                <span className="text-xs font-bold text-slate-800">
-                  {profile.education || "Graduate"}
-                </span>
-                {profile.degree && (
-                  <p className="text-[11px] text-slate-500 mt-0.5">{profile.degree}</p>
+                {profile.educations && profile.educations.length > 0 ? (
+                  <div className="space-y-2 mt-1">
+                    {profile.educations.map((edu: any, i: number) => (
+                      <div key={i} className="text-xs">
+                        <span className="font-bold text-slate-900">{edu.degree}</span>
+                        {edu.major && <span className="text-slate-600 font-medium"> in {edu.major}</span>}
+                        {edu.institution && (
+                          <p className="text-[11px] text-slate-500 font-medium flex items-center gap-1 mt-0.5">
+                            <span>🏛️</span> {edu.institution}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div>
+                    <span className="text-xs font-bold text-slate-800">
+                      {profile.education || "Graduate"}
+                    </span>
+                    {profile.degree && (
+                      <p className="text-[11px] text-slate-500 mt-0.5">{profile.degree}</p>
+                    )}
+                  </div>
                 )}
               </div>
             </div>

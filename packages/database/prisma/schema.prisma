@@ -181,6 +181,7 @@ model Profile {
 
   user               User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   photos             ProfilePhoto[]
+  educations         ProfileEducation[]
   partnerPreference  PartnerPreference?
 
   @@index([updatedAt(sort: Desc)])
@@ -188,6 +189,21 @@ model Profile {
   @@index([country, state, city])
   @@index([nationality, religion, maritalStatus])
   @@map("profiles")
+}
+
+model ProfileEducation {
+  id           String   @id @default(uuid())
+  profileId    String   @map("profile_id")
+  degree       String   // e.g. "Bachelor's Degree", "Master's Degree", "Doctorate / Ph.D"
+  major        String?  // e.g. "Computer Science", "Economics"
+  institution  String   // e.g. "Stanford University", "IIT Delhi"
+  year         Int?     // Graduation year (optional)
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+  @@map("profile_educations")
 }
 
 model ProfilePhoto {

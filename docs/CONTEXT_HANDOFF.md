@@ -76,7 +76,7 @@ All activity feeds and lists (`/discover`, `/matches`, `/unblur/received`, `/unb
 
 ### 3.3. Profile Edit Architecture (`/profile/edit`)
 Located at [`EditProfilePage.tsx`](file:///c:/Users/Inboxuser.IBDT01/code/helloq-matrimonial/apps/web/src/pages/settings/EditProfilePage.tsx):
-* **Left Sticky Navigation Sidebar**: 8 distinct section tabs (*About & Demographics*, *Identity & Pronouns*, *Marital Status*, *Education & Work*, *Bio*, *Lifestyle & Interests*, *Looking For*, *Privacy Safeguards & Photos*).
+* **Left Sticky Navigation Sidebar**: 8 distinct section tabs (*About & Demographics*, *Identity*, *Marital Status*, *Education & Work*, *Bio*, *Lifestyle & Interests*, *Looking For*, *Privacy Safeguards & Photos*).
 * **Anchor Hash Jump**: Clicking any tab updates the URL (e.g. `/profile/edit#marital-status`) and smoothly scrolls the screen to the target section card.
 * **Intersection Observer**: Automatically highlights the active sidebar tab as the user scrolls through the form.
 * **Aligned Right Column**: Top header ("Back to Discover", "Edit Your Profile", and subtitle) is housed inside the right column, perfectly aligned with the left sidebar.

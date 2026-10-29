@@ -36,6 +36,16 @@ export const createProfileSchema = z.object({
   profession: z.string().max(100).trim().optional(),
   company: z.string().max(100).trim().optional(),
   annualIncome: z.string().max(50).trim().optional(),
+  educations: z
+    .array(
+      z.object({
+        degree: z.string().min(1, "Degree/Qualification is required"),
+        major: z.string().optional().nullable(),
+        institution: z.string().min(1, "Institution/College is required"),
+        year: z.number().int().optional().nullable(),
+      })
+    )
+    .optional(),
 
   // Bio & Lifestyle
   bio: z.string().max(1000).trim().optional(),

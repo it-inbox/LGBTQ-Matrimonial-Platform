@@ -25,6 +25,9 @@ export class ProfilesService {
         photos: {
           orderBy: [{ isPrimary: "desc" }, { createdAt: "asc" }],
         },
+        educations: {
+          orderBy: { createdAt: "asc" },
+        },
         partnerPreference: true,
       },
     });
@@ -46,6 +49,9 @@ export class ProfilesService {
       include: {
         photos: {
           orderBy: [{ isPrimary: "desc" }, { createdAt: "asc" }],
+        },
+        educations: {
+          orderBy: { createdAt: "asc" },
         },
         partnerPreference: true,
       },
@@ -216,6 +222,16 @@ export class ProfilesService {
             })),
           },
         }),
+        ...(data.educations && data.educations.length > 0 && {
+          educations: {
+            create: data.educations.map((edu) => ({
+              degree: edu.degree,
+              major: edu.major || null,
+              institution: edu.institution,
+              year: edu.year || null,
+            })),
+          },
+        }),
         ...(data.partnerPreference && {
           partnerPreference: {
             create: {
@@ -233,6 +249,7 @@ export class ProfilesService {
       },
       include: {
         photos: true,
+        educations: true,
         partnerPreference: true,
       },
     });
@@ -247,7 +264,7 @@ export class ProfilesService {
       throw new NotFoundException("Profile not found");
     }
 
-    const { dateOfBirth, gender, orientation, outnessStatus, photoVisibility, partnerPreference, photos, ...rest } = data;
+    const { dateOfBirth, gender, orientation, outnessStatus, photoVisibility, partnerPreference, photos, educations, ...rest } = data;
 
     // If photos are provided, replace existing photos with the updated photo list
     if (photos && Array.isArray(photos)) {
@@ -262,6 +279,25 @@ export class ProfilesService {
             originalUrl: url,
             isPrimary: idx === 0,
             isApproved: true,
+          })),
+        });
+      }
+    }
+
+    // If educations are provided, replace existing educations with the updated list
+    if (educations && Array.isArray(educations)) {
+      await this.prisma.client.profileEducation.deleteMany({
+        where: { profileId: profile.id },
+      });
+
+      if (educations.length > 0) {
+        await this.prisma.client.profileEducation.createMany({
+          data: educations.map((edu) => ({
+            profileId: profile.id,
+            degree: edu.degree,
+            major: edu.major || null,
+            institution: edu.institution,
+            year: edu.year || null,
           })),
         });
       }

@@ -18,13 +18,22 @@ import {
   Briefcase,
   Coffee,
   CheckCircle2,
-  Lock,
   UploadCloud,
   X,
+  Plus,
+  Trash2,
+  GraduationCap,
 } from "lucide-react";
 import { allCountries } from "../../data/countries";
 import { getStatesForCountry, getCitiesForState } from "../../data/locations";
 import { HOBBIES_LIST } from "../../data/hobbies";
+
+export interface EducationEntry {
+  degree: string;
+  major?: string;
+  institution: string;
+  year?: number;
+}
 
 export interface OnboardingFormData {
   displayName: string;
@@ -43,6 +52,7 @@ export interface OnboardingFormData {
   maritalStatus: string;
   education: string;
   degree: string;
+  educations: EducationEntry[];
   sector: string;
   profession: string;
   annualIncome: string;
@@ -92,6 +102,13 @@ export const OnboardingWizard: React.FC = () => {
     // Step 4: Education & Work
     education: "Bachelor's Degree",
     degree: "",
+    educations: [
+      {
+        degree: "Bachelor's Degree",
+        major: "",
+        institution: "",
+      },
+    ],
     sector: "Private / IT",
     profession: "",
     annualIncome: "",
@@ -186,7 +203,7 @@ export const OnboardingWizard: React.FC = () => {
 
   const stepTitles = [
     "About You",
-    "Identity & Pronouns",
+    "Identity",
     "Marital Status",
     "Education & Work",
     "Upload Photos",
@@ -208,6 +225,42 @@ export const OnboardingWizard: React.FC = () => {
       } else {
         return { ...prev, [field]: [...current, value] };
       }
+    });
+  };
+
+  const handleAddEducation = () => {
+    setFormData((prev) => ({
+      ...prev,
+      educations: [
+        ...(prev.educations || []),
+        { degree: "Bachelor's Degree", major: "", institution: "" },
+      ],
+    }));
+  };
+
+  const handleUpdateEducation = (index: number, field: keyof EducationEntry, value: any) => {
+    setFormData((prev) => {
+      const updated = [...(prev.educations || [])];
+      updated[index] = { ...updated[index], [field]: value };
+      return {
+        ...prev,
+        educations: updated,
+        // Sync primary education/degree for cards & preview
+        education: updated[0]?.degree || prev.education,
+        degree: updated[0]?.major || prev.degree,
+      };
+    });
+  };
+
+  const handleRemoveEducation = (index: number) => {
+    setFormData((prev) => {
+      const updated = (prev.educations || []).filter((_, i) => i !== index);
+      return {
+        ...prev,
+        educations: updated,
+        education: updated[0]?.degree || "",
+        degree: updated[0]?.major || "",
+      };
     });
   };
 
@@ -367,8 +420,16 @@ export const OnboardingWizard: React.FC = () => {
         city: formData.city.trim(),
         state: formData.state.trim(),
         country: formData.country.trim() || "India",
-        education: formData.education.trim() || undefined,
-        degree: formData.degree.trim() || undefined,
+        education: (formData.educations?.[0]?.degree || formData.education || "").trim() || undefined,
+        degree: (formData.educations?.[0]?.major || formData.degree || "").trim() || undefined,
+        educations: (formData.educations || [])
+          .filter((e) => e.degree && e.institution.trim())
+          .map((e) => ({
+            degree: e.degree.trim(),
+            major: e.major?.trim() || null,
+            institution: e.institution.trim(),
+            year: e.year ? Number(e.year) : null,
+          })),
         sector: formData.sector.trim() || undefined,
         profession: formData.profession.trim() || undefined,
         annualIncome: undefined,
@@ -574,7 +635,7 @@ export const OnboardingWizard: React.FC = () => {
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                  Religion / Beliefs
+                  Religion
                 </label>
                 <select
                   value={formData.religion}
@@ -690,7 +751,7 @@ export const OnboardingWizard: React.FC = () => {
                 <Sparkles className="w-5 h-5" />
               </div>
               <div>
-                <h2 className="text-xl font-black text-slate-900">Identity & Pronouns</h2>
+                <h2 className="text-xl font-black text-slate-900">Identity</h2>
                 <p className="text-xs text-slate-500">
                   Affirm your authentic gender identity, sexual orientation, and outness.
                 </p>
@@ -721,7 +782,7 @@ export const OnboardingWizard: React.FC = () => {
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                  Sexual / Romantic Orientation <span className="text-rose-500">*</span>
+                  Sexual Orientation <span className="text-rose-500">*</span>
                 </label>
                 <select
                   value={formData.orientation}
@@ -831,37 +892,97 @@ export const OnboardingWizard: React.FC = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                  Highest Qualification
-                </label>
-                <select
-                  value={formData.education}
-                  onChange={(e) => handleChange("education", e.target.value)}
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-500"
+            {/* Qualifications & Degrees (Multiple) */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                    Educational Qualifications
+                  </label>
+                  <p className="text-[11px] text-slate-500">
+                    Add your degrees, certifications, and institutions attended.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleAddEducation}
+                  className="px-3 py-1.5 text-xs font-bold text-brand-600 bg-brand-50 hover:bg-brand-100 rounded-xl border border-brand-200 flex items-center gap-1.5 transition-colors cursor-pointer"
                 >
-                  <option value="">Select</option>
-                  <option value="Doctorate / Ph.D">Doctorate / Ph.D</option>
-                  <option value="Master's Degree">Master's Degree (MBA, MTech, MS, etc.)</option>
-                  <option value="Bachelor's Degree">Bachelor's Degree (BTech, BA, BSc, etc.)</option>
-                  <option value="Diploma">Diploma / Associate Degree</option>
-                  <option value="High School">High School</option>
-                  <option value="Other">Other</option>
-                </select>
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Add Qualification</span>
+                </button>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                  Degree / Major
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. Computer Science, Economics"
-                  value={formData.degree}
-                  onChange={(e) => handleChange("degree", e.target.value)}
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-500"
-                />
+              <div className="space-y-3">
+                {(formData.educations || []).map((edu, idx) => (
+                  <div
+                    key={idx}
+                    className="p-4 rounded-2xl border border-slate-200 bg-slate-50/60 space-y-3 relative group"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                        <GraduationCap className="w-4 h-4 text-brand-600" />
+                        Qualification #{idx + 1}
+                      </span>
+                      {formData.educations.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveEducation(idx)}
+                          title="Remove this qualification"
+                          className="p-1 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition-colors cursor-pointer"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">
+                          Qualification / Degree <span className="text-rose-500">*</span>
+                        </label>
+                        <select
+                          value={edu.degree}
+                          onChange={(e) => handleUpdateEducation(idx, "degree", e.target.value)}
+                          className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:border-brand-500 font-medium"
+                        >
+                          <option value="Doctorate / Ph.D">Doctorate / Ph.D</option>
+                          <option value="Master's Degree">Master's Degree (MBA, MTech, MS, etc.)</option>
+                          <option value="Bachelor's Degree">Bachelor's Degree (BTech, BA, BSc, etc.)</option>
+                          <option value="Diploma">Diploma / Associate Degree</option>
+                          <option value="High School">High School</option>
+                          <option value="Other">Other</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">
+                          College / Institute / University <span className="text-rose-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="e.g. Stanford University, IIT Delhi"
+                          value={edu.institution}
+                          onChange={(e) => handleUpdateEducation(idx, "institution", e.target.value)}
+                          className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:border-brand-500"
+                        />
+                      </div>
+
+                      <div className="sm:col-span-2">
+                        <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">
+                          Major / Field of Study (Optional)
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="e.g. Computer Science, Economics, Graphic Design"
+                          value={edu.major || ""}
+                          onChange={(e) => handleUpdateEducation(idx, "major", e.target.value)}
+                          className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:border-brand-500"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
 
@@ -890,7 +1011,7 @@ export const OnboardingWizard: React.FC = () => {
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                  Job Title / Profession
+                  Job Title
                 </label>
                 <input
                   type="text"

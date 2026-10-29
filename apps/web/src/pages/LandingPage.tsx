@@ -138,7 +138,7 @@ export const LandingPage: React.FC = () => {
                   </select>
                 </div>
 
-                {/* Sexual / Romantic Orientation */}
+                {/* Sexual Orientation */}
                 <div>
                   <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">
                     Orientation
@@ -343,19 +343,17 @@ export const LandingPage: React.FC = () => {
                   <img
                     src={heroCoupleImg}
                     alt="Privacy Demo"
-                    className={`w-full h-full object-cover transition-all duration-700 ${
-                      simulatorUnblurred ? "blur-0 scale-100" : "blur-xl scale-105 opacity-80"
-                    }`}
+                    className={`w-full h-full object-cover transition-all duration-700 ${simulatorUnblurred ? "blur-0 scale-100" : "blur-xl scale-105 opacity-80"
+                      }`}
                   />
 
                   {/* Privacy Overlay Pill */}
                   <div className="absolute top-4 left-4 z-10">
                     <span
-                      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold shadow-md transition-all ${
-                        simulatorUnblurred
-                          ? "bg-emerald-600/90 text-white backdrop-blur-sm"
-                          : "bg-slate-950/80 text-amber-300 backdrop-blur-md border border-amber-300/30"
-                      }`}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold shadow-md transition-all ${simulatorUnblurred
+                        ? "bg-emerald-600/90 text-white backdrop-blur-sm"
+                        : "bg-slate-950/80 text-amber-300 backdrop-blur-md border border-amber-300/30"
+                        }`}
                     >
                       {simulatorUnblurred ? (
                         <>
@@ -388,22 +386,20 @@ export const LandingPage: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => setSimulatorUnblurred(false)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                        !simulatorUnblurred
-                          ? "bg-white text-slate-900 shadow-xs"
-                          : "text-slate-500 hover:text-slate-800"
-                      }`}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${!simulatorUnblurred
+                        ? "bg-white text-slate-900 shadow-xs"
+                        : "text-slate-500 hover:text-slate-800"
+                        }`}
                     >
                       Visitor View
                     </button>
                     <button
                       type="button"
                       onClick={() => setSimulatorUnblurred(true)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                        simulatorUnblurred
-                          ? "bg-brand-600 text-white shadow-xs"
-                          : "text-slate-500 hover:text-slate-800"
-                      }`}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${simulatorUnblurred
+                        ? "bg-brand-600 text-white shadow-xs"
+                        : "text-slate-500 hover:text-slate-800"
+                        }`}
                     >
                       Accepted Match
                     </button>
@@ -579,9 +575,8 @@ export const LandingPage: React.FC = () => {
                   >
                     <span className="text-base font-bold text-slate-900">{faq.q}</span>
                     <ChevronDown
-                      className={`w-5 h-5 text-slate-400 shrink-0 transition-transform duration-300 ${
-                        isOpen ? "rotate-180 text-brand-600" : ""
-                      }`}
+                      className={`w-5 h-5 text-slate-400 shrink-0 transition-transform duration-300 ${isOpen ? "rotate-180 text-brand-600" : ""
+                        }`}
                     />
                   </button>
                   {isOpen && (
