@@ -29,17 +29,30 @@ export class MatchesController {
   constructor(private readonly matchesService: MatchesService) { }
 
   @Get("feed")
-  @ApiOperation({ summary: "Get personalized discovery feed with photo privacy safeguards" })
+  @ApiOperation({ summary: "Get personalized discovery feed with photo privacy safeguards and server-side filtering" })
   async getFeed(
     @CurrentUser("userId") userId: string,
     @Query("page") page?: string,
-    @Query("limit") limit?: string
+    @Query("limit") limit?: string,
+    @Query("search") search?: string,
+    @Query("nationalities") nationalities?: string,
+    @Query("religions") religions?: string,
+    @Query("maritalStatuses") maritalStatuses?: string,
+    @Query("minAge") minAge?: string,
+    @Query("maxAge") maxAge?: string,
+    @Query("quickFilter") quickFilter?: string,
   ) {
-    return this.matchesService.getFeed(
-      userId,
-      page ? parseInt(page, 10) : 1,
-      limit ? parseInt(limit, 10) : 20
-    );
+    return this.matchesService.getFeed(userId, {
+      page: page ? parseInt(page, 10) : 1,
+      limit: limit ? parseInt(limit, 10) : 20,
+      search,
+      nationalities: nationalities ? nationalities.split(",").map((s) => s.trim()).filter(Boolean) : undefined,
+      religions: religions ? religions.split(",").map((s) => s.trim()).filter(Boolean) : undefined,
+      maritalStatuses: maritalStatuses ? maritalStatuses.split(",").map((s) => s.trim()).filter(Boolean) : undefined,
+      minAge: minAge ? parseInt(minAge, 10) : undefined,
+      maxAge: maxAge ? parseInt(maxAge, 10) : undefined,
+      quickFilter,
+    });
   }
 
   @Post("interest")

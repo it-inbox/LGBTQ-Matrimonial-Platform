@@ -54,12 +54,35 @@ export const DiscoveryFeedPage: React.FC = () => {
     }
   };
 
-  // Fetch matches from NestJS API (supports pagination)
+  // Fetch matches from NestJS API with database-level multi-select filtering & search
   const [currentPage, setCurrentPage] = useState(1);
   const { data: feedResult, isLoading, error } = useQuery({
-    queryKey: ["matches-feed", currentPage],
+    queryKey: [
+      "matches-feed",
+      currentPage,
+      searchQuery,
+      activeQuickFilter,
+      selectedNationalities.sort().join(","),
+      selectedReligions.sort().join(","),
+      selectedMaritalStatuses.sort().join(","),
+      filterAgeMin,
+      filterAgeMax,
+    ],
     queryFn: async () => {
-      const res = await api.get(`/matches/feed?page=${currentPage}&limit=20`);
+      const params = new URLSearchParams({
+        page: String(currentPage),
+        limit: "20",
+      });
+
+      if (searchQuery.trim()) params.set("search", searchQuery.trim());
+      if (activeQuickFilter !== "All") params.set("quickFilter", activeQuickFilter);
+      if (selectedNationalities.length > 0) params.set("nationalities", selectedNationalities.join(","));
+      if (selectedReligions.length > 0) params.set("religions", selectedReligions.join(","));
+      if (selectedMaritalStatuses.length > 0) params.set("maritalStatuses", selectedMaritalStatuses.join(","));
+      if (filterAgeMin > 18) params.set("minAge", String(filterAgeMin));
+      if (filterAgeMax < 60) params.set("maxAge", String(filterAgeMax));
+
+      const res = await api.get(`/matches/feed?${params.toString()}`);
       return res.data;
     },
     staleTime: 5 * 60 * 1000, // 5 minutes cache TTL: navigating between tabs won't re-trigger API/DB calls
@@ -130,38 +153,9 @@ export const DiscoveryFeedPage: React.FC = () => {
     return Math.abs(new Date(diff).getUTCFullYear() - 1970);
   };
 
-  // Filter profiles based on quick filter and search input
+  // Profile filter for local exclusions (e.g. user dismissed in current session)
   const filteredMatches = matches?.filter((profile: any) => {
-    const q = searchQuery.toLowerCase().trim();
-    const matchesSearch =
-      !q ||
-      profile.displayName?.toLowerCase().includes(q) ||
-      profile.city?.toLowerCase().includes(q) ||
-      profile.state?.toLowerCase().includes(q) ||
-      profile.nationality?.toLowerCase().includes(q) ||
-      profile.profession?.toLowerCase().includes(q);
-
-    if (!matchesSearch) return false;
-
     if (ignoredProfileIds.includes(profile.id)) return false;
-
-    // Filter Criteria Check (Multi-Select)
-    if (selectedNationalities.length > 0 && !selectedNationalities.includes(profile.nationality)) return false;
-    if (selectedReligions.length > 0 && !selectedReligions.includes(profile.religion)) return false;
-    if (selectedMaritalStatuses.length > 0 && !selectedMaritalStatuses.includes(profile.maritalStatus)) return false;
-    
-    const age = calculateAge(profile.dateOfBirth);
-    if (age !== null) {
-      if (age < filterAgeMin || age > filterAgeMax) return false;
-    }
-
-    if (activeQuickFilter === "With Photos") {
-      const primary = profile.photos?.[0];
-      return primary && !primary.isBlurred;
-    }
-    if (activeQuickFilter === "Nearby") {
-      return true; // keep all for feed
-    }
     return true;
   });
 
@@ -768,10 +762,13 @@ export const DiscoveryFeedPage: React.FC = () => {
                 type="button"
                 variant="primary"
                 size="sm"
-                onClick={() => setIsFilterModalOpen(false)}
+                onClick={() => {
+                  setCurrentPage(1);
+                  setIsFilterModalOpen(false);
+                }}
                 className="w-2/3"
               >
-                Apply Criteria ({filteredMatches?.length || 0} Matches)
+                Apply Criteria {feedResult?.pagination?.total ? `(${feedResult.pagination.total.toLocaleString()} Matches)` : ""}
               </Button>
             </div>
           </div>

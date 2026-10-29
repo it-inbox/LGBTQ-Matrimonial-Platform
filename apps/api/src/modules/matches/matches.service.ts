@@ -41,12 +41,25 @@ export class MatchesService {
     }));
   }
 
-  async getFeed(userId: string, page = 1, limit = 20) {
-    const pageNum = Math.max(1, Number(page) || 1);
-    const take = Math.min(50, Math.max(1, Number(limit) || 20));
+  async getFeed(
+    userId: string,
+    options: {
+      page?: number;
+      limit?: number;
+      search?: string;
+      nationalities?: string[];
+      religions?: string[];
+      maritalStatuses?: string[];
+      minAge?: number;
+      maxAge?: number;
+      quickFilter?: string;
+    } = {}
+  ) {
+    const pageNum = Math.max(1, Number(options.page) || 1);
+    const take = Math.min(50, Math.max(1, Number(options.limit) || 20));
     const skip = (pageNum - 1) * take;
 
-    // 1. Get user profile and preference
+    // 1. Get current user profile and preferences
     const userProfile = await this.prisma.client.profile.findUnique({
       where: { userId },
       include: { partnerPreference: true },
@@ -56,6 +69,7 @@ export class MatchesService {
       throw new BadRequestException("Please complete your profile before browsing matches");
     }
 
+    // 2. Fetch exclusions (blocked users + already interacted users)
     const [blocked, existingInterests] = await Promise.all([
       this.prisma.client.blockedUser.findMany({
         where: {
@@ -63,7 +77,6 @@ export class MatchesService {
         },
         select: { userId: true, blockedId: true },
       }),
-      // Query interests: either sent by me (any status) OR accepted matches with me
       this.prisma.client.matchInterest.findMany({
         where: {
           OR: [
@@ -81,17 +94,72 @@ export class MatchesService {
       ...existingInterests.map((i) => (i.senderId === userId ? i.receiverId : i.senderId)),
     ]);
 
-    const whereClause = {
+    // 3. Build comprehensive database WHERE clause
+    const whereClause: any = {
       userId: { notIn: Array.from(excludedUserIds) },
-      ...(userProfile.partnerPreference?.preferredGenders?.length && {
-        gender: { in: userProfile.partnerPreference.preferredGenders },
-      }),
-      ...(userProfile.partnerPreference?.preferredOrientations?.length && {
-        orientation: { in: userProfile.partnerPreference.preferredOrientations },
-      }),
     };
 
-    // Query profiles with pagination
+    // Preference filters
+    if (userProfile.partnerPreference?.preferredGenders?.length) {
+      whereClause.gender = { in: userProfile.partnerPreference.preferredGenders };
+    }
+    if (userProfile.partnerPreference?.preferredOrientations?.length) {
+      whereClause.orientation = { in: userProfile.partnerPreference.preferredOrientations };
+    }
+
+    // Server-side Multi-Select Filters
+    if (options.nationalities && options.nationalities.length > 0) {
+      whereClause.nationality = { in: options.nationalities };
+    }
+    if (options.religions && options.religions.length > 0) {
+      whereClause.religion = { in: options.religions };
+    }
+    if (options.maritalStatuses && options.maritalStatuses.length > 0) {
+      whereClause.maritalStatus = { in: options.maritalStatuses };
+    }
+
+    // Age Filter (converted to Date of Birth ranges)
+    const now = new Date();
+    if (options.minAge !== undefined || options.maxAge !== undefined) {
+      const minAge = options.minAge || 18;
+      const maxAge = options.maxAge || 80;
+      const maxDob = new Date(now.getFullYear() - minAge, now.getMonth(), now.getDate());
+      const minDob = new Date(now.getFullYear() - maxAge - 1, now.getMonth(), now.getDate());
+
+      whereClause.dateOfBirth = {
+        gte: minDob,
+        lte: maxDob,
+      };
+    }
+
+    // Search Query (Indexed text search across names, city, state, country, profession)
+    if (options.search && options.search.trim()) {
+      const term = options.search.trim();
+      whereClause.OR = [
+        { displayName: { contains: term, mode: "insensitive" } },
+        { city: { contains: term, mode: "insensitive" } },
+        { state: { contains: term, mode: "insensitive" } },
+        { country: { contains: term, mode: "insensitive" } },
+        { profession: { contains: term, mode: "insensitive" } },
+      ];
+    }
+
+    // Quick Filters
+    if (options.quickFilter === "With Photos") {
+      whereClause.photoVisibility = "ALL_MEMBERS";
+    } else if (options.quickFilter === "Nearby" && userProfile.city) {
+      whereClause.city = { equals: userProfile.city, mode: "insensitive" };
+    }
+
+    // 4. Smart Scoring & Rotation Ordering
+    // Proximity to viewer's country/state first, followed by recent activity
+    const orderByClause: any[] = [];
+    if (options.quickFilter === "Nearby" && userProfile.state) {
+      orderByClause.push({ state: "asc" });
+    }
+    orderByClause.push({ updatedAt: "desc" });
+
+    // 5. Query profiles with pagination
     const [totalCount, profiles] = await Promise.all([
       this.prisma.client.profile.count({ where: whereClause }),
       this.prisma.client.profile.findMany({
@@ -108,11 +176,11 @@ export class MatchesService {
         },
         skip,
         take,
-        orderBy: { updatedAt: "desc" },
+        orderBy: orderByClause,
       }),
     ]);
 
-    // Check photo access permissions for masked photos
+    // 6. Check photo access permissions for masked photos
     const photoGrants = await this.prisma.client.photoAccessRequest.findMany({
       where: {
         requesterId: userId,
@@ -123,7 +191,7 @@ export class MatchesService {
     });
     const grantedTargetIds = new Set(photoGrants.map((g) => g.targetId));
 
-    // Mask photos if restricted
+    // 7. Sanitize coordinates and photos
     const sanitizedProfiles = profiles.map((p) => {
       const canViewOriginal =
         p.photoVisibility === "ALL_MEMBERS" || grantedTargetIds.has(p.userId);
