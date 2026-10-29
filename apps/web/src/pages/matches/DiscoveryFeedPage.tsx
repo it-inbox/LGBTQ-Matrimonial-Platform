@@ -62,6 +62,9 @@ export const DiscoveryFeedPage: React.FC = () => {
       const res = await api.get(`/matches/feed?page=${currentPage}&limit=20`);
       return res.data;
     },
+    staleTime: 5 * 60 * 1000, // 5 minutes cache TTL: navigating between tabs won't re-trigger API/DB calls
+    gcTime: 10 * 60 * 1000, // Keep in garbage collection memory for 10 minutes
+    refetchOnWindowFocus: false, // Prevent refetching every time the user refocuses the browser window
   });
 
   const matches = feedResult?.data || (Array.isArray(feedResult) ? feedResult : []);

@@ -183,6 +183,10 @@ model Profile {
   photos             ProfilePhoto[]
   partnerPreference  PartnerPreference?
 
+  @@index([updatedAt(sort: Desc)])
+  @@index([gender, orientation])
+  @@index([country, state, city])
+  @@index([nationality, religion, maritalStatus])
   @@map("profiles")
 }
 
