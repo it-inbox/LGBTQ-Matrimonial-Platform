@@ -206,17 +206,56 @@ export const OnboardingWizard: React.FC = () => {
     }
   };
 
-  // Add sample photo URL
-  const handleAddSamplePhoto = () => {
-    const samplePhotos = [
-      "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80",
-      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80",
-      "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=600&q=80",
-    ];
-    const nextPhoto = samplePhotos[formData.photos.length % samplePhotos.length];
-    if (formData.photos.length < 6) {
-      handleChange("photos", [...formData.photos, nextPhoto]);
-    }
+  // Handle real device photo upload with client-side compression
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    Array.from(files).forEach((file) => {
+      if (formData.photos.length >= 6) return;
+      if (!file.type.startsWith("image/")) return;
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const rawDataUrl = event.target?.result as string;
+        if (!rawDataUrl) return;
+
+        // Compress and optimize image to ensure fast network payload & reliable DB storage
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          const maxDim = 1200;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > maxDim || height > maxDim) {
+            if (width > height) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            } else {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, width, height);
+            const optimizedDataUrl = canvas.toDataURL("image/jpeg", 0.82);
+            setFormData((prev) => {
+              if (prev.photos.length >= 6) return prev;
+              return { ...prev, photos: [...prev.photos, optimizedDataUrl] };
+            });
+          }
+        };
+        img.src = rawDataUrl;
+      };
+      reader.readAsDataURL(file);
+    });
+    // Reset file input value to allow uploading the same file again if desired
+    e.target.value = "";
   };
 
   const handleRemovePhoto = (index: number) => {
@@ -818,14 +857,20 @@ export const OnboardingWizard: React.FC = () => {
               ))}
 
               {formData.photos.length < 6 && (
-                <button
-                  type="button"
-                  onClick={handleAddSamplePhoto}
-                  className="aspect-square rounded-2xl border-2 border-dashed border-slate-300 hover:border-brand-500 flex flex-col items-center justify-center gap-1 text-slate-500 hover:text-brand-600 transition-all cursor-pointer bg-slate-50/50 hover:bg-brand-50/20"
-                >
-                  <UploadCloud className="w-6 h-6" />
-                  <span className="text-[11px] font-bold">+ Add Photo</span>
-                </button>
+                <label className="aspect-square rounded-2xl border-2 border-dashed border-slate-300 hover:border-brand-500 flex flex-col items-center justify-center gap-1.5 text-slate-500 hover:text-brand-600 transition-all cursor-pointer bg-slate-50/50 hover:bg-brand-50/20 p-2 text-center group">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleFileUpload}
+                    className="hidden"
+                  />
+                  <UploadCloud className="w-6 h-6 group-hover:scale-110 transition-transform text-slate-400 group-hover:text-brand-600" />
+                  <span className="text-[11px] font-bold text-slate-700 group-hover:text-brand-600">
+                    + Upload Photo
+                  </span>
+                  <span className="text-[9px] text-slate-400">PNG, JPG, WebP</span>
+                </label>
               )}
             </div>
 
