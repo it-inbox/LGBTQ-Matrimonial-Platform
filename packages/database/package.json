@@ -10,6 +10,7 @@
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:seed": "pnpm dlx tsx prisma/seed.ts",
+    "db:purge:dummy": "pnpm dlx tsx scripts/purge-dummy-users.ts",
     "db:studio": "prisma studio",
     "clean": "rimraf node_modules"
   },

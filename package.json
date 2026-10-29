@@ -11,6 +11,7 @@
     "db:generate": "turbo run db:generate",
     "db:push": "turbo run db:push",
     "db:seed": "pnpm --filter @everpride/database db:seed",
+    "db:purge:dummy": "pnpm --filter @everpride/database db:purge:dummy",
     "clean": "turbo run clean"
   },
   "devDependencies": {
