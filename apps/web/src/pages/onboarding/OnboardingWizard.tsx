@@ -1139,7 +1139,7 @@ export const OnboardingWizard: React.FC = () => {
                 </span>
               </div>
 
-              <div className="flex flex-wrap gap-2 p-3 border border-slate-200 rounded-2xl bg-slate-50/50">
+              <div className="flex flex-wrap gap-2 pt-1">
                 {HOBBIES_LIST.map((hobby) => {
                   const selected = formData.hobbies.includes(hobby);
                   return (
