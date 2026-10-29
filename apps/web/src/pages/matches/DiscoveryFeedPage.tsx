@@ -34,7 +34,7 @@ export const DiscoveryFeedPage: React.FC = () => {
   const [activeQuickFilter, setActiveQuickFilter] = useState<string>("All");
   const [ignoredProfileIds, setIgnoredProfileIds] = useState<string[]>([]);
 
-  // Filter Criteria Multi-Select State
+  // Draft filter state (inside modal)
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [selectedNationalities, setSelectedNationalities] = useState<string[]>([]);
   const [nationalitySearchInput, setNationalitySearchInput] = useState("");
@@ -43,12 +43,37 @@ export const DiscoveryFeedPage: React.FC = () => {
   const [filterAgeMin, setFilterAgeMin] = useState<number>(18);
   const [filterAgeMax, setFilterAgeMax] = useState<number>(60);
 
+  // Applied filter state (drives the actual feed query on the page)
+  const [appliedFilters, setAppliedFilters] = useState<{
+    nationalities: string[];
+    religions: string[];
+    maritalStatuses: string[];
+    minAge: number;
+    maxAge: number;
+  }>({
+    nationalities: [],
+    religions: [],
+    maritalStatuses: [],
+    minAge: 18,
+    maxAge: 60,
+  });
+
   const toggleFilter = (list: string[], setList: React.Dispatch<React.SetStateAction<string[]>>, item: string) => {
     if (list.includes(item)) {
       setList(list.filter((x) => x !== item));
     } else {
       setList([...list, item]);
     }
+  };
+
+  // Open modal and sync draft state with currently applied filters
+  const openFilterModal = () => {
+    setSelectedNationalities([...appliedFilters.nationalities]);
+    setSelectedReligions([...appliedFilters.religions]);
+    setSelectedMaritalStatuses([...appliedFilters.maritalStatuses]);
+    setFilterAgeMin(appliedFilters.minAge);
+    setFilterAgeMax(appliedFilters.maxAge);
+    setIsFilterModalOpen(true);
   };
 
   // Fetch matches from NestJS API with database-level multi-select filtering & search
@@ -59,11 +84,11 @@ export const DiscoveryFeedPage: React.FC = () => {
       currentPage,
       searchQuery,
       activeQuickFilter,
-      selectedNationalities.sort().join(","),
-      selectedReligions.sort().join(","),
-      selectedMaritalStatuses.sort().join(","),
-      filterAgeMin,
-      filterAgeMax,
+      [...appliedFilters.nationalities].sort().join(","),
+      [...appliedFilters.religions].sort().join(","),
+      [...appliedFilters.maritalStatuses].sort().join(","),
+      appliedFilters.minAge,
+      appliedFilters.maxAge,
     ],
     queryFn: async () => {
       const params = new URLSearchParams({
@@ -73,11 +98,11 @@ export const DiscoveryFeedPage: React.FC = () => {
 
       if (searchQuery.trim()) params.set("search", searchQuery.trim());
       if (activeQuickFilter !== "All") params.set("quickFilter", activeQuickFilter);
-      if (selectedNationalities.length > 0) params.set("nationalities", selectedNationalities.join(","));
-      if (selectedReligions.length > 0) params.set("religions", selectedReligions.join(","));
-      if (selectedMaritalStatuses.length > 0) params.set("maritalStatuses", selectedMaritalStatuses.join(","));
-      if (filterAgeMin > 18) params.set("minAge", String(filterAgeMin));
-      if (filterAgeMax < 60) params.set("maxAge", String(filterAgeMax));
+      if (appliedFilters.nationalities.length > 0) params.set("nationalities", appliedFilters.nationalities.join(","));
+      if (appliedFilters.religions.length > 0) params.set("religions", appliedFilters.religions.join(","));
+      if (appliedFilters.maritalStatuses.length > 0) params.set("maritalStatuses", appliedFilters.maritalStatuses.join(","));
+      if (appliedFilters.minAge > 18) params.set("minAge", String(appliedFilters.minAge));
+      if (appliedFilters.maxAge < 60) params.set("maxAge", String(appliedFilters.maxAge));
 
       const res = await api.get(`/matches/feed?${params.toString()}`);
       return res.data;
@@ -157,10 +182,10 @@ export const DiscoveryFeedPage: React.FC = () => {
   });
 
   const activeFilterCount =
-    (selectedNationalities.length > 0 ? 1 : 0) +
-    (selectedReligions.length > 0 ? 1 : 0) +
-    (selectedMaritalStatuses.length > 0 ? 1 : 0) +
-    (filterAgeMin !== 18 || filterAgeMax !== 60 ? 1 : 0);
+    (appliedFilters.nationalities.length > 0 ? 1 : 0) +
+    (appliedFilters.religions.length > 0 ? 1 : 0) +
+    (appliedFilters.maritalStatuses.length > 0 ? 1 : 0) +
+    (appliedFilters.minAge !== 18 || appliedFilters.maxAge !== 60 ? 1 : 0);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 pb-0 h-full flex flex-col">
@@ -193,8 +218,11 @@ export const DiscoveryFeedPage: React.FC = () => {
               />
               {searchQuery && (
                 <button
-                  onClick={() => setSearchQuery("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  onClick={() => {
+                    setSearchQuery("");
+                    setCurrentPage(1);
+                  }}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -205,7 +233,7 @@ export const DiscoveryFeedPage: React.FC = () => {
             <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none text-xs">
               <button
                 type="button"
-                onClick={() => setIsFilterModalOpen(true)}
+                onClick={openFilterModal}
                 className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full font-semibold shrink-0 shadow-xs cursor-pointer transition-colors ${
                   activeFilterCount > 0
                     ? "bg-rose-600 text-white border border-rose-600"
@@ -735,6 +763,15 @@ export const DiscoveryFeedPage: React.FC = () => {
                   setSelectedMaritalStatuses([]);
                   setFilterAgeMin(18);
                   setFilterAgeMax(60);
+                  setAppliedFilters({
+                    nationalities: [],
+                    religions: [],
+                    maritalStatuses: [],
+                    minAge: 18,
+                    maxAge: 60,
+                  });
+                  setCurrentPage(1);
+                  setIsFilterModalOpen(false);
                 }}
                 className="w-1/3"
               >
@@ -745,6 +782,13 @@ export const DiscoveryFeedPage: React.FC = () => {
                 variant="primary"
                 size="sm"
                 onClick={() => {
+                  setAppliedFilters({
+                    nationalities: [...selectedNationalities],
+                    religions: [...selectedReligions],
+                    maritalStatuses: [...selectedMaritalStatuses],
+                    minAge: filterAgeMin,
+                    maxAge: filterAgeMax,
+                  });
                   setCurrentPage(1);
                   setIsFilterModalOpen(false);
                 }}

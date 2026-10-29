@@ -214,11 +214,14 @@ export const UniversalProfileCard: React.FC<UniversalProfileCardProps> = ({
                     (profile.heightCm % 30.48) / 2.54
                   )}in • `
                 : ""}
-              <span>{profile.city || "New Delhi"}</span>
-              <span>•</span>
-              <span className="text-slate-500">
-                {profile.religion || "Hindu"}
-              </span>
+              {profile.city && <span>{profile.city}</span>}
+              {profile.state && <span>, {profile.state}</span>}
+              {profile.religion && (
+                <>
+                  <span>•</span>
+                  <span className="text-slate-500">{profile.religion}</span>
+                </>
+              )}
             </p>
             <div className="flex items-center gap-1.5 text-slate-600 flex-wrap">
               <Briefcase className="w-3.5 h-3.5 text-slate-400 shrink-0" />
