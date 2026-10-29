@@ -132,7 +132,7 @@ export class MatchesService {
       };
     }
 
-    // Search Query (Indexed text search across names, city, state, country, profession)
+    // Search Query (Indexed text search across names, city, state, country, nationality, religion, profession)
     if (options.search && options.search.trim()) {
       const term = options.search.trim();
       whereClause.OR = [
@@ -140,6 +140,8 @@ export class MatchesService {
         { city: { contains: term, mode: "insensitive" } },
         { state: { contains: term, mode: "insensitive" } },
         { country: { contains: term, mode: "insensitive" } },
+        { nationality: { contains: term, mode: "insensitive" } },
+        { religion: { contains: term, mode: "insensitive" } },
         { profession: { contains: term, mode: "insensitive" } },
       ];
     }

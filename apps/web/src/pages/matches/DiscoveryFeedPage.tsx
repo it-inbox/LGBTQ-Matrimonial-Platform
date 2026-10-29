@@ -16,8 +16,6 @@ import {
   MessageCircle,
   Phone,
   GraduationCap,
-  Star,
-  LogIn,
   Send,
   MessageSquare,
 } from "lucide-react";
@@ -35,7 +33,6 @@ export const DiscoveryFeedPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeQuickFilter, setActiveQuickFilter] = useState<string>("All");
   const [ignoredProfileIds, setIgnoredProfileIds] = useState<string[]>([]);
-  const [shortlistedProfileIds, setShortlistedProfileIds] = useState<string[]>([]);
 
   // Filter Criteria Multi-Select State
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
@@ -186,9 +183,12 @@ export const DiscoveryFeedPage: React.FC = () => {
               <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
-                placeholder="Tell us what you're looking for (e.g. Designer, Mumbai, Vegetarian)..."
+                placeholder="Search by Name, City, State, Country, Nationality, Religion, or Profession..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setCurrentPage(1);
+                }}
                 className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:border-brand-500 text-slate-900 placeholder:text-slate-400"
               />
               {searchQuery && (
@@ -291,12 +291,6 @@ export const DiscoveryFeedPage: React.FC = () => {
                         Active Today
                       </span>
                     }
-                    headerStatusRight={
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-slate-100 text-slate-900 font-bold text-xs shadow-2xs border border-slate-200/80">
-                        <LogIn className="w-3.5 h-3.5 text-slate-700" />
-                        <span>Just Joined</span>
-                      </span>
-                    }
                     onRequestUnblur={() => {
                       setActiveModalProfile(profile);
                       setModalType("photo");
@@ -313,18 +307,6 @@ export const DiscoveryFeedPage: React.FC = () => {
                         >
                           <Send className="w-3.5 h-3.5 text-rose-600 group-hover:scale-110 transition-transform" />
                           <span>Interest</span>
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setSuccessToast(`Shortlisted ${profile.displayName}!`);
-                            setTimeout(() => setSuccessToast(null), 3000);
-                          }}
-                          className="flex-1 flex items-center justify-center gap-1.5 py-2 px-1 text-rose-600 hover:bg-rose-100/60 transition-colors font-bold text-xs cursor-pointer group"
-                        >
-                          <Star className="w-3.5 h-3.5 text-rose-600 group-hover:scale-110 transition-transform" />
-                          <span>Shortlist</span>
                         </button>
 
                         <button
