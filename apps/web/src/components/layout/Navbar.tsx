@@ -15,8 +15,8 @@ export const Navbar: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
+  const isOnboardingPage = location.pathname.startsWith("/onboarding");
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-slate-200/80 bg-white/80 backdrop-blur-md">
@@ -79,34 +79,38 @@ export const Navbar: React.FC = () => {
                     <span>Completing Profile</span>
                   </div>
                 )}
-                <button
-                  type="button"
-                  onClick={() => {
-                    logout();
-                    navigate("/");
-                  }}
-                  title="Log out"
-                  className="p-2 text-slate-500 hover:text-slate-800 rounded-lg hover:bg-slate-100 cursor-pointer"
-                >
-                  <LogOut className="w-4 h-4" />
-                </button>
+                {!isOnboardingPage && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      logout();
+                      navigate("/");
+                    }}
+                    title="Log out"
+                    className="p-2 text-slate-500 hover:text-slate-800 rounded-lg hover:bg-slate-100 cursor-pointer"
+                  >
+                    <LogOut className="w-4 h-4" />
+                  </button>
+                )}
               </div>
 
-              {/* Hamburger Button (Mobile & Tablet: < lg) for remaining navigation items */}
-              <div className="lg:hidden flex items-center">
-                <button
-                  type="button"
-                  onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                  aria-label="Toggle navigation menu"
-                  className="p-2 text-slate-600 hover:text-slate-900 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
-                >
-                  {isMobileMenuOpen ? (
-                    <X className="w-6 h-6 text-slate-900" />
-                  ) : (
-                    <Menu className="w-6 h-6 text-slate-900" />
-                  )}
-                </button>
-              </div>
+              {/* Hamburger Button (Mobile & Tablet: < lg) - hidden on /onboarding page */}
+              {!isOnboardingPage && (
+                <div className="lg:hidden flex items-center">
+                  <button
+                    type="button"
+                    onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                    aria-label="Toggle navigation menu"
+                    className="p-2 text-slate-600 hover:text-slate-900 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
+                  >
+                    {isMobileMenuOpen ? (
+                      <X className="w-6 h-6 text-slate-900" />
+                    ) : (
+                      <Menu className="w-6 h-6 text-slate-900" />
+                    )}
+                  </button>
+                </div>
+              )}
             </>
           ) : (
             <div className="flex items-center gap-2">
@@ -128,7 +132,7 @@ export const Navbar: React.FC = () => {
       </div>
 
       {/* Mobile/Tablet Drawer Menu (Fixed floating overlay on top of the dashboard, < lg) */}
-      {isAuthenticated && isMobileMenuOpen && (
+      {isAuthenticated && !isOnboardingPage && isMobileMenuOpen && (
         <div 
           onClick={closeMobileMenu}
           className="lg:hidden fixed inset-x-0 top-16 bottom-0 z-50 bg-slate-900/50 backdrop-blur-xs animate-fade-in"

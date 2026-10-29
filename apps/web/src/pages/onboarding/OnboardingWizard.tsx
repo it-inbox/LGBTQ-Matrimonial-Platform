@@ -457,7 +457,7 @@ export const OnboardingWizard: React.FC = () => {
             {/* Display Name */}
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                Name / Display Alias <span className="text-rose-500">*</span>
+                Name <span className="text-rose-500">*</span>
               </label>
               <input
                 type="text"
@@ -1147,11 +1147,10 @@ export const OnboardingWizard: React.FC = () => {
                       type="button"
                       key={hobby}
                       onClick={() => toggleArrayItem("hobbies", hobby)}
-                      className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all cursor-pointer ${
-                        selected
+                      className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all cursor-pointer ${selected
                           ? "bg-brand-600 text-white border-brand-600 shadow-xs"
                           : "bg-white text-slate-700 border-slate-200 hover:border-brand-300 hover:text-brand-600"
-                      }`}
+                        }`}
                     >
                       {hobby}
                     </button>
