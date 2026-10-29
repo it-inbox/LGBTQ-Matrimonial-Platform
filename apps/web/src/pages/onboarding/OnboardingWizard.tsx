@@ -25,15 +25,49 @@ import {
 import { allCountries } from "../../data/countries";
 import { getStatesForCountry, getCitiesForState } from "../../data/locations";
 
+export interface OnboardingFormData {
+  displayName: string;
+  dateOfBirth: string;
+  heightCm: number;
+  nationality: string;
+  country: string;
+  state: string;
+  city: string;
+  religion: string;
+  languagesSpoken: string[];
+  gender: string;
+  orientation: string;
+  pronouns: string;
+  outnessStatus: string;
+  maritalStatus: string;
+  education: string;
+  degree: string;
+  sector: string;
+  profession: string;
+  annualIncome: string;
+  photos: string[];
+  photoVisibility: string;
+  bio: string;
+  diet: string;
+  drinking: string;
+  smoking: string;
+  hobbies: string[];
+  ghostModeEnabled: boolean;
+  preferredGenders: string[];
+  preferredOrientations: string[];
+  minAge: number;
+  maxAge: number;
+  acceptableOutness: string[];
+}
+
 export const OnboardingWizard: React.FC = () => {
   const navigate = useNavigate();
   const { fetchProfile, user, isAuthenticated } = useAuthStore();
-  const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Form State
-  const [formData, setFormData] = useState({
+  // Default Form State
+  const initialFormData: OnboardingFormData = {
     // Step 1: About You
     displayName: "",
     dateOfBirth: "",
@@ -43,7 +77,7 @@ export const OnboardingWizard: React.FC = () => {
     state: "",
     city: "",
     religion: "",
-    languagesSpoken: ["English"] as string[],
+    languagesSpoken: ["English"],
 
     // Step 2: Identity
     gender: "",
@@ -62,7 +96,7 @@ export const OnboardingWizard: React.FC = () => {
     annualIncome: "",
 
     // Step 5: Upload Photos
-    photos: [] as string[],
+    photos: [],
     photoVisibility: "MUTUAL_MATCHES_ONLY",
 
     // Step 6: Bio
@@ -72,35 +106,79 @@ export const OnboardingWizard: React.FC = () => {
     diet: "Vegetarian",
     drinking: "Non-drinker",
     smoking: "Non-smoker",
-    hobbies: [] as string[],
+    hobbies: [],
 
     // Privacy (retained from system)
     ghostModeEnabled: false,
 
     // Partner Preferences (Looking for)
-    preferredGenders: ["MAN"] as string[],
-    preferredOrientations: ["GAY"] as string[],
+    preferredGenders: ["MAN"],
+    preferredOrientations: ["GAY"],
     minAge: 22,
     maxAge: 32,
-    acceptableOutness: ["DISCREET_NOT_OUT", "OUT_TO_SELECT_FEW", "OUT_TO_ALL"] as string[],
-  });
+    acceptableOutness: ["DISCREET_NOT_OUT", "OUT_TO_SELECT_FEW", "OUT_TO_ALL"],
+  };
 
-  // Pull initial preferences from landing page hero if available
-  useEffect(() => {
+  const storageKey = user?.id ? `everpride_onboarding_draft_${user.id}` : "everpride_onboarding_draft";
+
+  // Form State initialized from localStorage draft if present
+  const [formData, setFormData] = useState<OnboardingFormData>(() => {
     try {
-      const heroPref = localStorage.getItem("everpride_hero_preferences");
-      if (heroPref) {
-        const parsed = JSON.parse(heroPref);
-        setFormData((prev) => ({
-          ...prev,
-          preferredGenders: [parsed.gender || "MAN"],
-          preferredOrientations: [parsed.orientation || "GAY"],
-          minAge: parsed.minAge || 22,
-          maxAge: parsed.maxAge || 32,
-        }));
+      const saved = localStorage.getItem(user?.id ? `everpride_onboarding_draft_${user.id}` : "everpride_onboarding_draft");
+      if (saved) {
+        return { ...initialFormData, ...JSON.parse(saved) };
       }
     } catch { }
-  }, []);
+    return initialFormData;
+  });
+
+  // Step initialized from localStorage if present
+  const [step, setStep] = useState<number>(() => {
+    try {
+      const key = user?.id ? `everpride_onboarding_step_${user.id}` : "everpride_onboarding_step";
+      const savedStep = localStorage.getItem(key);
+      if (savedStep) {
+        const parsed = parseInt(savedStep, 10);
+        if (parsed >= 1 && parsed <= 7) return parsed;
+      }
+    } catch { }
+    return 1;
+  });
+
+  // Auto-save form data changes to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(formData));
+    } catch { }
+  }, [formData, storageKey]);
+
+  // Auto-save step changes to localStorage
+  useEffect(() => {
+    try {
+      const stepKey = user?.id ? `everpride_onboarding_step_${user.id}` : "everpride_onboarding_step";
+      localStorage.setItem(stepKey, step.toString());
+    } catch { }
+  }, [step, user?.id]);
+
+  // Pull initial preferences from landing page hero if available and no draft saved
+  useEffect(() => {
+    try {
+      const savedDraft = localStorage.getItem(storageKey);
+      if (!savedDraft) {
+        const heroPref = localStorage.getItem("everpride_hero_preferences");
+        if (heroPref) {
+          const parsed = JSON.parse(heroPref);
+          setFormData((prev) => ({
+            ...prev,
+            preferredGenders: [parsed.gender || "MAN"],
+            preferredOrientations: [parsed.orientation || "GAY"],
+            minAge: parsed.minAge || 22,
+            maxAge: parsed.maxAge || 32,
+          }));
+        }
+      }
+    } catch { }
+  }, [storageKey]);
 
   const totalSteps = 7;
   const progressPercent = Math.round((step / totalSteps) * 100);
@@ -313,6 +391,10 @@ export const OnboardingWizard: React.FC = () => {
       await api.post("/profiles", payload);
       await fetchProfile();
       localStorage.removeItem("everpride_hero_preferences");
+      localStorage.removeItem(storageKey);
+      localStorage.removeItem(user?.id ? `everpride_onboarding_step_${user.id}` : "everpride_onboarding_step");
+      localStorage.removeItem("everpride_onboarding_draft");
+      localStorage.removeItem("everpride_onboarding_step");
       navigate("/discover");
     } catch (err: any) {
       setError(err.response?.data?.message || "Failed to complete onboarding. Please check your details.");
