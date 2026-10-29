@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { allCountries } from "../../data/countries";
 import { getStatesForCountry, getCitiesForState } from "../../data/locations";
+import { HOBBY_CATEGORIES } from "../../data/hobbies";
 
 export interface OnboardingFormData {
   displayName: string;
@@ -1122,83 +1123,67 @@ export const OnboardingWizard: React.FC = () => {
               </div>
             </div>
 
-            {/* Hobbies / Interests - Atomic, Individual Hobbies */}
+            {/* Hobbies / Interests - Grouped by Category */}
             <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                  Hobbies & Interests
-                </label>
-                <span className="text-[11px] text-slate-400">
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                    Hobbies & Interests
+                  </label>
+                  <p className="text-[11px] text-slate-500">
+                    Select the activities and passions that best describe you.
+                  </p>
+                </div>
+                <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-brand-50 text-brand-700 border border-brand-200">
                   {formData.hobbies.length} selected
                 </span>
               </div>
-              <div className="flex flex-wrap gap-2 p-1.5 border border-slate-100 rounded-2xl bg-slate-50/50">
-                {[
-                  "Acting",
-                  "Astrology",
-                  "Audiobooks",
-                  "Baking",
-                  "Board Games",
-                  "Camping",
-                  "Chess",
-                  "Cinema",
-                  "Coding",
-                  "Coffee",
-                  "Cooking",
-                  "Crafting",
-                  "Cycling",
-                  "Dancing",
-                  "Esports",
-                  "Fashion",
-                  "Filmmaking",
-                  "Fitness",
-                  "Gardening",
-                  "Gym",
-                  "Hiking",
-                  "Journaling",
-                  "Live Concerts",
-                  "Meditation",
-                  "Mixology",
-                  "Museums",
-                  "Music",
-                  "Painting",
-                  "Pets",
-                  "Photography",
-                  "Plant Care",
-                  "Podcasts",
-                  "Poetry",
-                  "Puzzles",
-                  "Queer Art",
-                  "Reading",
-                  "Road Trips",
-                  "Running",
-                  "Singing",
-                  "Stand-up Comedy",
-                  "Swimming",
-                  "Tarot",
-                  "Theatre",
-                  "Travel",
-                  "Video Games",
-                  "Volunteering",
-                  "Water Sports",
-                  "Wildlife",
-                  "Wine Tasting",
-                  "Writing",
-                  "Yoga",
-                ].map((hobby) => {
-                  const selected = formData.hobbies.includes(hobby);
+
+              <div className="space-y-4">
+                {HOBBY_CATEGORIES.map((cat) => {
+                  const categorySelectedCount = cat.hobbies.filter((h) =>
+                    formData.hobbies.includes(h)
+                  ).length;
+
                   return (
-                    <button
-                      type="button"
-                      key={hobby}
-                      onClick={() => toggleArrayItem("hobbies", hobby)}
-                      className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all cursor-pointer ${selected
-                        ? "bg-pink-600 text-white border-pink-600 shadow-sm"
-                        : "bg-white text-slate-700 border-slate-200 hover:border-slate-300"
-                        }`}
+                    <div
+                      key={cat.category}
+                      className="p-3.5 rounded-2xl border border-slate-200 bg-slate-50/40 hover:bg-slate-50/80 transition-colors"
                     >
-                      {hobby}
-                    </button>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-xs font-bold text-slate-800">
+                          {cat.category}
+                        </span>
+                        {categorySelectedCount > 0 && (
+                          <span className="text-[10px] font-bold text-brand-600 bg-brand-50 px-2 py-0.5 rounded-full border border-brand-200">
+                            {categorySelectedCount} selected
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[10px] text-slate-500 mb-2.5">
+                        {cat.description}
+                      </p>
+
+                      <div className="flex flex-wrap gap-1.5">
+                        {cat.hobbies.map((hobby) => {
+                          const selected = formData.hobbies.includes(hobby);
+                          return (
+                            <button
+                              type="button"
+                              key={hobby}
+                              onClick={() => toggleArrayItem("hobbies", hobby)}
+                              className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all cursor-pointer ${
+                                selected
+                                  ? "bg-brand-600 text-white border-brand-600 shadow-xs"
+                                  : "bg-white text-slate-700 border-slate-200 hover:border-brand-300 hover:text-brand-600"
+                              }`}
+                            >
+                              {hobby}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
                   );
                 })}
               </div>
