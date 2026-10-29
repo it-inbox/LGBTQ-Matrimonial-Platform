@@ -189,9 +189,16 @@ export const MemberProfileDetailPage: React.FC = () => {
             <div className="max-w-md w-full p-8 text-center bg-white rounded-3xl border border-slate-200 shadow-sm">
               <ShieldAlert className="w-12 h-12 text-rose-500 mx-auto mb-3" />
               <h2 className="text-lg font-bold text-slate-800">Profile Not Available</h2>
-              <p className="text-xs text-slate-500 mt-1 mb-6">
+              <p className="text-xs text-slate-500 mt-1 mb-2">
                 This profile might be hidden, set to private, or does not exist.
               </p>
+              {error && (
+                <div className="mb-6 p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-[11px] font-mono break-all text-left">
+                  <p className="font-bold">Error Info:</p>
+                  <p>{(error as any)?.response?.data?.message || (error as any)?.message || String(error)}</p>
+                  {(error as any)?.response?.status && <p>Status: {(error as any)?.response?.status}</p>}
+                </div>
+              )}
               <button
                 type="button"
                 onClick={() => navigate(-1)}
