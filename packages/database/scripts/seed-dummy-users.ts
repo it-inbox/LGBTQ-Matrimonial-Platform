@@ -109,9 +109,14 @@ async function runSeeder() {
       const diet = getRandomItem(DIETS);
       const hobbiesList = getRandomSubset(HOBBIES, 4);
 
-      // 30% photo protected (blurred)
-      const isProtected = Math.random() < 0.3;
-      const photoVisibility = isProtected ? "REQUEST_REQUIRED" : "MUTUAL_MATCHES_ONLY";
+      // Photo visibility: 45% ALL_MEMBERS (unblurred/public), 35% MUTUAL_MATCHES_ONLY, 20% REQUEST_REQUIRED
+      const photoRand = Math.random();
+      const photoVisibility =
+        photoRand < 0.45
+          ? "ALL_MEMBERS"
+          : photoRand < 0.80
+          ? "MUTUAL_MATCHES_ONLY"
+          : "REQUEST_REQUIRED";
       const samplePhoto = getRandomItem(PHOTO_URLS);
 
       // User SQL Row
