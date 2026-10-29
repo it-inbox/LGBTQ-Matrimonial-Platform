@@ -10,12 +10,14 @@
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:seed": "pnpm dlx tsx prisma/seed.ts",
+    "db:seed:dummy": "pnpm dlx tsx scripts/seed-dummy-users.ts",
     "db:purge:dummy": "pnpm dlx tsx scripts/purge-dummy-users.ts",
     "db:studio": "prisma studio",
     "clean": "rimraf node_modules"
   },
   "dependencies": {
-    "@prisma/client": "^6.3.0"
+    "@prisma/client": "^6.3.0",
+    "country-state-city": "^3.2.1"
   },
   "devDependencies": {
     "@everpride/typescript-config": "workspace:*",

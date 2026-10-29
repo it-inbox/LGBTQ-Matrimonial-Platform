@@ -201,6 +201,9 @@ importers:
       '@prisma/client':
         specifier: ^6.3.0
         version: 6.19.3(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3)
+      country-state-city:
+        specifier: ^3.2.1
+        version: 3.2.1
     devDependencies:
       '@everpride/typescript-config':
         specifier: workspace:*
