@@ -715,17 +715,24 @@ export const MemberProfileDetailPage: React.FC = () => {
                 </span>
                 {profile.educations && profile.educations.length > 0 ? (
                   <div className="space-y-2 mt-1">
-                    {profile.educations.map((edu: any, i: number) => (
-                      <div key={i} className="text-xs">
-                        <span className="font-bold text-slate-900">{edu.degree}</span>
-                        {edu.major && <span className="text-slate-600 font-medium"> in {edu.major}</span>}
-                        {edu.institution && (
-                          <p className="text-[11px] text-slate-500 font-medium flex items-center gap-1 mt-0.5">
-                            <span>🏛️</span> {edu.institution}
-                          </p>
-                        )}
-                      </div>
-                    ))}
+                    {profile.educations.map((edu: any, i: number) => {
+                      const displayTitle = edu.degreeName || edu.degree;
+                      const hasDistinctQual = edu.qualification && edu.qualification !== displayTitle;
+                      return (
+                        <div key={i} className="text-xs">
+                          <span className="font-bold text-slate-900">{displayTitle}</span>
+                          {hasDistinctQual && (
+                            <span className="text-slate-500 font-medium text-[11px]"> ({edu.qualification})</span>
+                          )}
+                          {edu.major && <span className="text-slate-600 font-medium"> in {edu.major}</span>}
+                          {edu.institution && (
+                            <p className="text-[11px] text-slate-500 font-medium flex items-center gap-1 mt-0.5">
+                              <span>🏛️</span> {edu.institution}
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 ) : (
                   <div>

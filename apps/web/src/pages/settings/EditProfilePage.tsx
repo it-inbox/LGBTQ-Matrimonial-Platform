@@ -246,7 +246,14 @@ export const EditProfilePage: React.FC = () => {
     // Step 4: Education & Work
     education: "Bachelor's Degree",
     degree: "",
-    educations: [] as Array<{ degree: string; major?: string; institution: string; year?: number }>,
+    educations: [] as Array<{
+      qualification?: string;
+      degree: string;
+      degreeName?: string;
+      major?: string;
+      institution: string;
+      year?: number;
+    }>,
     sector: "Private / IT",
     profession: "",
 
@@ -310,18 +317,21 @@ export const EditProfilePage: React.FC = () => {
         degree: (profile as any).degree || "",
         educations: (profile as any).educations?.length
           ? (profile as any).educations.map((e: any) => ({
-              degree: e.degree || "Bachelor's Degree",
-              major: e.major || "",
-              institution: e.institution || "",
-              year: e.year || undefined,
-            }))
+            qualification: e.qualification || e.degree || "Bachelor's Degree",
+            degree: e.qualification || e.degree || "Bachelor's Degree",
+            degreeName: e.degreeName || (e.qualification && e.degree !== e.qualification ? e.degree : ""),
+            major: e.major || "",
+            institution: e.institution || "",
+            year: e.year || undefined,
+          }))
           : [
-              {
-                degree: (profile as any).education || "Bachelor's Degree",
-                major: (profile as any).degree || "",
-                institution: "",
-              },
-            ],
+            {
+              degree: (profile as any).education || "Bachelor's Degree",
+              degreeName: (profile as any).degree || "",
+              major: "",
+              institution: "",
+            },
+          ],
         sector: (profile as any).sector || "Private / IT",
         profession: (profile as any).profession || "",
 
@@ -582,11 +592,13 @@ export const EditProfilePage: React.FC = () => {
         state: formData.state.trim(),
         country: formData.country.trim() || formData.nationality.trim() || "India",
         education: (formData.educations?.[0]?.degree || formData.education || "").trim() || undefined,
-        degree: (formData.educations?.[0]?.major || formData.degree || "").trim() || undefined,
+        degree: (formData.educations?.[0]?.degreeName || formData.educations?.[0]?.major || formData.degree || "").trim() || undefined,
         educations: (formData.educations || [])
           .filter((e) => e.degree && e.institution.trim())
           .map((e) => ({
-            degree: e.degree.trim(),
+            qualification: e.degree.trim(),
+            degree: (e.degreeName || e.degree).trim(),
+            degreeName: e.degreeName?.trim() || null,
             major: e.major?.trim() || null,
             institution: e.institution.trim(),
             year: e.year ? Number(e.year) : null,
@@ -645,14 +657,14 @@ export const EditProfilePage: React.FC = () => {
                     type="button"
                     onClick={() => scrollToSection(tab.id)}
                     className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left text-xs font-bold transition-all cursor-pointer ${isActive
-                        ? "bg-rose-50 text-rose-600 shadow-xs border border-rose-100"
-                        : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                      ? "bg-rose-50 text-rose-600 shadow-xs border border-rose-100"
+                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
                       }`}
                   >
                     <div
                       className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${isActive
-                          ? "bg-rose-600 text-white"
-                          : "bg-slate-100 text-slate-500 group-hover:bg-slate-200"
+                        ? "bg-rose-600 text-white"
+                        : "bg-slate-100 text-slate-500 group-hover:bg-slate-200"
                         }`}
                     >
                       <Icon className="w-3.5 h-3.5" />
@@ -851,8 +863,8 @@ export const EditProfilePage: React.FC = () => {
                           key={lang}
                           onClick={() => toggleArrayItem("languagesSpoken", lang)}
                           className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all cursor-pointer ${selected
-                              ? "bg-brand-600 text-white border-brand-600 shadow-sm"
-                              : "bg-white text-slate-700 border-slate-200 hover:border-slate-300"
+                            ? "bg-brand-600 text-white border-brand-600 shadow-sm"
+                            : "bg-white text-slate-700 border-slate-200 hover:border-slate-300"
                             }`}
                         >
                           {lang}
@@ -954,8 +966,8 @@ export const EditProfilePage: React.FC = () => {
                     key={status.id}
                     onClick={() => handleChange("maritalStatus", status.id)}
                     className={`block p-3.5 rounded-xl border cursor-pointer transition-all ${formData.maritalStatus === status.id
-                        ? "border-brand-500 bg-brand-50/50 shadow-sm"
-                        : "border-slate-200 hover:border-slate-300"
+                      ? "border-brand-500 bg-brand-50/50 shadow-sm"
+                      : "border-slate-200 hover:border-slate-300"
                       }`}
                   >
                     <div className="flex items-center justify-between">
@@ -1033,7 +1045,7 @@ export const EditProfilePage: React.FC = () => {
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                           <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">
-                            Qualification / Degree <span className="text-rose-500">*</span>
+                            Qualification <span className="text-rose-500">*</span>
                           </label>
                           <select
                             value={edu.degree}
@@ -1041,9 +1053,9 @@ export const EditProfilePage: React.FC = () => {
                             className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:border-brand-500 font-medium"
                           >
                             <option value="Doctorate / Ph.D">Doctorate / Ph.D</option>
-                            <option value="Master's Degree">Master's Degree (MBA, MTech, MS, etc.)</option>
-                            <option value="Bachelor's Degree">Bachelor's Degree (BTech, BA, BSc, etc.)</option>
-                            <option value="Diploma">Diploma / Associate Degree</option>
+                            <option value="Master's Degree">Master's Degree</option>
+                            <option value="Bachelor's Degree">Bachelor's Degree</option>
+                            <option value="Diploma">Diploma</option>
                             <option value="High School">High School</option>
                             <option value="Other">Other</option>
                           </select>
@@ -1051,7 +1063,7 @@ export const EditProfilePage: React.FC = () => {
 
                         <div>
                           <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">
-                            College / Institute / University <span className="text-rose-500">*</span>
+                            Institute <span className="text-rose-500">*</span>
                           </label>
                           <input
                             type="text"
@@ -1061,6 +1073,21 @@ export const EditProfilePage: React.FC = () => {
                             className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:border-brand-500"
                           />
                         </div>
+
+                        {edu.degree !== "High School" && (
+                          <div className="sm:col-span-2">
+                            <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">
+                              Degree <span className="text-rose-500">*</span>
+                            </label>
+                            <input
+                              type="text"
+                              placeholder="e.g. B.Tech, B.Sc, B.Com, MBA, M.Tech, MBBS, Ph.D"
+                              value={edu.degreeName || ""}
+                              onChange={(e) => handleUpdateEducation(idx, "degreeName", e.target.value)}
+                              className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:border-brand-500"
+                            />
+                          </div>
+                        )}
 
                         <div className="sm:col-span-2">
                           <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">
@@ -1158,8 +1185,8 @@ export const EditProfilePage: React.FC = () => {
                         key={dietOption}
                         onClick={() => handleChange("diet", dietOption)}
                         className={`py-2 px-3 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${formData.diet === dietOption
-                            ? "bg-brand-600 text-white border-brand-600 shadow-sm"
-                            : "bg-slate-50 text-slate-700 border-slate-200 hover:border-slate-300"
+                          ? "bg-brand-600 text-white border-brand-600 shadow-sm"
+                          : "bg-slate-50 text-slate-700 border-slate-200 hover:border-slate-300"
                           }`}
                       >
                         {dietOption}
@@ -1184,8 +1211,8 @@ export const EditProfilePage: React.FC = () => {
                         key={drinkOption.id}
                         onClick={() => handleChange("drinking", drinkOption.id)}
                         className={`py-2 px-3 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${formData.drinking === drinkOption.id
-                            ? "bg-brand-600 text-white border-brand-600 shadow-sm"
-                            : "bg-slate-50 text-slate-700 border-slate-200 hover:border-slate-300"
+                          ? "bg-brand-600 text-white border-brand-600 shadow-sm"
+                          : "bg-slate-50 text-slate-700 border-slate-200 hover:border-slate-300"
                           }`}
                       >
                         {drinkOption.label}
@@ -1211,8 +1238,8 @@ export const EditProfilePage: React.FC = () => {
                         key={smokeOption.id}
                         onClick={() => handleChange("smoking", smokeOption.id)}
                         className={`py-2 px-3 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${formData.smoking === smokeOption.id
-                            ? "bg-brand-600 text-white border-brand-600 shadow-sm"
-                            : "bg-slate-50 text-slate-700 border-slate-200 hover:border-slate-300"
+                          ? "bg-brand-600 text-white border-brand-600 shadow-sm"
+                          : "bg-slate-50 text-slate-700 border-slate-200 hover:border-slate-300"
                           }`}
                       >
                         {smokeOption.label}
@@ -1240,8 +1267,8 @@ export const EditProfilePage: React.FC = () => {
                           key={hobby}
                           onClick={() => toggleArrayItem("hobbies", hobby)}
                           className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all cursor-pointer ${selected
-                              ? "bg-pink-600 text-white border-pink-600 shadow-sm"
-                              : "bg-white text-slate-700 border-slate-200 hover:border-slate-300"
+                            ? "bg-pink-600 text-white border-pink-600 shadow-sm"
+                            : "bg-white text-slate-700 border-slate-200 hover:border-slate-300"
                             }`}
                         >
                           {hobby}
@@ -1290,8 +1317,8 @@ export const EditProfilePage: React.FC = () => {
                           key={item.id}
                           onClick={() => toggleArrayItem("preferredGenders", item.id)}
                           className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all cursor-pointer ${selected
-                              ? "bg-brand-600 text-white border-brand-600 shadow-sm"
-                              : "bg-slate-50 text-slate-700 border-slate-200 hover:border-slate-300"
+                            ? "bg-brand-600 text-white border-brand-600 shadow-sm"
+                            : "bg-slate-50 text-slate-700 border-slate-200 hover:border-slate-300"
                             }`}
                         >
                           {item.label}
@@ -1323,8 +1350,8 @@ export const EditProfilePage: React.FC = () => {
                           key={item.id}
                           onClick={() => toggleArrayItem("preferredOrientations", item.id)}
                           className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all cursor-pointer ${selected
-                              ? "bg-pink-600 text-white border-pink-600 shadow-sm"
-                              : "bg-slate-50 text-slate-700 border-slate-200 hover:border-slate-300"
+                            ? "bg-pink-600 text-white border-pink-600 shadow-sm"
+                            : "bg-slate-50 text-slate-700 border-slate-200 hover:border-slate-300"
                             }`}
                         >
                           {item.label}
@@ -1510,8 +1537,8 @@ export const EditProfilePage: React.FC = () => {
                         key={tier.id}
                         onClick={() => handleChange("photoVisibility", tier.id)}
                         className={`block p-3.5 rounded-xl border cursor-pointer transition-all ${formData.photoVisibility === tier.id
-                            ? "border-brand-500 bg-brand-50/50"
-                            : "border-slate-200 hover:border-slate-300"
+                          ? "border-brand-500 bg-brand-50/50"
+                          : "border-slate-200 hover:border-slate-300"
                           }`}
                       >
                         <div className="flex items-center justify-between">
@@ -1575,14 +1602,14 @@ export const EditProfilePage: React.FC = () => {
           role="status"
           aria-live="polite"
           className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-2xl shadow-2xl border text-xs font-semibold backdrop-blur-md transition-all duration-300 animate-slide-up max-w-sm ${toast.type === "success"
-              ? "bg-emerald-950/90 text-emerald-100 border-emerald-500/40 shadow-emerald-950/20"
-              : "bg-rose-950/90 text-rose-100 border-rose-500/40 shadow-rose-950/20"
+            ? "bg-emerald-950/90 text-emerald-100 border-emerald-500/40 shadow-emerald-950/20"
+            : "bg-rose-950/90 text-rose-100 border-rose-500/40 shadow-rose-950/20"
             }`}
         >
           <div
             className={`w-7 h-7 rounded-xl flex items-center justify-center shrink-0 ${toast.type === "success"
-                ? "bg-emerald-500 text-white"
-                : "bg-rose-500 text-white"
+              ? "bg-emerald-500 text-white"
+              : "bg-rose-500 text-white"
               }`}
           >
             {toast.type === "success" ? (

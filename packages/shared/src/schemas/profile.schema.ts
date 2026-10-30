@@ -39,7 +39,9 @@ export const createProfileSchema = z.object({
   educations: z
     .array(
       z.object({
+        qualification: z.string().optional().nullable(),
         degree: z.string().min(1, "Degree/Qualification is required"),
+        degreeName: z.string().optional().nullable(),
         major: z.string().optional().nullable(),
         institution: z.string().min(1, "Institution/College is required"),
         year: z.number().int().optional().nullable(),

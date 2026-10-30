@@ -192,13 +192,15 @@ model Profile {
 }
 
 model ProfileEducation {
-  id           String   @id @default(uuid())
-  profileId    String   @map("profile_id")
-  degree       String   // e.g. "Bachelor's Degree", "Master's Degree", "Doctorate / Ph.D"
-  major        String?  // e.g. "Computer Science", "Economics"
-  institution  String   // e.g. "Stanford University", "IIT Delhi"
-  year         Int?     // Graduation year (optional)
-  createdAt    DateTime @default(now()) @map("created_at")
+  id            String   @id @default(uuid())
+  profileId     String   @map("profile_id")
+  qualification String?  // e.g. "Bachelor's Degree", "Master's Degree", "Doctorate / Ph.D", "High School"
+  degree        String   // e.g. "B.Tech", "MBA", "M.Sc", or qualification label for backward compatibility
+  degreeName    String?  @map("degree_name") // specific degree name e.g. "B.Tech", "MBA"
+  major         String?  // e.g. "Computer Science", "Economics"
+  institution   String   // e.g. "Stanford University", "IIT Delhi"
+  year          Int?     // Graduation year (optional)
+  createdAt     DateTime @default(now()) @map("created_at")
 
   profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
 

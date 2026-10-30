@@ -225,7 +225,9 @@ export class ProfilesService {
         ...(data.educations && data.educations.length > 0 && {
           educations: {
             create: data.educations.map((edu) => ({
-              degree: edu.degree,
+              qualification: edu.qualification || edu.degree,
+              degree: edu.degreeName || edu.degree,
+              degreeName: edu.degreeName || null,
               major: edu.major || null,
               institution: edu.institution,
               year: edu.year || null,
@@ -294,7 +296,9 @@ export class ProfilesService {
         await this.prisma.client.profileEducation.createMany({
           data: educations.map((edu) => ({
             profileId: profile.id,
-            degree: edu.degree,
+            qualification: edu.qualification || edu.degree,
+            degree: edu.degreeName || edu.degree,
+            degreeName: edu.degreeName || null,
             major: edu.major || null,
             institution: edu.institution,
             year: edu.year || null,

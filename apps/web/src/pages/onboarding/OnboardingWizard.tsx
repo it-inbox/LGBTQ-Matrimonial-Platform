@@ -29,7 +29,9 @@ import { getStatesForCountry, getCitiesForState } from "../../data/locations";
 import { HOBBIES_LIST } from "../../data/hobbies";
 
 export interface EducationEntry {
+  qualification?: string;
   degree: string;
+  degreeName?: string;
   major?: string;
   institution: string;
   year?: number;
@@ -144,7 +146,19 @@ export const OnboardingWizard: React.FC = () => {
     try {
       const saved = localStorage.getItem(user?.id ? `everpride_onboarding_draft_${user.id}` : "everpride_onboarding_draft");
       if (saved) {
-        return { ...initialFormData, ...JSON.parse(saved) };
+        const parsed = JSON.parse(saved);
+        // Clean legacy cached strings with parenthetical examples
+        if (parsed.educations && Array.isArray(parsed.educations)) {
+          parsed.educations = parsed.educations.map((edu: any) => ({
+            ...edu,
+            degree: (edu.degree || "")
+              .replace(/\s*\(MBA.*?\)/i, "")
+              .replace(/\s*\(BTech.*?\)/i, "")
+              .replace(/\s*\/\s*Associate Degree/i, "")
+              .trim() || "Bachelor's Degree",
+          }));
+        }
+        return { ...initialFormData, ...parsed };
       }
     } catch { }
     return initialFormData;
@@ -157,7 +171,7 @@ export const OnboardingWizard: React.FC = () => {
       const savedStep = localStorage.getItem(key);
       if (savedStep) {
         const parsed = parseInt(savedStep, 10);
-        if (parsed >= 1 && parsed <= 7) return parsed;
+        if (parsed >= 1 && parsed <= 8) return parsed;
       }
     } catch { }
     return 1;
@@ -198,14 +212,15 @@ export const OnboardingWizard: React.FC = () => {
     } catch { }
   }, [storageKey]);
 
-  const totalSteps = 7;
+  const totalSteps = 8;
   const progressPercent = Math.round((step / totalSteps) * 100);
 
   const stepTitles = [
     "About You",
     "Identity",
     "Marital Status",
-    "Education & Work",
+    "Education",
+    "Work & Career",
     "Upload Photos",
     "Bio / About You",
     "More About You (Lifestyle)",
@@ -312,8 +327,8 @@ export const OnboardingWizard: React.FC = () => {
       }
     }
 
-    // Step 5: Photos
-    if (step === 5) {
+    // Step 6: Photos
+    if (step === 6) {
       // Photo uploading can be skipped or added, but privacy tier must be set
     }
 
@@ -421,11 +436,13 @@ export const OnboardingWizard: React.FC = () => {
         state: formData.state.trim(),
         country: formData.country.trim() || "India",
         education: (formData.educations?.[0]?.degree || formData.education || "").trim() || undefined,
-        degree: (formData.educations?.[0]?.major || formData.degree || "").trim() || undefined,
+        degree: (formData.educations?.[0]?.degreeName || formData.educations?.[0]?.major || formData.degree || "").trim() || undefined,
         educations: (formData.educations || [])
           .filter((e) => e.degree && e.institution.trim())
           .map((e) => ({
-            degree: e.degree.trim(),
+            qualification: e.degree.trim(),
+            degree: (e.degreeName || e.degree).trim(),
+            degreeName: e.degreeName?.trim() || null,
             major: e.major?.trim() || null,
             institution: e.institution.trim(),
             year: e.year ? Number(e.year) : null,
@@ -879,16 +896,16 @@ export const OnboardingWizard: React.FC = () => {
           </div>
         )}
 
-        {/* ── STEP 4: EDUCATION & WORK ── */}
+        {/* ── STEP 4: EDUCATION ── */}
         {step === 4 && (
           <div className="space-y-6">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center">
-                <Briefcase className="w-5 h-5" />
+              <div className="w-10 h-10 rounded-2xl bg-indigo-100 text-indigo-600 flex items-center justify-center">
+                <GraduationCap className="w-5 h-5" />
               </div>
               <div>
-                <h2 className="text-xl font-black text-slate-900">Education & Work</h2>
-                <p className="text-xs text-slate-500">Your academic qualifications and career path.</p>
+                <h2 className="text-xl font-black text-slate-900">Education</h2>
+                <p className="text-xs text-slate-500">Your educational background, degrees, and institutions.</p>
               </div>
             </div>
 
@@ -939,7 +956,7 @@ export const OnboardingWizard: React.FC = () => {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
                         <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">
-                          Qualification / Degree <span className="text-rose-500">*</span>
+                          Qualification <span className="text-rose-500">*</span>
                         </label>
                         <select
                           value={edu.degree}
@@ -947,9 +964,9 @@ export const OnboardingWizard: React.FC = () => {
                           className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:border-brand-500 font-medium"
                         >
                           <option value="Doctorate / Ph.D">Doctorate / Ph.D</option>
-                          <option value="Master's Degree">Master's Degree (MBA, MTech, MS, etc.)</option>
-                          <option value="Bachelor's Degree">Bachelor's Degree (BTech, BA, BSc, etc.)</option>
-                          <option value="Diploma">Diploma / Associate Degree</option>
+                          <option value="Master's Degree">Master's Degree</option>
+                          <option value="Bachelor's Degree">Bachelor's Degree</option>
+                          <option value="Diploma">Diploma</option>
                           <option value="High School">High School</option>
                           <option value="Other">Other</option>
                         </select>
@@ -957,7 +974,7 @@ export const OnboardingWizard: React.FC = () => {
 
                       <div>
                         <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">
-                          College / Institute / University <span className="text-rose-500">*</span>
+                          Institute <span className="text-rose-500">*</span>
                         </label>
                         <input
                           type="text"
@@ -967,6 +984,21 @@ export const OnboardingWizard: React.FC = () => {
                           className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:border-brand-500"
                         />
                       </div>
+
+                      {edu.degree !== "High School" && (
+                        <div className="sm:col-span-2">
+                          <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">
+                            Degree <span className="text-rose-500">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="e.g. B.Tech, B.Sc, B.Com, MBA, M.Tech, MBBS, Ph.D"
+                            value={edu.degreeName || ""}
+                            onChange={(e) => handleUpdateEducation(idx, "degreeName", e.target.value)}
+                            className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:border-brand-500"
+                          />
+                        </div>
+                      )}
 
                       <div className="sm:col-span-2">
                         <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">
@@ -983,6 +1015,21 @@ export const OnboardingWizard: React.FC = () => {
                     </div>
                   </div>
                 ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── STEP 5: WORK & CAREER ── */}
+        {step === 5 && (
+          <div className="space-y-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center">
+                <Briefcase className="w-5 h-5" />
+              </div>
+              <div>
+                <h2 className="text-xl font-black text-slate-900">Work & Career</h2>
+                <p className="text-xs text-slate-500">Your professional occupation and industry sector.</p>
               </div>
             </div>
 
@@ -1025,8 +1072,8 @@ export const OnboardingWizard: React.FC = () => {
           </div>
         )}
 
-        {/* ── STEP 5: UPLOAD PHOTOS ── */}
-        {step === 5 && (
+        {/* ── STEP 6: UPLOAD PHOTOS ── */}
+        {step === 6 && (
           <div className="space-y-6">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
@@ -1123,8 +1170,8 @@ export const OnboardingWizard: React.FC = () => {
           </div>
         )}
 
-        {/* ── STEP 6: BIO ── */}
-        {step === 6 && (
+        {/* ── STEP 7: BIO ── */}
+        {step === 7 && (
           <div className="space-y-6">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-2xl bg-indigo-100 text-indigo-600 flex items-center justify-center">
@@ -1156,8 +1203,8 @@ export const OnboardingWizard: React.FC = () => {
           </div>
         )}
 
-        {/* ── STEP 7: MORE ABOUT YOU (LIFESTYLE) ── */}
-        {step === 7 && (
+        {/* ── STEP 8: MORE ABOUT YOU (LIFESTYLE) ── */}
+        {step === 8 && (
           <div className="space-y-6">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-2xl bg-orange-100 text-orange-600 flex items-center justify-center">
@@ -1269,8 +1316,8 @@ export const OnboardingWizard: React.FC = () => {
                       key={hobby}
                       onClick={() => toggleArrayItem("hobbies", hobby)}
                       className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all cursor-pointer ${selected
-                          ? "bg-brand-600 text-white border-brand-600 shadow-xs"
-                          : "bg-white text-slate-700 border-slate-200 hover:border-brand-300 hover:text-brand-600"
+                        ? "bg-brand-600 text-white border-brand-600 shadow-xs"
+                        : "bg-white text-slate-700 border-slate-200 hover:border-brand-300 hover:text-brand-600"
                         }`}
                     >
                       {hobby}
