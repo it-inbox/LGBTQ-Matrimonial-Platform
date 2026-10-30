@@ -23,6 +23,9 @@ import {
   Plus,
   Trash2,
   GraduationCap,
+  Lock,
+  Eye,
+  Users,
 } from "lucide-react";
 import { allCountries } from "../../data/countries";
 import { getStatesForCountry, getCitiesForState } from "../../data/locations";
@@ -171,7 +174,7 @@ export const OnboardingWizard: React.FC = () => {
       const savedStep = localStorage.getItem(key);
       if (savedStep) {
         const parsed = parseInt(savedStep, 10);
-        if (parsed >= 1 && parsed <= 8) return parsed;
+        if (parsed >= 1 && parsed <= 9) return parsed;
       }
     } catch { }
     return 1;
@@ -212,7 +215,7 @@ export const OnboardingWizard: React.FC = () => {
     } catch { }
   }, [storageKey]);
 
-  const totalSteps = 8;
+  const totalSteps = 9;
   const progressPercent = Math.round((step / totalSteps) * 100);
 
   const stepTitles = [
@@ -221,6 +224,7 @@ export const OnboardingWizard: React.FC = () => {
     "Marital Status",
     "Education",
     "Work & Career",
+    "Photo Privacy Shield",
     "Upload Photos",
     "Bio / About You",
     "More About You (Lifestyle)",
@@ -327,9 +331,17 @@ export const OnboardingWizard: React.FC = () => {
       }
     }
 
-    // Step 6: Photos
+    // Step 6: Photo Privacy Shield Setting (defaults to MUTUAL_MATCHES_ONLY)
     if (step === 6) {
-      // Photo uploading can be skipped or added, but privacy tier must be set
+      if (!formData.photoVisibility) {
+        setError("Please select a Photo Privacy Shield setting.");
+        return false;
+      }
+    }
+
+    // Step 7: Upload Photos (optional to skip, but must be valid if uploaded)
+    if (step === 7) {
+      // Photo uploading can be optional or populated
     }
 
     return true;
@@ -1072,19 +1084,208 @@ export const OnboardingWizard: React.FC = () => {
           </div>
         )}
 
-        {/* ── STEP 6: UPLOAD PHOTOS ── */}
+        {/* ── STEP 6: PHOTO PRIVACY SHIELD SETTING ── */}
         {step === 6 && (
+          <div className="space-y-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-brand-100 text-brand-600 flex items-center justify-center">
+                <Shield className="w-5 h-5" />
+              </div>
+              <div>
+                <h2 className="text-xl font-black text-slate-900">Photo Privacy Shield</h2>
+                <p className="text-xs text-slate-500">
+                  You are in complete control of who can see your photos on EverPride.
+                </p>
+              </div>
+            </div>
+
+            {/* Interactive Animated Simulation */}
+            <div className="rounded-2xl bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 p-4 sm:p-5 text-white border border-slate-800 shadow-lg relative overflow-hidden">
+              <div className="absolute -top-10 -right-10 w-40 h-40 bg-brand-500/15 rounded-full blur-2xl pointer-events-none" />
+
+              <div className="relative z-10 flex items-center gap-4 sm:gap-6">
+                {/* Visual Preview Card */}
+                <div className="w-28 sm:w-32 aspect-[3/4] rounded-xl overflow-hidden border border-white/20 bg-slate-800 relative shadow-md shrink-0">
+                  <img
+                    src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80"
+                    alt="Privacy Demo"
+                    className={`w-full h-full object-cover transition-all duration-500 ease-in-out ${
+                      formData.photoVisibility === "ALL_MEMBERS"
+                        ? "blur-0 scale-100"
+                        : "blur-lg scale-110 brightness-75"
+                    }`}
+                  />
+
+                  {formData.photoVisibility !== "ALL_MEMBERS" && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center p-2 text-center bg-black/40 backdrop-blur-xs">
+                      <div className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white mb-1 shadow border border-white/30">
+                        {formData.photoVisibility === "MUTUAL_MATCHES_ONLY" ? (
+                          <Heart className="w-4 h-4 text-pink-400 fill-pink-400" />
+                        ) : (
+                          <Lock className="w-4 h-4 text-amber-300" />
+                        )}
+                      </div>
+                      <span className="text-[10px] font-bold text-white">
+                        {formData.photoVisibility === "MUTUAL_MATCHES_ONLY" ? "Shielded" : "Locked"}
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-wider bg-black/70 backdrop-blur-md text-white border border-white/10 flex items-center gap-1">
+                    <span className="w-1 h-1 rounded-full bg-emerald-400 animate-ping" />
+                    <span>Live Preview</span>
+                  </div>
+                </div>
+
+                {/* Concise Summary */}
+                <div className="flex-1 min-w-0 space-y-1.5">
+                  <span className="text-[10px] font-bold tracking-wider uppercase text-brand-300">
+                    Active Protection
+                  </span>
+
+                  <h3 className="text-base sm:text-lg font-bold text-white truncate">
+                    {formData.photoVisibility === "MUTUAL_MATCHES_ONLY" && "Mutual Matches Only"}
+                    {formData.photoVisibility === "REQUEST_REQUIRED" && "Require My Approval"}
+                    {formData.photoVisibility === "ALL_MEMBERS" && "Visible to All Members"}
+                  </h3>
+
+                  <p className="text-xs text-slate-300 leading-snug">
+                    {formData.photoVisibility === "MUTUAL_MATCHES_ONLY" && (
+                      <>Photos stay blurred until <strong>both of you like each other</strong>. Safe & mutual.</>
+                    )}
+                    {formData.photoVisibility === "REQUEST_REQUIRED" && (
+                      <>Photos stay locked. Members must <strong>request access</strong> and get your direct approval.</>
+                    )}
+                    {formData.photoVisibility === "ALL_MEMBERS" && (
+                      <>Photos are <strong>visible immediately</strong> to all verified, logged-in members.</>
+                    )}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Concise Selection Cards */}
+            <div className="space-y-2.5">
+              {[
+                {
+                  id: "MUTUAL_MATCHES_ONLY",
+                  title: "Mutual Matches Only",
+                  badge: "Recommended",
+                  badgeColor: "bg-emerald-100 text-emerald-700 border-emerald-200",
+                  icon: Users,
+                  desc: "Photos unblur automatically only when interest is mutual.",
+                  example: "Stay blurred to strangers; unblurs once you both connect.",
+                },
+                {
+                  id: "REQUEST_REQUIRED",
+                  title: "Require My Approval",
+                  badge: "Maximum Privacy",
+                  badgeColor: "bg-indigo-100 text-indigo-700 border-indigo-200",
+                  icon: Lock,
+                  desc: "Photos remain locked until you accept individual requests.",
+                  example: "You review and grant photo access one member at a time.",
+                },
+                {
+                  id: "ALL_MEMBERS",
+                  title: "Visible to All Members",
+                  badge: "Open",
+                  badgeColor: "bg-amber-100 text-amber-700 border-amber-200",
+                  icon: Eye,
+                  desc: "Photos are clear to any verified member right away.",
+                  example: "Best for active discovery and direct matchmaking.",
+                },
+              ].map((tier) => {
+                const IconComponent = tier.icon;
+                const isSelected = formData.photoVisibility === tier.id;
+                return (
+                  <label
+                    key={tier.id}
+                    onClick={() => handleChange("photoVisibility", tier.id)}
+                    className={`block p-3.5 rounded-2xl border cursor-pointer transition-all ${
+                      isSelected
+                        ? "border-brand-600 bg-brand-50/40 shadow-sm"
+                        : "border-slate-200 hover:border-slate-300 bg-white"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div
+                          className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
+                            isSelected
+                              ? "bg-brand-600 text-white"
+                              : "bg-slate-100 text-slate-600"
+                          }`}
+                        >
+                          <IconComponent className="w-4 h-4" />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs sm:text-sm font-bold text-slate-900">{tier.title}</span>
+                            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md border ${tier.badgeColor}`}>
+                              {tier.badge}
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-slate-600 mt-0.5 leading-tight">
+                            {tier.desc} <span className="text-slate-400">({tier.example})</span>
+                          </p>
+                        </div>
+                      </div>
+
+                      <div
+                        className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${
+                          isSelected
+                            ? "border-brand-600 bg-brand-600 text-white"
+                            : "border-slate-300 bg-white"
+                        }`}
+                      >
+                        {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
+                      </div>
+                    </div>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* ── STEP 7: UPLOAD PHOTOS ── */}
+        {step === 7 && (
           <div className="space-y-6">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
                 <Camera className="w-5 h-5" />
               </div>
               <div>
-                <h2 className="text-xl font-black text-slate-900">Upload Photos & Privacy</h2>
+                <h2 className="text-xl font-black text-slate-900">Upload Photos</h2>
                 <p className="text-xs text-slate-500">
-                  Your photos are protected by EverPride's privacy blur shields.
+                  Add photos to your profile. They are protected by your chosen Privacy Shield.
                 </p>
               </div>
+            </div>
+
+            {/* Current Privacy Shield Status Indicator */}
+            <div className="flex items-center justify-between p-3.5 rounded-2xl bg-brand-50/70 border border-brand-200">
+              <div className="flex items-center gap-2.5">
+                <Shield className="w-5 h-5 text-brand-600 shrink-0" />
+                <div>
+                  <span className="text-xs font-bold text-brand-900 block">
+                    Protected by:{" "}
+                    {formData.photoVisibility === "MUTUAL_MATCHES_ONLY" && "Mutual Matches Only"}
+                    {formData.photoVisibility === "REQUEST_REQUIRED" && "Require My Approval"}
+                    {formData.photoVisibility === "ALL_MEMBERS" && "Visible to All Members"}
+                  </span>
+                  <span className="text-[11px] text-brand-700">
+                    Your photos will be blurred or locked in accordance with this setting.
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setStep(6)}
+                className="text-xs font-bold text-brand-600 hover:text-brand-800 underline underline-offset-2 shrink-0 cursor-pointer"
+              >
+                Change
+              </button>
             </div>
 
             {/* Photo Preview Grid */}
@@ -1125,53 +1326,14 @@ export const OnboardingWizard: React.FC = () => {
               )}
             </div>
 
-            {/* Photo Privacy Rule */}
-            <div className="pt-2">
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-                Photo Privacy Shield Setting
-              </label>
-              <div className="space-y-2.5">
-                {[
-                  {
-                    id: "MUTUAL_MATCHES_ONLY",
-                    title: "Mutual Matches Only (Recommended)",
-                    desc: "Photos unblur automatically only after both members accept each other's interest.",
-                  },
-                  {
-                    id: "REQUEST_REQUIRED",
-                    title: "Require My Approval",
-                    desc: "Photos remain blurred with a lock icon. Members must request access individually.",
-                  },
-                  {
-                    id: "ALL_MEMBERS",
-                    title: "Visible to All Members",
-                    desc: "Photos are clear to any signed-in verified member.",
-                  },
-                ].map((tier) => (
-                  <label
-                    key={tier.id}
-                    onClick={() => handleChange("photoVisibility", tier.id)}
-                    className={`block p-3 rounded-xl border cursor-pointer transition-all ${formData.photoVisibility === tier.id
-                      ? "border-brand-500 bg-brand-50/50"
-                      : "border-slate-200 hover:border-slate-300"
-                      }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-slate-900">{tier.title}</span>
-                      {formData.photoVisibility === tier.id && (
-                        <Check className="w-4 h-4 text-brand-600" />
-                      )}
-                    </div>
-                    <p className="text-[11px] text-slate-500 mt-0.5">{tier.desc}</p>
-                  </label>
-                ))}
-              </div>
-            </div>
+            <p className="text-xs text-slate-400">
+              Tip: You can upload up to 6 photos. The first photo will be your primary profile picture.
+            </p>
           </div>
         )}
 
-        {/* ── STEP 7: BIO ── */}
-        {step === 7 && (
+        {/* ── STEP 8: BIO ── */}
+        {step === 8 && (
           <div className="space-y-6">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-2xl bg-indigo-100 text-indigo-600 flex items-center justify-center">
@@ -1203,8 +1365,8 @@ export const OnboardingWizard: React.FC = () => {
           </div>
         )}
 
-        {/* ── STEP 8: MORE ABOUT YOU (LIFESTYLE) ── */}
-        {step === 8 && (
+        {/* ── STEP 9: MORE ABOUT YOU (LIFESTYLE) ── */}
+        {step === 9 && (
           <div className="space-y-6">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-2xl bg-orange-100 text-orange-600 flex items-center justify-center">

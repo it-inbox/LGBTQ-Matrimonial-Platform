@@ -150,7 +150,7 @@ const SECTION_TABS: SectionTab[] = [
     id: "demographics",
     label: "About & Demographics",
     icon: User,
-    description: "Name, DOB, height, location & beliefs",
+    description: "Name, height, location & languages",
   },
   {
     id: "identity",
@@ -468,21 +468,6 @@ export const EditProfilePage: React.FC = () => {
     });
   };
 
-  const handleAddSamplePhoto = () => {
-    const samplePhotos = [
-      "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80",
-      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80",
-      "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=600&q=80",
-      "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=600&q=80",
-      "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=600&q=80",
-      "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=600&q=80",
-    ];
-    const unused = samplePhotos.filter((p) => !formData.photos.includes(p));
-    const nextPhoto = unused.length > 0 ? unused[0] : samplePhotos[formData.photos.length % samplePhotos.length];
-    if (formData.photos.length < 6) {
-      handleChange("photos", [...formData.photos, nextPhoto]);
-    }
-  };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -581,10 +566,8 @@ export const EditProfilePage: React.FC = () => {
         orientation: formData.orientation,
         pronouns: formData.pronouns.trim() || undefined,
         outnessStatus: formData.outnessStatus,
-        dateOfBirth: formData.dateOfBirth || undefined,
         heightCm: formData.heightCm ? Number(formData.heightCm) : undefined,
         nationality: formData.nationality.trim() || undefined,
-        religion: formData.religion.trim() || undefined,
         motherTongue: formData.languagesSpoken[0] || "English",
         languagesSpoken: formData.languagesSpoken,
         maritalStatus: formData.maritalStatus,
@@ -730,7 +713,7 @@ export const EditProfilePage: React.FC = () => {
                   <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
                     About You & Demographics
                   </h2>
-                  <p className="text-[11px] text-slate-400">Basic personal information, location, and beliefs</p>
+                  <p className="text-[11px] text-slate-400">Basic personal information and location</p>
                 </div>
               </div>
 
@@ -748,19 +731,30 @@ export const EditProfilePage: React.FC = () => {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Input
-                    label="Date of Birth *"
-                    type="date"
-                    required
-                    value={formData.dateOfBirth}
-                    onChange={(e) => handleChange("dateOfBirth", e.target.value)}
-                  />
-
-                  <Input
                     label="Height (cm)"
                     type="number"
                     value={formData.heightCm}
                     onChange={(e) => handleChange("heightCm", parseInt(e.target.value) || 170)}
                   />
+
+                  {/* Read-only verification details (Date of Birth & Religion are permanent) */}
+                  <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200">
+                    <div className="text-xs">
+                      <span className="block font-bold text-slate-500 uppercase tracking-wider text-[10px]">
+                        Verified DOB & Beliefs
+                      </span>
+                      <p className="text-slate-700 font-medium text-xs mt-0.5">
+                        {formData.dateOfBirth
+                          ? new Date(formData.dateOfBirth).toLocaleDateString(undefined, {
+                              year: "numeric",
+                              month: "short",
+                              day: "numeric",
+                            })
+                          : "Set on signup"}{" "}
+                        {formData.religion ? `• ${formData.religion}` : ""}
+                      </p>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Nationality & State */}
@@ -805,8 +799,8 @@ export const EditProfilePage: React.FC = () => {
                   </Select>
                 </div>
 
-                {/* City & Religion */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* City */}
+                <div>
                   <Select
                     label="City *"
                     value={formData.city}
@@ -821,26 +815,6 @@ export const EditProfilePage: React.FC = () => {
                           {ct}
                         </option>
                       ))}
-                  </Select>
-
-                  <Select
-                    label="Religion / Beliefs"
-                    value={formData.religion}
-                    onChange={(e) => handleChange("religion", e.target.value)}
-                  >
-                    <option value="">Select</option>
-                    <option value="Christianity">Christianity</option>
-                    <option value="Islam">Islam</option>
-                    <option value="Hinduism">Hinduism</option>
-                    <option value="Buddhism">Buddhism</option>
-                    <option value="Folk Religion / Shinto / Taoism">Folk Religion / Shinto / Taoism</option>
-                    <option value="Sikhism">Sikhism</option>
-                    <option value="Judaism">Judaism</option>
-                    <option value="Jainism">Jainism</option>
-                    <option value="Baháʼí">Baháʼí</option>
-                    <option value="Spiritual but not religious">Spiritual but not religious</option>
-                    <option value="Atheist / Agnostic">Atheist / Agnostic</option>
-                    <option value="Other">Other</option>
                   </Select>
                 </div>
 
@@ -1476,22 +1450,10 @@ export const EditProfilePage: React.FC = () => {
                 </div>
 
                 {/* Quick Actions Bar */}
-                <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-100 text-xs">
+                <div className="pt-2 border-t border-slate-100 text-xs">
                   <p className="text-slate-500 text-[11px]">
                     Tip: Click <strong>"Make Primary"</strong> on any picture to set it as your main profile cover.
                   </p>
-                  <div className="flex items-center gap-2">
-                    {formData.photos.length < 6 && (
-                      <button
-                        type="button"
-                        onClick={handleAddSamplePhoto}
-                        className="px-3 py-1.5 rounded-lg border border-slate-200 hover:border-brand-300 hover:bg-brand-50/40 text-slate-700 hover:text-brand-700 font-semibold text-[11px] flex items-center gap-1.5 transition-all cursor-pointer"
-                      >
-                        <Sparkles className="w-3.5 h-3.5 text-brand-600" />
-                        + Add Sample Demo Picture
-                      </button>
-                    )}
-                  </div>
                 </div>
               </div>
             </div>
