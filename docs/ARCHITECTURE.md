@@ -184,7 +184,41 @@ stateDiagram-v2
 
 ---
 
-## 5. Security & Real-Time Architecture
+## 6. Payments, Subscriptions & Membership Architecture
+
+EverPride features a provider-agnostic, dual-mode payment gateway supporting **Razorpay** and **Stripe** with a local **Dev / Mock Gateway Simulator** for seamless local development and sandbox testing without mandatory live credentials.
+
+### 6.1 Architectural Topology
+```mermaid
+graph TD
+  Client[Web Client - /membership/upgrade] -->|Create Checkout Session| Controller[PaymentsController]
+  Controller --> Service[PaymentsService]
+  Service -->|RAZORPAY_KEY_* present| Razorpay[Razorpay Gateway]
+  Service -->|STRIPE_SECRET_KEY present| Stripe[Stripe Gateway]
+  Service -->|No Live Credentials| Simulator[Dev Gateway Simulator & Logger]
+  Simulator -->|Instant Mock Verification| State[Active Membership Entitlements]
+  Razorpay -->|Webhook / Callback| State
+  Stripe -->|Webhook / checkout.session.completed| State
+  State -->|Unlock Perks & Badges| ActivitySidebar[ActivitySidebar & Feed Views]
+```
+
+### 6.2 Membership Tiers & Entitlements
+* **Free Member**: Standard blurred discovery browsing, mutual-interest messaging.
+* **Pro**: Direct contact sharing, 25 Super Interests, Verified Badge.
+* **Pro Max (Top Seller)**: 50 Super Interests, 50 Spotlights, Direct phone viewing, Gold Avatar Ring.
+* **Pro Supreme**: 80 Super Interests, 80 Spotlights, 3 Spotlights boosts.
+* **Premier Lite (Assisted)**: Dedicated Relationship Manager, 3x faster assisted matching, 150 quotas.
+
+### 6.3 Payment Endpoints (`apps/api/src/modules/payments`)
+| Method | Endpoint | Auth | Description |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/v1/payments/membership` | Bearer JWT | Retrieves user's active membership tier, quotas, and entitlement status |
+| `POST` | `/api/v1/payments/create-checkout-session` | Bearer JWT | Initiates checkout with plan, billing duration, and USD amount |
+| `POST` | `/api/v1/payments/complete-simulation` | Bearer JWT | Completes mock checkout for testing success/decline behaviors |
+
+---
+
+## 7. Security & Real-Time Architecture
 
 1. **Password Storage:** Uses `bcrypt` with 12 salt rounds (`packages/auth/PasswordService`).
 2. **Token Strategy:**

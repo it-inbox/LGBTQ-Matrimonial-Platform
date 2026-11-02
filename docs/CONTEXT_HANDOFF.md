@@ -109,9 +109,25 @@ Located at [`LandingPage.tsx`](file:///c:/Users/Inboxuser.IBDT01/code/helloq-mat
 * LGBTQ+ Matrimonial FAQ accordion.
 * Pride celebratory bottom CTA and complete footer.
 
+### 3.7. Upgrade Membership & Payments (`/membership/upgrade`)
+Located at [`UpgradeMembershipPage.tsx`](file:///c:/Users/Inboxuser.IBDT01/code/helloq-matrimonial/apps/web/src/pages/membership/UpgradeMembershipPage.tsx):
+* **Dual Tab Architecture**: **Self-Service** (Pro, Pro Max, Pro Supreme) and **Assisted** (Premier Lite).
+* **Plans Comparison Matrix**: 6-feature alignment grid (Contact Sharing, Engage+, Contact Details, Super Interest, Spotlights, Gold Badge) with equal column widths.
+* **Duration Selector in USD**: Monthly, Quarterly, and "Till Marriage" long-term pricing in `$ USD`.
+* **Integrated ActivitySidebar**: Pinned on the left matching dashboard layout conventions.
+* **Gateway Simulator Checkout Modal**: Real-time test checkout modal with simulated payment success and failure actions, provisioning entitlements without live API keys.
+* **"Need Help?" Callback Modal**: Integrated modal with toll-free support number (`1-800-419-6299`) and callback request form.
+
 ---
 
 ## 4. Key Endpoints & Backend Architecture
+
+### Payments & Membership (`payments.controller.ts` & `payments.service.ts`)
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `GET` | `/api/v1/payments/membership` | Retrieves active user membership tier, status, remaining quotas, and badge entitlement |
+| `POST` | `/api/v1/payments/create-checkout-session` | Dispatches checkout session (detects Razorpay, Stripe, or Dev Simulator) |
+| `POST` | `/api/v1/payments/complete-simulation` | Processes mock payment and activates membership perks in real time |
 
 ### Matchmaking & Discovery (`matches.controller.ts` & `matches.service.ts`)
 | Method | Endpoint | Description |
@@ -179,13 +195,21 @@ pnpm build
 
 1. **Active Features (Completed)**:
    - Authentication (phone/email), onboarding wizard, profile photo protection with watermarking.
-   - Discovery feed with reciprocal interest auto-matching, sent-interest exclusions, and dual-thumb age range filters.
+   - Discovery feed with reciprocal interest auto-matching, sent-interest exclusions, persistent session filters, and dual-thumb age range filters.
    - Real-time WebSocket messaging and presence via Socket.IO `/chat` namespace.
-   - Real-time toast notifications with live badges on ActivitySidebar and BottomStickyNavbar.
+   - Real-time chat keyboard shortcuts: Enter sends message, Shift+Enter inserts new lines.
+   - Searchable Emoji Picker with keyword dictionary (`emojiKeywords.ts`).
+   - Unique sender message count badge in left ActivitySidebar and mobile navigation.
+   - Automatic badge dismissal once user views newly discovered matches.
+   - Full-height slide-over hamburger drawer with streamlined menu navigation and Safety Center.
+   - Dedicated `/membership/upgrade` page with comparison table, pricing in USD, and left sidebar integration.
+   - Provider-agnostic payment gateway simulator (ready for **Razorpay** / **Stripe**).
+   - Dynamic user avatar gold rings and membership badges upon plan upgrade.
    - Unified polymorphic activity pages for Interests and Unblur requests.
    - Dedicated `/profile/edit` page with left sticky section navigation tabs and URL hash sync.
    - Senior UI redesigned landing page with interactive privacy simulator and trust metrics.
 2. **Upcoming Features (Roadmap)**:
+   - Live Razorpay / Stripe credentials injection in `.env` for production order processing.
    - WebRTC signaling for in-browser audio and video calling between matched couples.
    - KYC Verification document uploads to Cloudflare R2 / AWS S3 using presigned URLs.
    - Mobile app implementation (`apps/mobile`) using Expo / React Native reusing `@everpride/shared` and `@everpride/auth`.
