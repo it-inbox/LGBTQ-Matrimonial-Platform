@@ -24,24 +24,62 @@ import { allCountries } from "../../data/countries";
 import { Modal } from "../../components/ui/Modal";
 import { Button } from "../../components/ui/Button";
 
+const DISCOVERY_SESSION_STORAGE_KEY = "everpride_discovery_session_filters";
+
+interface DiscoverySavedFilters {
+  searchQuery?: string;
+  activeQuickFilter?: string;
+  currentPage?: number;
+  appliedFilters?: {
+    nationalities: string[];
+    religions: string[];
+    maritalStatuses: string[];
+    minAge: number;
+    maxAge: number;
+  };
+}
+
+const getSavedDiscoveryFilters = (): DiscoverySavedFilters => {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = sessionStorage.getItem(DISCOVERY_SESSION_STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch (e) {
+    console.error("Failed to parse saved discovery session filters:", e);
+  }
+  return {};
+};
+
 export const DiscoveryFeedPage: React.FC = () => {
   const queryClient = useQueryClient();
+  const savedFilters = React.useMemo(() => getSavedDiscoveryFilters(), []);
+
   const [interestMessage, setInterestMessage] = useState("");
   const [activeModalProfile, setActiveModalProfile] = useState<any | null>(null);
   const [modalType, setModalType] = useState<"interest" | "photo" | null>(null);
   const [successToast, setSuccessToast] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [activeQuickFilter, setActiveQuickFilter] = useState<string>("All");
+  const [searchQuery, setSearchQuery] = useState(savedFilters.searchQuery || "");
+  const [activeQuickFilter, setActiveQuickFilter] = useState<string>(savedFilters.activeQuickFilter || "All");
   const [ignoredProfileIds, setIgnoredProfileIds] = useState<string[]>([]);
 
   // Draft filter state (inside modal)
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
-  const [selectedNationalities, setSelectedNationalities] = useState<string[]>([]);
+  const [selectedNationalities, setSelectedNationalities] = useState<string[]>(
+    savedFilters.appliedFilters?.nationalities || []
+  );
   const [nationalitySearchInput, setNationalitySearchInput] = useState("");
-  const [selectedReligions, setSelectedReligions] = useState<string[]>([]);
-  const [selectedMaritalStatuses, setSelectedMaritalStatuses] = useState<string[]>([]);
-  const [filterAgeMin, setFilterAgeMin] = useState<number>(18);
-  const [filterAgeMax, setFilterAgeMax] = useState<number>(60);
+  const [selectedReligions, setSelectedReligions] = useState<string[]>(
+    savedFilters.appliedFilters?.religions || []
+  );
+  const [selectedMaritalStatuses, setSelectedMaritalStatuses] = useState<string[]>(
+    savedFilters.appliedFilters?.maritalStatuses || []
+  );
+  const [filterAgeMin, setFilterAgeMin] = useState<number>(
+    savedFilters.appliedFilters?.minAge ?? 18
+  );
+  const [filterAgeMax, setFilterAgeMax] = useState<number>(
+    savedFilters.appliedFilters?.maxAge ?? 60
+  );
 
   // Applied filter state (drives the actual feed query on the page)
   const [appliedFilters, setAppliedFilters] = useState<{
@@ -51,12 +89,29 @@ export const DiscoveryFeedPage: React.FC = () => {
     minAge: number;
     maxAge: number;
   }>({
-    nationalities: [],
-    religions: [],
-    maritalStatuses: [],
-    minAge: 18,
-    maxAge: 60,
+    nationalities: savedFilters.appliedFilters?.nationalities || [],
+    religions: savedFilters.appliedFilters?.religions || [],
+    maritalStatuses: savedFilters.appliedFilters?.maritalStatuses || [],
+    minAge: savedFilters.appliedFilters?.minAge ?? 18,
+    maxAge: savedFilters.appliedFilters?.maxAge ?? 60,
   });
+
+  const [currentPage, setCurrentPage] = useState<number>(savedFilters.currentPage || 1);
+
+  // Synchronize filter state to sessionStorage whenever it changes
+  React.useEffect(() => {
+    try {
+      const payload: DiscoverySavedFilters = {
+        searchQuery,
+        activeQuickFilter,
+        currentPage,
+        appliedFilters,
+      };
+      sessionStorage.setItem(DISCOVERY_SESSION_STORAGE_KEY, JSON.stringify(payload));
+    } catch (e) {
+      console.error("Failed to save discovery filters to sessionStorage:", e);
+    }
+  }, [searchQuery, activeQuickFilter, currentPage, appliedFilters]);
 
   const toggleFilter = (list: string[], setList: React.Dispatch<React.SetStateAction<string[]>>, item: string) => {
     if (list.includes(item)) {
@@ -77,7 +132,6 @@ export const DiscoveryFeedPage: React.FC = () => {
   };
 
   // Fetch matches from NestJS API with database-level multi-select filtering & search
-  const [currentPage, setCurrentPage] = useState(1);
   const { data: feedResult, isLoading, error } = useQuery({
     queryKey: [
       "matches-feed",

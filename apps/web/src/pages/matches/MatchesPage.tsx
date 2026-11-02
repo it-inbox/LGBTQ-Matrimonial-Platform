@@ -17,6 +17,7 @@ import { Badge } from "../../components/ui/Badge";
 export const MatchesPage: React.FC = () => {
   const navigate = useNavigate();
   const setActiveConversationId = useChatStore((s) => s.setActiveConversationId);
+  const setNewMatchesCount = useChatStore((s) => s.setNewMatchesCount);
 
   const { data: matchesList, isLoading } = useQuery({
     queryKey: ["accepted-matches"],
@@ -25,6 +26,22 @@ export const MatchesPage: React.FC = () => {
       return res.data;
     },
   });
+
+  // When user opens/views the Matches page, mark all current matches as seen
+  React.useEffect(() => {
+    if (matchesList && matchesList.length > 0) {
+      try {
+        const seenIds = matchesList
+          .map((m: any) => m.interestId || m.user?.id)
+          .filter(Boolean);
+        localStorage.setItem("everpride_seen_match_ids", JSON.stringify(seenIds));
+        setNewMatchesCount(0);
+        window.dispatchEvent(new Event("matches_seen_updated"));
+      } catch (e) {
+        console.error("Failed to save seen match ids:", e);
+      }
+    }
+  }, [matchesList, setNewMatchesCount]);
 
   const handleOpenChat = async (partnerUserId: string) => {
     try {

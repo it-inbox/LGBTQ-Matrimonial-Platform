@@ -44,11 +44,71 @@ export const ActivitySidebar: React.FC<ActivitySidebarProps> = ({ activeTab }) =
     staleTime: 30000,
   });
 
+  // Query conversations to keep Connect unread badge in sync with number of distinct people
+  const { data: conversations = [] } = useQuery<any[]>({
+    queryKey: ["conversations", "all"],
+    queryFn: async () => {
+      const res = await api.get("/chat/conversations?filter=all");
+      return res.data;
+    },
+    staleTime: 12000,
+    refetchInterval: 12000,
+  });
+
+  const distinctPeopleWithUnread = React.useMemo(() => {
+    if (!conversations || conversations.length === 0) return 0;
+    return conversations.filter((c: any) => (c?.unreadCount || 0) > 0).length;
+  }, [conversations]);
+
+  // Use the calculated distinct count or the chat store value as fallback
+  const displayConnectBadgeCount = distinctPeopleWithUnread > 0 ? distinctPeopleWithUnread : totalUnreadCount;
+
   const pendingInterestsCount = (receivedInterests || []).filter(
     (item: any) => item.status === "PENDING"
   ).length + socketUnreadInterests;
 
-  const totalMatchesCount = (matchesList?.length || 0) + socketNewMatches;
+  // Listen for seen matches updates
+  const [seenMatchIds, setSeenMatchIds] = React.useState<string[]>(() => {
+    try {
+      const raw = localStorage.getItem("everpride_seen_match_ids");
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  React.useEffect(() => {
+    const handleUpdate = () => {
+      try {
+        const raw = localStorage.getItem("everpride_seen_match_ids");
+        setSeenMatchIds(raw ? JSON.parse(raw) : []);
+      } catch {
+        setSeenMatchIds([]);
+      }
+    };
+    window.addEventListener("matches_seen_updated", handleUpdate);
+    window.addEventListener("storage", handleUpdate);
+    return () => {
+      window.removeEventListener("matches_seen_updated", handleUpdate);
+      window.removeEventListener("storage", handleUpdate);
+    };
+  }, []);
+
+  // If user is currently on /matches, don't show the badge
+  const isMatchesPage = location.pathname === "/matches";
+
+  const unseenMatchesCount = React.useMemo(() => {
+    if (isMatchesPage) return 0;
+    if (!matchesList || matchesList.length === 0) return socketNewMatches;
+    const seenSet = new Set(seenMatchIds);
+    const unseenList = matchesList.filter((m: any) => {
+      const id = m.interestId || m.user?.id;
+      return id && !seenSet.has(id);
+    });
+    return unseenList.length + socketNewMatches;
+  }, [matchesList, seenMatchIds, socketNewMatches, isMatchesPage]);
+
+  const totalMatchesCount = unseenMatchesCount;
 
   const getInitials = (name?: string) => {
     if (!name) return "EP";
@@ -58,6 +118,8 @@ export const ActivitySidebar: React.FC<ActivitySidebarProps> = ({ activeTab }) =
   const memberId = user?.id || profile?.id;
   const primaryPhoto = profile?.photos?.find((p) => p.isPrimary) || profile?.photos?.[0];
   const primaryPhotoUrl = primaryPhoto?.originalUrl || primaryPhoto?.url;
+  const membership = useAuthStore((s) => s.membership);
+  const isPaidMember = membership && membership.tier !== "FREE" && membership.status === "ACTIVE";
 
   return (
     <aside className="hidden lg:block lg:w-64 shrink-0 space-y-4 self-start">
@@ -66,7 +128,11 @@ export const ActivitySidebar: React.FC<ActivitySidebarProps> = ({ activeTab }) =
         {/* Profile Header Section */}
         <div className="p-4 flex items-center gap-3.5">
           <div className="relative shrink-0">
-            <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-brand-600 to-pink-500 p-0.5 shadow-sm overflow-hidden">
+            <div className={`w-14 h-14 rounded-full p-0.5 shadow-sm overflow-hidden ${
+              isPaidMember
+                ? "bg-gradient-to-tr from-amber-400 via-rose-500 to-amber-500 ring-2 ring-amber-400/40"
+                : "bg-gradient-to-tr from-brand-600 to-pink-500"
+            }`}>
               {primaryPhotoUrl ? (
                 <img
                   src={primaryPhotoUrl}
@@ -82,17 +148,27 @@ export const ActivitySidebar: React.FC<ActivitySidebarProps> = ({ activeTab }) =
             <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-500 border-2 border-white rounded-full z-10" />
           </div>
 
-          <div className="min-w-0 flex-1 flex items-center justify-between gap-1.5">
-            <h3 className="text-sm font-bold text-slate-900 truncate" title={profile?.displayName || "Member"}>
-              {profile?.displayName || "Member"}
-            </h3>
-            <Link
-              to="/profile/edit"
-              title="Edit Profile"
-              className="p-1.5 text-slate-400 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-colors shrink-0"
-            >
-              <Pencil className="w-3.5 h-3.5" />
-            </Link>
+          <div className="min-w-0 flex-1 flex flex-col justify-center">
+            <div className="flex items-center justify-between gap-1.5">
+              <h3 className="text-sm font-bold text-slate-900 truncate" title={profile?.displayName || "Member"}>
+                {profile?.displayName || "Member"}
+              </h3>
+              <Link
+                to="/profile/edit"
+                title="Edit Profile"
+                className="p-1.5 text-slate-400 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-colors shrink-0"
+              >
+                <Pencil className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+            {isPaidMember ? (
+              <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-amber-700 bg-amber-50 border border-amber-200/80 px-1.5 py-0.5 rounded-md mt-0.5 self-start">
+                <span>⭐</span>
+                <span>{membership.planName}</span>
+              </span>
+            ) : (
+              <span className="text-[11px] font-medium text-slate-400">Free Member</span>
+            )}
           </div>
         </div>
 
@@ -142,9 +218,9 @@ export const ActivitySidebar: React.FC<ActivitySidebarProps> = ({ activeTab }) =
           >
             <div className="flex items-center gap-2">
               <span>Connect</span>
-              {totalUnreadCount > 0 && (
+              {displayConnectBadgeCount > 0 && (
                 <Badge variant="danger" size="sm">
-                  {totalUnreadCount}
+                  {displayConnectBadgeCount}
                 </Badge>
               )}
             </div>
@@ -234,12 +310,12 @@ export const ActivitySidebar: React.FC<ActivitySidebarProps> = ({ activeTab }) =
         </div>
 
         <div className="pt-3 border-t border-slate-100">
-          <button
-            type="button"
+          <Link
+            to="/membership/upgrade"
             className="w-full py-2.5 px-3 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-rose-500 to-brand-600 hover:from-rose-600 hover:to-brand-700 shadow-md shadow-brand-500/20 flex items-center justify-center gap-1.5 transition-all cursor-pointer"
           >
             <span>Upgrade to Premium</span>
-          </button>
+          </Link>
         </div>
       </div>
     </aside>

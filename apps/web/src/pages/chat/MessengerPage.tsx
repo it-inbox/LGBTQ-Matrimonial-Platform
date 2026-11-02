@@ -22,7 +22,7 @@ export const MessengerPage: React.FC = () => {
     connectSocket();
   }, [connectSocket]);
 
-  // 1. Fetch conversations
+  // 1. Fetch conversations for active filter pill
   const {
     data: conversations = [],
     isLoading: loadingConversations,
@@ -35,15 +35,28 @@ export const MessengerPage: React.FC = () => {
     refetchInterval: 12000,
   });
 
-  // Calculate total unread
+  // Always query all conversations to accurately calculate distinct people with unread messages
+  const { data: allConversations = [] } = useQuery<ConversationItem[]>({
+    queryKey: ["conversations", "all"],
+    queryFn: async () => {
+      const res = await api.get(`/chat/conversations?filter=all`);
+      return res.data;
+    },
+    refetchInterval: 12000,
+  });
+
+  // Calculate distinct conversations / people with unread messages
   useEffect(() => {
-    if (!conversations || conversations.length === 0) {
+    if (!allConversations || allConversations.length === 0) {
       setTotalUnreadCount(0);
       return;
     }
-    const total = conversations.reduce((acc, c) => acc + (c?.unreadCount || 0), 0);
-    setTotalUnreadCount(total);
-  }, [conversations, setTotalUnreadCount]);
+    // Count number of distinct people (conversations) that have unread messages
+    const distinctPeopleWithUnread = allConversations.filter(
+      (c) => (c?.unreadCount || 0) > 0
+    ).length;
+    setTotalUnreadCount(distinctPeopleWithUnread);
+  }, [allConversations, setTotalUnreadCount]);
 
   // Filter conversations by local search query
   const filteredConversations = (conversations || []).filter((c) => {

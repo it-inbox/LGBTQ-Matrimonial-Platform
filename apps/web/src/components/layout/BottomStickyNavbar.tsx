@@ -35,16 +35,75 @@ export const BottomStickyNavbar: React.FC = () => {
     staleTime: 30000,
   });
 
+  // Query conversations to keep Connect unread badge in sync with number of distinct people
+  const { data: conversations = [] } = useQuery<any[]>({
+    queryKey: ["conversations", "all"],
+    queryFn: async () => {
+      const res = await api.get("/chat/conversations?filter=all");
+      return res.data;
+    },
+    enabled: !!isAuthenticated && !!profile,
+    staleTime: 12000,
+    refetchInterval: 12000,
+  });
+
+  // Listen for seen matches updates
+  const [seenMatchIds, setSeenMatchIds] = React.useState<string[]>(() => {
+    try {
+      const raw = localStorage.getItem("everpride_seen_match_ids");
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  React.useEffect(() => {
+    const handleUpdate = () => {
+      try {
+        const raw = localStorage.getItem("everpride_seen_match_ids");
+        setSeenMatchIds(raw ? JSON.parse(raw) : []);
+      } catch {
+        setSeenMatchIds([]);
+      }
+    };
+    window.addEventListener("matches_seen_updated", handleUpdate);
+    window.addEventListener("storage", handleUpdate);
+    return () => {
+      window.removeEventListener("matches_seen_updated", handleUpdate);
+      window.removeEventListener("storage", handleUpdate);
+    };
+  }, []);
+
+  const isMatchesPage = location.pathname === "/matches";
+
+  const unseenMatchesCount = React.useMemo(() => {
+    if (isMatchesPage) return 0;
+    if (!matchesList || matchesList.length === 0) return socketNewMatches;
+    const seenSet = new Set(seenMatchIds);
+    const unseenList = matchesList.filter((m: any) => {
+      const id = m.interestId || m.user?.id;
+      return id && !seenSet.has(id);
+    });
+    return unseenList.length + socketNewMatches;
+  }, [matchesList, seenMatchIds, socketNewMatches, isMatchesPage]);
+
   // Show only if authenticated and profile completed, and on mobile or tablet (< xl)
   if (!isAuthenticated || !profile) {
     return null;
   }
 
+  const distinctPeopleWithUnread =
+    conversations && conversations.length > 0
+      ? conversations.filter((c: any) => (c?.unreadCount || 0) > 0).length
+      : 0;
+
+  const displayConnectBadgeCount = distinctPeopleWithUnread > 0 ? distinctPeopleWithUnread : totalUnreadCount;
+
   const pendingInterestsCount = (receivedInterests || []).filter(
     (item: any) => item.status === "PENDING"
   ).length + socketUnreadInterests;
 
-  const totalMatchesCount = (matchesList?.length || 0) + socketNewMatches;
+  const totalMatchesCount = unseenMatchesCount;
 
   const navItems = [
     {
@@ -66,7 +125,7 @@ export const BottomStickyNavbar: React.FC = () => {
       label: "Connect",
       icon: MessageSquare,
       isActive: location.pathname.startsWith("/messages"),
-      badgeCount: totalUnreadCount,
+      badgeCount: displayConnectBadgeCount,
     },
     {
       to: "/interests/received",

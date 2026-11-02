@@ -11,6 +11,7 @@ import {
   Lightbulb,
   Flag,
 } from "lucide-react";
+import { EMOJI_KEYWORDS } from "./emojiKeywords";
 
 export interface EmojiPickerProps {
   onSelectEmoji: (emoji: string) => void;
@@ -295,10 +296,30 @@ export const EmojiPicker: React.FC<EmojiPickerProps> = ({
     const q = searchQuery.trim().toLowerCase();
     if (!q) return EMOJI_CATEGORIES;
 
-    return EMOJI_CATEGORIES.map((cat) => ({
-      ...cat,
-      emojis: cat.emojis.filter((emoji) => emoji.includes(q)),
-    })).filter((cat) => cat.emojis.length > 0);
+    return EMOJI_CATEGORIES.map((cat) => {
+      // If the query matches the category name (e.g., "heart", "smile", "food"), show category emojis
+      const catMatches =
+        cat.name.toLowerCase().includes(q) ||
+        cat.shortName.toLowerCase().includes(q);
+
+      const matchedEmojis = cat.emojis.filter((emoji) => {
+        // Direct emoji character match
+        if (emoji.includes(q)) return true;
+
+        // Keyword lookup match
+        const keywords = EMOJI_KEYWORDS[emoji];
+        if (keywords && keywords.some((kw) => kw.toLowerCase().includes(q))) {
+          return true;
+        }
+
+        return catMatches;
+      });
+
+      return {
+        ...cat,
+        emojis: matchedEmojis,
+      };
+    }).filter((cat) => cat.emojis.length > 0);
   }, [searchQuery]);
 
   if (!isOpen) return null;

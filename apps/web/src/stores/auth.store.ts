@@ -25,9 +25,23 @@ interface Profile {
   photos?: Array<{ id: string; url?: string; originalUrl?: string; blurredUrl?: string | null; isPrimary: boolean; isBlurred?: boolean }>;
 }
 
+export interface UserMembership {
+  tier: "FREE" | "PRO" | "PRO_MAX" | "PRO_SUPREME" | "PREMIER_LITE";
+  planName: string;
+  expiresAt: string | null;
+  status: "ACTIVE" | "EXPIRED" | "NONE";
+  superInterestsRemaining: number;
+  spotlightsRemaining: number;
+  hasGoldBadge: boolean;
+  canViewPhoneNumbers: boolean;
+  lastPaymentAt?: string;
+  lastPaymentAmount?: number;
+}
+
 interface AuthState {
   user: User | null;
   profile: Profile | null;
+  membership: UserMembership | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   isLoginModalOpen: boolean;
@@ -39,12 +53,15 @@ interface AuthState {
   register: (phoneNumber: string, otp?: string) => Promise<void>;
   logout: () => void;
   fetchProfile: () => Promise<void>;
+  fetchMembership: () => Promise<void>;
+  setMembership: (membership: UserMembership) => void;
   checkAuth: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   profile: null,
+  membership: null,
   isAuthenticated: !!localStorage.getItem("everpride_access_token"),
   isLoading: true,
   isLoginModalOpen: false,
@@ -68,6 +85,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     localStorage.setItem("everpride_refresh_token", refreshToken);
     set({ user, isAuthenticated: true });
     await get().fetchProfile();
+    await get().fetchMembership();
   },
 
   register: async (phoneNumber: string, otp?: string) => {
@@ -81,7 +99,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   logout: () => {
     localStorage.removeItem("everpride_access_token");
     localStorage.removeItem("everpride_refresh_token");
-    set({ user: null, profile: null, isAuthenticated: false });
+    set({ user: null, profile: null, membership: null, isAuthenticated: false });
   },
 
   fetchProfile: async () => {
@@ -97,14 +115,28 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 
+  fetchMembership: async () => {
+    try {
+      const res = await api.get("/payments/membership");
+      set({ membership: res.data });
+    } catch {
+      // Keep existing or default
+    }
+  },
+
+  setMembership: (membership: UserMembership) => {
+    set({ membership });
+  },
+
   checkAuth: async () => {
     const token = localStorage.getItem("everpride_access_token");
     if (!token) {
-      set({ isLoading: false, isAuthenticated: false, user: null });
+      set({ isLoading: false, isAuthenticated: false, user: null, membership: null });
       return;
     }
     try {
       await get().fetchProfile();
+      await get().fetchMembership();
       set({ isAuthenticated: true, isLoading: false });
     } catch {
       set({ isAuthenticated: false, isLoading: false });

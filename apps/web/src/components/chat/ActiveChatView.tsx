@@ -66,7 +66,7 @@ export const ActiveChatView: React.FC<ActiveChatViewProps> = ({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const editInputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<any>(null);
 
@@ -224,8 +224,12 @@ export const ActiveChatView: React.FC<ActiveChatViewProps> = ({
     }, 80);
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInputText(e.target.value);
+
+    // Auto-grow textarea height up to max-height
+    e.target.style.height = "auto";
+    e.target.style.height = `${Math.min(e.target.scrollHeight, 128)}px`;
 
     // Emit typing indicator with debounce
     emitTyping(conversation.id, true);
@@ -233,6 +237,18 @@ export const ActiveChatView: React.FC<ActiveChatViewProps> = ({
     typingTimeoutRef.current = setTimeout(() => {
       emitTyping(conversation.id, false);
     }, 2000);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter") {
+      if (e.shiftKey) {
+        // Shift + Enter: allow default behavior which inserts a newline
+        return;
+      }
+      // Enter without Shift: send message
+      e.preventDefault();
+      handleSend();
+    }
   };
 
   const [sending, setSending] = useState(false);
@@ -243,6 +259,9 @@ export const ActiveChatView: React.FC<ActiveChatViewProps> = ({
     if (!text || sending) return;
 
     setInputText("");
+    if (inputRef.current) {
+      inputRef.current.style.height = "auto";
+    }
     emitTyping(conversation.id, false);
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
 
@@ -748,13 +767,14 @@ export const ActiveChatView: React.FC<ActiveChatViewProps> = ({
               <Smile className="w-4 h-4" />
             </button>
 
-            <input
+            <textarea
               ref={inputRef}
-              type="text"
-              placeholder={`Message ${conversation.partner?.displayName || "Member"}...`}
+              rows={1}
+              placeholder={`Message ${conversation.partner?.displayName || "Member"}... (Shift+Enter for newline)`}
               value={inputText}
               onChange={handleInputChange}
-              className="flex-1 bg-slate-50 border border-slate-200/90 rounded-xl px-4 py-2.5 text-xs sm:text-sm focus:outline-none focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 text-slate-900 placeholder:text-slate-400 transition-all shadow-subtle"
+              onKeyDown={handleKeyDown}
+              className="flex-1 bg-slate-50 border border-slate-200/90 rounded-xl px-4 py-2.5 text-xs sm:text-sm focus:outline-none focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 text-slate-900 placeholder:text-slate-400 transition-all shadow-subtle resize-none max-h-32 leading-relaxed"
             />
             <Button
               type="submit"

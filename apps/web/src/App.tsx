@@ -13,6 +13,7 @@ import { InterestsActivityPage } from "./pages/interests/InterestsActivityPage";
 import { UnblurActivityPage } from "./pages/unblur/UnblurActivityPage";
 import { MessengerPage } from "./pages/chat/MessengerPage";
 import { MemberProfileDetailPage } from "./pages/matches/MemberProfileDetailPage";
+import { UpgradeMembershipPage } from "./pages/membership/UpgradeMembershipPage";
 import { LoginModal } from "./components/auth/LoginModal";
 import { ChatNotificationToast } from "./components/chat/ChatNotificationToast";
 import { useAuthStore } from "./stores/auth.store";
@@ -210,6 +211,15 @@ export function App() {
                   </ProtectedRoute>
                 }
               />
+              <Route
+                path="/membership/upgrade"
+                element={
+                  <ProtectedRoute requireProfile={false}>
+                    <UpgradeMembershipPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="/upgrade" element={<Navigate to="/membership/upgrade" replace />} />
               <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
               </ErrorBoundary>
