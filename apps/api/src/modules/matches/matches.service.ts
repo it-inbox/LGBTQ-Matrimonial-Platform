@@ -1207,4 +1207,61 @@ export class MatchesService {
       };
     });
   }
+
+  /**
+   * Unsend / Cancel a sent match interest request.
+   * Allowed if the interest is still PENDING.
+   */
+  async unsendInterest(senderId: string, interestId: string) {
+    const interest = await this.prisma.client.matchInterest.findUnique({
+      where: { id: interestId },
+    });
+
+    if (!interest || interest.senderId !== senderId) {
+      throw new NotFoundException("Sent interest request not found");
+    }
+
+    if (interest.status === "ACCEPTED") {
+      throw new BadRequestException("Cannot unsend an interest that has already been accepted.");
+    }
+
+    // Delete the match interest record
+    await this.prisma.client.matchInterest.delete({
+      where: { id: interestId },
+    });
+
+    return {
+      success: true,
+      message: "Match interest has been successfully unsent / cancelled.",
+    };
+  }
+
+  /**
+   * Unsend / Cancel a sent unblur photo request.
+   * Allowed if the photo request was sent by this user.
+   */
+  async unsendPhotoAccess(requesterId: string, requestId: string) {
+    const request = await this.prisma.client.photoAccessRequest.findUnique({
+      where: { id: requestId },
+    });
+
+    if (!request || request.requesterId !== requesterId) {
+      throw new NotFoundException("Sent photo access request not found");
+    }
+
+    if (request.status === "ACCEPTED" && !request.isRevoked) {
+      throw new BadRequestException("Cannot unsend a photo access request that has already been approved.");
+    }
+
+    // Delete the photo access request record
+    await this.prisma.client.photoAccessRequest.delete({
+      where: { id: requestId },
+    });
+
+    return {
+      success: true,
+      message: "Unblur photo request has been successfully unsent / cancelled.",
+    };
+  }
 }
+

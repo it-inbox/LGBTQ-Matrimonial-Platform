@@ -104,6 +104,17 @@ export const UnblurActivityPage: React.FC<UnblurActivityPageProps> = ({
     },
   });
 
+  const unsendPhotoMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return api.post(`/matches/photo-access/${id}/unsend`);
+    },
+    onSuccess: () => {
+      setSuccessToast("Unblur photo request has been unsent and cancelled.");
+      queryClient.invalidateQueries({ queryKey: ["sent-unblur"] });
+      setTimeout(() => setSuccessToast(null), 4000);
+    },
+  });
+
 
   const rawList = currentTab === "received" ? receivedData : sentData;
   const isLoading = currentTab === "received" ? isLoadingReceived : isLoadingSent;
@@ -323,7 +334,7 @@ export const UnblurActivityPage: React.FC<UnblurActivityPageProps> = ({
                           </div>
                         )
                       ) : (
-                        <div className="flex-1 flex items-center justify-between px-4 py-2">
+                        <div className="flex-1 flex flex-col sm:flex-row items-center justify-between gap-2 px-4 py-2">
                           <span className="text-slate-600 font-medium text-xs truncate">
                             {item.status === "ACCEPTED"
                               ? item.isHidden
@@ -335,7 +346,24 @@ export const UnblurActivityPage: React.FC<UnblurActivityPageProps> = ({
                               ? "Member declined your unblur request."
                               : "Waiting for the member to approve photo access."}
                           </span>
-                          <div className="shrink-0 ml-2">{renderStatusBadge(item.status, item.isHidden, item.isRevoked)}</div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            {renderStatusBadge(item.status, item.isHidden, item.isRevoked)}
+                            {item.status === "PENDING" && (
+                              <button
+                                type="button"
+                                disabled={unsendPhotoMutation.isPending}
+                                onClick={() => {
+                                  if (window.confirm("Are you sure you want to unsend and cancel this unblur photo request?")) {
+                                    unsendPhotoMutation.mutate(item.id);
+                                  }
+                                }}
+                                className="px-2.5 py-1 rounded-lg text-rose-600 hover:text-rose-700 hover:bg-rose-50 border border-rose-200 text-xs font-bold transition-colors cursor-pointer disabled:opacity-50"
+                                title="Unsend unblur request"
+                              >
+                                {unsendPhotoMutation.isPending ? "Cancelling..." : "Unsend"}
+                              </button>
+                            )}
+                          </div>
                         </div>
                       )
                     }

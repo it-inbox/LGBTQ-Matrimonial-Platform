@@ -68,6 +68,18 @@ export const InterestsActivityPage: React.FC<InterestsActivityPageProps> = ({
     },
   });
 
+  const unsendMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return api.post(`/matches/interest/${id}/unsend`);
+    },
+    onSuccess: () => {
+      setSuccessToast("Match interest has been unsent and cancelled.");
+      queryClient.invalidateQueries({ queryKey: ["sent-interests"] });
+      queryClient.invalidateQueries({ queryKey: ["discover-feed"] });
+      setTimeout(() => setSuccessToast(null), 4000);
+    },
+  });
+
   const rawList = currentTab === "received" ? receivedData : sentData;
   const isLoading = currentTab === "received" ? isLoadingReceived : isLoadingSent;
 
@@ -209,7 +221,7 @@ export const InterestsActivityPage: React.FC<InterestsActivityPageProps> = ({
                           </div>
                         )
                       ) : (
-                        <div className="flex-1 flex items-center justify-between px-4 py-2">
+                        <div className="flex-1 flex flex-col sm:flex-row items-center justify-between gap-2 px-4 py-2">
                           <span className="text-slate-600 font-medium text-xs truncate">
                             {item.status === "ACCEPTED"
                               ? "Member accepted your match interest! You are now connected."
@@ -217,7 +229,24 @@ export const InterestsActivityPage: React.FC<InterestsActivityPageProps> = ({
                               ? "Member declined this match interest."
                               : "Waiting for the member to respond."}
                           </span>
-                          <div className="shrink-0 ml-2">{renderStatusBadge(item.status)}</div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            {renderStatusBadge(item.status)}
+                            {item.status === "PENDING" && (
+                              <button
+                                type="button"
+                                disabled={unsendMutation.isPending}
+                                onClick={() => {
+                                  if (window.confirm("Are you sure you want to unsend and cancel this interest request?")) {
+                                    unsendMutation.mutate(item.id);
+                                  }
+                                }}
+                                className="px-2.5 py-1 rounded-lg text-rose-600 hover:text-rose-700 hover:bg-rose-50 border border-rose-200 text-xs font-bold transition-colors cursor-pointer disabled:opacity-50"
+                                title="Unsend interest"
+                              >
+                                {unsendMutation.isPending ? "Cancelling..." : "Unsend"}
+                              </button>
+                            )}
+                          </div>
                         </div>
                       )
                     }

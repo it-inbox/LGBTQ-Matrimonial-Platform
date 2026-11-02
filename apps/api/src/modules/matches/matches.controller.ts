@@ -178,6 +178,24 @@ export class MatchesController {
     return this.matchesService.revokePhotoAccess(userId, requestId);
   }
 
+  @Post("interest/:id/unsend")
+  @ApiOperation({ summary: "Unsend / cancel a sent match interest request" })
+  async unsendInterest(
+    @CurrentUser("userId") userId: string,
+    @Param("id") interestId: string
+  ) {
+    return this.matchesService.unsendInterest(userId, interestId);
+  }
+
+  @Post("photo-access/:id/unsend")
+  @ApiOperation({ summary: "Unsend / cancel a sent photo unblur request" })
+  async unsendPhotoAccess(
+    @CurrentUser("userId") userId: string,
+    @Param("id") requestId: string
+  ) {
+    return this.matchesService.unsendPhotoAccess(userId, requestId);
+  }
+
   @Post("block/:targetUserId")
   @ApiOperation({ summary: "Block a member" })
   async blockUser(
