@@ -35,6 +35,9 @@ export const UnblurActivityPage: React.FC<UnblurActivityPageProps> = ({
   // Revoke confirmation modal state
   const [revokingRequest, setRevokingRequest] = useState<any | null>(null);
 
+  // Unsend confirmation modal state
+  const [unsendPhotoTarget, setUnsendPhotoTarget] = useState<any | null>(null);
+
   // Sync tab if prop changes
   React.useEffect(() => {
     setCurrentTab(initialTab);
@@ -352,15 +355,11 @@ export const UnblurActivityPage: React.FC<UnblurActivityPageProps> = ({
                               <button
                                 type="button"
                                 disabled={unsendPhotoMutation.isPending}
-                                onClick={() => {
-                                  if (window.confirm("Are you sure you want to unsend and cancel this unblur photo request?")) {
-                                    unsendPhotoMutation.mutate(item.id);
-                                  }
-                                }}
+                                onClick={() => setUnsendPhotoTarget(item)}
                                 className="px-2.5 py-1 rounded-lg text-rose-600 hover:text-rose-700 hover:bg-rose-50 border border-rose-200 text-xs font-bold transition-colors cursor-pointer disabled:opacity-50"
                                 title="Unsend unblur request"
                               >
-                                {unsendPhotoMutation.isPending ? "Cancelling..." : "Unsend"}
+                                Unsend
                               </button>
                             )}
                           </div>
@@ -411,6 +410,51 @@ export const UnblurActivityPage: React.FC<UnblurActivityPageProps> = ({
               className="flex-1"
             >
               Revoke Access
+            </Button>
+          </>
+        }
+      />
+
+      {/* Unsend Photo Request Confirmation Modal */}
+      <Modal
+        isOpen={!!unsendPhotoTarget}
+        onClose={() => setUnsendPhotoTarget(null)}
+        icon={<AlertTriangle className="w-5 h-5 text-rose-600" />}
+        iconContainerClassName="bg-rose-50 text-rose-600"
+        title="Unsend Photo Request?"
+        description={
+          <>
+            Are you sure you want to unsend and cancel your unblur request to{" "}
+            <strong className="text-zinc-800">
+              {unsendPhotoTarget?.target?.profile?.displayName || "this member"}
+            </strong>
+            ? They will no longer see your request in their pending photo approval list.
+          </>
+        }
+        footer={
+          <>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setUnsendPhotoTarget(null)}
+              disabled={unsendPhotoMutation.isPending}
+              className="flex-1"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="danger"
+              size="sm"
+              onClick={() => {
+                if (unsendPhotoTarget?.id) {
+                  unsendPhotoMutation.mutate(unsendPhotoTarget.id);
+                  setUnsendPhotoTarget(null);
+                }
+              }}
+              isLoading={unsendPhotoMutation.isPending}
+              className="flex-1"
+            >
+              Yes, Unsend Request
             </Button>
           </>
         }

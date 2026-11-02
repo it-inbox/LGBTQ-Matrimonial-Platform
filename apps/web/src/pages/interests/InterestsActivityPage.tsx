@@ -11,8 +11,10 @@ import {
   CheckCircle2,
   Clock,
   XCircle,
+  RotateCcw,
 } from "lucide-react";
 import { Badge } from "../../components/ui/Badge";
+import { Modal } from "../../components/ui/Modal";
 
 interface InterestsActivityPageProps {
   initialTab?: "received" | "sent";
@@ -25,6 +27,7 @@ export const InterestsActivityPage: React.FC<InterestsActivityPageProps> = ({
   const [currentTab, setCurrentTab] = useState<"received" | "sent">(initialTab);
   const [statusFilter, setStatusFilter] = useState<"ALL" | "PENDING" | "ACCEPTED" | "DECLINED">("ALL");
   const [successToast, setSuccessToast] = useState<string | null>(null);
+  const [unsendTarget, setUnsendTarget] = useState<any | null>(null);
 
   // Sync tab if prop changes
   React.useEffect(() => {
@@ -235,15 +238,11 @@ export const InterestsActivityPage: React.FC<InterestsActivityPageProps> = ({
                               <button
                                 type="button"
                                 disabled={unsendMutation.isPending}
-                                onClick={() => {
-                                  if (window.confirm("Are you sure you want to unsend and cancel this interest request?")) {
-                                    unsendMutation.mutate(item.id);
-                                  }
-                                }}
+                                onClick={() => setUnsendTarget(item)}
                                 className="px-2.5 py-1 rounded-lg text-rose-600 hover:text-rose-700 hover:bg-rose-50 border border-rose-200 text-xs font-bold transition-colors cursor-pointer disabled:opacity-50"
                                 title="Unsend interest"
                               >
-                                {unsendMutation.isPending ? "Cancelling..." : "Unsend"}
+                                Unsend
                               </button>
                             )}
                           </div>
@@ -258,6 +257,48 @@ export const InterestsActivityPage: React.FC<InterestsActivityPageProps> = ({
           </div>
         </main>
       </div>
+
+      {/* Unsend Confirmation Modal Dialog */}
+      <Modal
+        isOpen={!!unsendTarget}
+        onClose={() => setUnsendTarget(null)}
+        icon={<RotateCcw className="w-5 h-5 text-rose-600" />}
+        iconContainerClassName="bg-rose-50 text-rose-600"
+        title="Unsend Match Interest?"
+        description={
+          <>
+            Are you sure you want to unsend and cancel your interest request to{" "}
+            <span className="font-bold text-slate-900">
+              {unsendTarget?.receiver?.profile?.displayName || "this member"}
+            </span>
+            ? They will no longer see your interest in their received queue.
+          </>
+        }
+        footer={
+          <div className="flex items-center justify-end gap-2.5 w-full">
+            <button
+              type="button"
+              onClick={() => setUnsendTarget(null)}
+              className="py-2.5 px-4 rounded-xl border border-slate-200 text-slate-600 font-bold text-xs hover:bg-slate-50 transition-colors cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              disabled={unsendMutation.isPending}
+              onClick={() => {
+                if (unsendTarget?.id) {
+                  unsendMutation.mutate(unsendTarget.id);
+                  setUnsendTarget(null);
+                }
+              }}
+              className="py-2.5 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-xs transition-colors cursor-pointer shadow-md shadow-rose-600/20 disabled:opacity-50"
+            >
+              {unsendMutation.isPending ? "Cancelling..." : "Yes, Unsend Interest"}
+            </button>
+          </div>
+        }
+      />
     </div>
   );
 };
