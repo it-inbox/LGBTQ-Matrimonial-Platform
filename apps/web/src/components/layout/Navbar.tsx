@@ -247,7 +247,7 @@ export const Navbar: React.FC = () => {
                       icon: Headphones,
                       onClick: () => {
                         closeMobileMenu();
-                        navigate("/discover");
+                        navigate("/help");
                       },
                     },
                     {
@@ -255,7 +255,7 @@ export const Navbar: React.FC = () => {
                       icon: MessageSquareQuote,
                       onClick: () => {
                         closeMobileMenu();
-                        navigate("/");
+                        navigate("/stories");
                       },
                     },
                   ].map((item, idx) => {

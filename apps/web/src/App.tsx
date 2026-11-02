@@ -14,6 +14,8 @@ import { UnblurActivityPage } from "./pages/unblur/UnblurActivityPage";
 import { MessengerPage } from "./pages/chat/MessengerPage";
 import { MemberProfileDetailPage } from "./pages/matches/MemberProfileDetailPage";
 import { UpgradeMembershipPage } from "./pages/membership/UpgradeMembershipPage";
+import { HelpSupportPage } from "./pages/help/HelpSupportPage";
+import { SuccessStoriesPage } from "./pages/stories/SuccessStoriesPage";
 import { LoginModal } from "./components/auth/LoginModal";
 import { ChatNotificationToast } from "./components/chat/ChatNotificationToast";
 import { useAuthStore } from "./stores/auth.store";
@@ -220,6 +222,15 @@ export function App() {
                 }
               />
               <Route path="/upgrade" element={<Navigate to="/membership/upgrade" replace />} />
+
+              {/* Help & Support (Accessible to authenticated or onboarding users) */}
+              <Route path="/help" element={<HelpSupportPage />} />
+              <Route path="/support" element={<Navigate to="/help" replace />} />
+
+              {/* Success Stories */}
+              <Route path="/stories" element={<SuccessStoriesPage />} />
+              <Route path="/success-stories" element={<Navigate to="/stories" replace />} />
+
               <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
               </ErrorBoundary>
