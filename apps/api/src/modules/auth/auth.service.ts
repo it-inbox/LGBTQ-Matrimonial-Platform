@@ -9,6 +9,7 @@ import { PrismaService } from "../prisma/prisma.service.js";
 import { TokenService } from "@everpride/auth";
 import { RegisterInput, LoginInput, SendOtpInput, VerifyOtpInput } from "@everpride/shared";
 import { SmsService } from "./sms.service.js";
+import { PaymentsService } from "../payments/payments.service.js";
 
 @Injectable()
 export class AuthService {
@@ -17,6 +18,7 @@ export class AuthService {
   constructor(
     private prisma: PrismaService,
     private smsService: SmsService,
+    private paymentsService: PaymentsService,
   ) {
     const accessSecret = process.env.JWT_ACCESS_SECRET || "super-secret-access-token-change-in-production";
     const refreshSecret = process.env.JWT_REFRESH_SECRET || "super-secret-refresh-token-change-in-production";
@@ -155,7 +157,16 @@ export class AuthService {
     });
 
     const tokens = this.generateTokens(user.id, cleanPhone, user.role);
-    return { user, ...tokens };
+    const membership = this.paymentsService.getMembership(user.id);
+    return {
+      user: {
+        ...user,
+        onboardingCompleted: false,
+      },
+      profile: null,
+      membership,
+      ...tokens,
+    };
   }
 
   async login(data: LoginInput) {
@@ -180,6 +191,14 @@ export class AuthService {
       throw new UnauthorizedException("User account is deactivated");
     }
 
+    const [profile, membership] = await Promise.all([
+      this.prisma.client.profile.findUnique({
+        where: { userId: user.id },
+        include: { photos: true, partnerPreference: true },
+      }),
+      Promise.resolve(this.paymentsService.getMembership(user.id)),
+    ]);
+
     const tokens = this.generateTokens(user.id, cleanPhone, user.role);
     return {
       user: {
@@ -187,7 +206,10 @@ export class AuthService {
         phoneNumber: user.phoneNumber,
         role: user.role,
         isVerified: user.isVerified,
+        onboardingCompleted: !!profile,
       },
+      profile,
+      membership,
       ...tokens,
     };
   }
@@ -206,6 +228,43 @@ export class AuthService {
     } catch {
       throw new UnauthorizedException("Invalid or expired refresh token");
     }
+  }
+
+  async getSession(userId: string) {
+    const [user, profile, membership] = await Promise.all([
+      this.prisma.client.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          phoneNumber: true,
+          email: true,
+          role: true,
+          isVerified: true,
+        },
+      }),
+      this.prisma.client.profile.findUnique({
+        where: { userId },
+        include: {
+          photos: { orderBy: [{ isPrimary: "desc" }, { createdAt: "asc" }] },
+          educations: { orderBy: { createdAt: "asc" } },
+          partnerPreference: true,
+        },
+      }),
+      Promise.resolve(this.paymentsService.getMembership(userId)),
+    ]);
+
+    if (!user) {
+      throw new UnauthorizedException("User not found or inactive");
+    }
+
+    return {
+      user: {
+        ...user,
+        onboardingCompleted: !!profile,
+      },
+      profile,
+      membership,
+    };
   }
 
   private generateTokens(userId: string, phoneNumber: string, role: string) {

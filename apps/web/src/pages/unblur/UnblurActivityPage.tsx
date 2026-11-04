@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "../../lib/api";
+import { QUERY_KEYS } from "../../lib/queryKeys";
 import { ActivitySidebar } from "../../components/layout/ActivitySidebar";
 import { EmptyActivityState } from "../../components/layout/EmptyActivityState";
 import { UnblurHeader } from "../../components/layout/UnblurHeader";
@@ -46,7 +47,7 @@ export const UnblurActivityPage: React.FC<UnblurActivityPageProps> = ({
 
   // Fetch Received Unblur Requests
   const { data: receivedData, isLoading: isLoadingReceived } = useQuery({
-    queryKey: ["received-unblur"],
+    queryKey: QUERY_KEYS.receivedUnblur,
     queryFn: async () => {
       const res = await api.get("/matches/photo-access/received");
       return res.data;
@@ -56,7 +57,7 @@ export const UnblurActivityPage: React.FC<UnblurActivityPageProps> = ({
 
   // Fetch Sent Unblur Requests
   const { data: sentData, isLoading: isLoadingSent } = useQuery({
-    queryKey: ["sent-unblur"],
+    queryKey: QUERY_KEYS.sentUnblur,
     queryFn: async () => {
       const res = await api.get("/matches/photo-access/sent");
       return res.data;
@@ -74,7 +75,10 @@ export const UnblurActivityPage: React.FC<UnblurActivityPageProps> = ({
           ? "Unblur permission approved! They can now view your original photos."
           : "Photo access request declined."
       );
-      queryClient.invalidateQueries({ queryKey: ["received-unblur"] });
+      queryClient.setQueryData(QUERY_KEYS.receivedUnblur, (old: any[]) => {
+        if (!Array.isArray(old)) return old;
+        return old.map((item) => (item.id === variables.id ? { ...item, status: variables.status } : item));
+      });
       setTimeout(() => setSuccessToast(null), 4000);
     },
   });
@@ -83,14 +87,17 @@ export const UnblurActivityPage: React.FC<UnblurActivityPageProps> = ({
     mutationFn: async ({ id, isHidden }: { id: string; isHidden?: boolean }) => {
       return api.post(`/matches/photo-access/${id}/toggle-hide`, { isHidden });
     },
-    onSuccess: (res) => {
+    onSuccess: (res, variables) => {
       const isNowHidden = res.data?.isHidden;
       setSuccessToast(
         isNowHidden
           ? "Photos temporarily hidden from this member. They will see blurred photos until you unhide."
           : "Photos unhidden. The member can now view your original photos again."
       );
-      queryClient.invalidateQueries({ queryKey: ["received-unblur"] });
+      queryClient.setQueryData(QUERY_KEYS.receivedUnblur, (old: any[]) => {
+        if (!Array.isArray(old)) return old;
+        return old.map((item) => (item.id === variables.id ? { ...item, isHidden: isNowHidden } : item));
+      });
       setTimeout(() => setSuccessToast(null), 4000);
     },
   });
@@ -99,10 +106,13 @@ export const UnblurActivityPage: React.FC<UnblurActivityPageProps> = ({
     mutationFn: async ({ id }: { id: string }) => {
       return api.post(`/matches/photo-access/${id}/revoke`);
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       setSuccessToast("Photo access completely revoked. They must send a new unblur request to view your pictures.");
       setRevokingRequest(null);
-      queryClient.invalidateQueries({ queryKey: ["received-unblur"] });
+      queryClient.setQueryData(QUERY_KEYS.receivedUnblur, (old: any[]) => {
+        if (!Array.isArray(old)) return old;
+        return old.map((item) => (item.id === variables.id ? { ...item, isRevoked: true, status: "REVOKED" } : item));
+      });
       setTimeout(() => setSuccessToast(null), 4000);
     },
   });
@@ -111,9 +121,12 @@ export const UnblurActivityPage: React.FC<UnblurActivityPageProps> = ({
     mutationFn: async (id: string) => {
       return api.post(`/matches/photo-access/${id}/unsend`);
     },
-    onSuccess: () => {
+    onSuccess: (_, unsentId) => {
       setSuccessToast("Unblur photo request has been unsent and cancelled.");
-      queryClient.invalidateQueries({ queryKey: ["sent-unblur"] });
+      queryClient.setQueryData(QUERY_KEYS.sentUnblur, (old: any[]) => {
+        if (!Array.isArray(old)) return old;
+        return old.filter((item) => item.id !== unsentId);
+      });
       setTimeout(() => setSuccessToast(null), 4000);
     },
   });

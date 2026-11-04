@@ -2,6 +2,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../../lib/api";
+import { QUERY_KEYS } from "../../lib/queryKeys";
 import { ActivitySidebar } from "../../components/layout/ActivitySidebar";
 import { EmptyActivityState } from "../../components/layout/EmptyActivityState";
 import { UniversalProfileCard } from "../../components/activity/UniversalProfileCard";
@@ -20,7 +21,7 @@ export const MatchesPage: React.FC = () => {
   const setNewMatchesCount = useChatStore((s) => s.setNewMatchesCount);
 
   const { data: matchesList, isLoading } = useQuery({
-    queryKey: ["accepted-matches"],
+    queryKey: QUERY_KEYS.acceptedMatches,
     queryFn: async () => {
       const res = await api.get("/matches/accepted");
       return res.data;

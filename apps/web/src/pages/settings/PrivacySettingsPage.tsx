@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "../../stores/auth.store";
 import { api } from "../../lib/api";
+import { QUERY_KEYS } from "../../lib/queryKeys";
 import { Shield, EyeOff, Check, Lock, AlertCircle, Ban, UserCheck, Loader2 } from "lucide-react";
 
 interface BlockedItem {
@@ -19,7 +21,8 @@ interface BlockedItem {
 }
 
 export const PrivacySettingsPage: React.FC = () => {
-  const { profile, fetchProfile } = useAuthStore();
+  const queryClient = useQueryClient();
+  const { profile, setProfile } = useAuthStore();
   const [photoVisibility, setPhotoVisibility] = useState(
     profile?.photoVisibility || "MUTUAL_MATCHES_ONLY"
   );
@@ -28,33 +31,24 @@ export const PrivacySettingsPage: React.FC = () => {
   );
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
-
-  // Blocked users management
-  const [blockedUsers, setBlockedUsers] = useState<BlockedItem[]>([]);
-  const [loadingBlocked, setLoadingBlocked] = useState(true);
   const [unblockingId, setUnblockingId] = useState<string | null>(null);
 
-  const fetchBlockedUsers = async () => {
-    try {
-      setLoadingBlocked(true);
+  // Blocked users query with automatic caching
+  const { data: blockedUsers = [], isLoading: loadingBlocked } = useQuery<BlockedItem[]>({
+    queryKey: QUERY_KEYS.blockedUsers,
+    queryFn: async () => {
       const res = await api.get("/matches/blocked");
-      setBlockedUsers(res.data || []);
-    } catch (err) {
-      console.error("Failed to fetch blocked users:", err);
-    } finally {
-      setLoadingBlocked(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchBlockedUsers();
-  }, []);
+      return res.data || [];
+    },
+  });
 
   const handleUnblock = async (blockedUserId: string) => {
     setUnblockingId(blockedUserId);
     try {
       await api.post(`/matches/unblock/${blockedUserId}`);
-      setBlockedUsers((prev) => prev.filter((item) => item.blockedUserId !== blockedUserId));
+      queryClient.setQueryData<BlockedItem[]>(QUERY_KEYS.blockedUsers, (prev = []) =>
+        prev.filter((item) => item.blockedUserId !== blockedUserId)
+      );
     } catch (err) {
       console.error("Failed to unblock user:", err);
     } finally {
@@ -63,13 +57,20 @@ export const PrivacySettingsPage: React.FC = () => {
   };
 
   const handleSave = async () => {
+    if (saving) return;
     setSaving(true);
     try {
       await api.patch("/profiles/me/privacy", {
         photoVisibility,
         ghostModeEnabled,
       });
-      await fetchProfile();
+      if (profile) {
+        setProfile({
+          ...profile,
+          photoVisibility,
+          ghostModeEnabled,
+        });
+      }
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
     } finally {

@@ -83,6 +83,12 @@ export class MatchesController {
     return this.matchesService.requestPhotoAccess(userId, dto);
   }
 
+  @Get("summary")
+  @ApiOperation({ summary: "Get aggregated counts and IDs for activity badges" })
+  async getSummary(@CurrentUser("userId") userId: string) {
+    return this.matchesService.getActivitySummary(userId);
+  }
+
   @Get("interests/received")
   @ApiOperation({ summary: "Get all received match interests" })
   async getReceivedInterests(@CurrentUser("userId") userId: string) {

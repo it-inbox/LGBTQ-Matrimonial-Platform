@@ -1074,6 +1074,41 @@ export class MatchesService {
   }
 
   /**
+   * Aggregated lightweight summary for badge counters and seen match checks.
+   * Replaces heavy full-list queries on login/initial mount.
+   */
+  async getActivitySummary(userId: string) {
+    const [pendingInterestsCount, acceptedMatches, unreadConversationsCount] = await Promise.all([
+      this.prisma.client.matchInterest.count({
+        where: {
+          receiverId: userId,
+          status: "PENDING",
+        },
+      }),
+      this.getAcceptedMatches(userId),
+      this.prisma.client.conversation.count({
+        where: {
+          OR: [{ participant1Id: userId }, { participant2Id: userId }],
+          messages: {
+            some: {
+              senderId: { not: userId },
+              isRead: false,
+            },
+          },
+        },
+      }),
+    ]);
+
+    const matchIds = acceptedMatches.map((m: any) => m.interestId || m.user?.id).filter(Boolean);
+
+    return {
+      pendingInterestsCount,
+      matchIds,
+      unreadConversationsCount,
+    };
+  }
+
+  /**
    * Block a user
    */
   async blockUser(userId: string, targetUserId: string, reason?: string) {

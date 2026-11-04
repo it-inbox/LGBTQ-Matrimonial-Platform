@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { queryClient } from "./lib/queryClient";
 import { Navbar } from "./components/layout/Navbar";
 import { BottomStickyNavbar } from "./components/layout/BottomStickyNavbar";
 import { LandingPage } from "./pages/LandingPage";
@@ -23,7 +24,7 @@ import { useChatStore } from "./stores/chat.store";
 
 import { ErrorBoundary } from "./components/common/ErrorBoundary";
 
-const queryClient = new QueryClient();
+export { queryClient };
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -102,137 +103,137 @@ export function App() {
             <main className="flex-1 min-h-0 overflow-y-auto pb-16 lg:pb-0">
               <ErrorBoundary>
                 <Routes>
-              {/* Public Routes */}
-              <Route path="/" element={<PublicLandingRoute />} />
-              <Route path="/login" element={<Navigate to="/" replace />} />
-              <Route
-                path="/onboarding"
-                element={
-                  <ProtectedRoute requireProfile={false}>
-                    <OnboardingWizard />
-                  </ProtectedRoute>
-                }
-              />
-              <Route path="/register" element={<Navigate to="/onboarding" replace />} />
+                  {/* Public Routes */}
+                  <Route path="/" element={<PublicLandingRoute />} />
+                  <Route path="/login" element={<Navigate to="/" replace />} />
+                  <Route
+                    path="/onboarding"
+                    element={
+                      <ProtectedRoute requireProfile={false}>
+                        <OnboardingWizard />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route path="/register" element={<Navigate to="/onboarding" replace />} />
 
-              {/* Protected Routes (Require Completed Profile) */}
-              <Route
-                path="/profile/edit"
-                element={
-                  <ProtectedRoute requireProfile={true}>
-                    <EditProfilePage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/discover"
-                element={
-                  <ProtectedRoute requireProfile={true}>
-                    <DiscoveryFeedPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/profile/:userId"
-                element={
-                  <ProtectedRoute requireProfile={true}>
-                    <MemberProfileDetailPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/matches"
-                element={
-                  <ProtectedRoute requireProfile={true}>
-                    <MatchesPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/messages"
-                element={
-                  <ProtectedRoute requireProfile={true}>
-                    <MessengerPage />
-                  </ProtectedRoute>
-                }
-              />
-              
-              {/* Consolidated Polymorphic Interests Activity Routes */}
-              <Route
-                path="/interests/sent"
-                element={
-                  <ProtectedRoute requireProfile={true}>
-                    <InterestsActivityPage initialTab="sent" />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/interests/received"
-                element={
-                  <ProtectedRoute requireProfile={true}>
-                    <InterestsActivityPage initialTab="received" />
-                  </ProtectedRoute>
-                }
-              />
-              <Route path="/interests" element={<Navigate to="/interests/received" replace />} />
-              <Route path="/interest/iDeclined" element={<Navigate to="/interests/received" replace />} />
-              <Route path="/interest/theyDeclined" element={<Navigate to="/interests/sent" replace />} />
-              <Route path="/interests/declined" element={<Navigate to="/interests/received" replace />} />
-              <Route path="/interests/iDeclined" element={<Navigate to="/interests/received" replace />} />
-              <Route path="/interests/theyDeclined" element={<Navigate to="/interests/sent" replace />} />
+                  {/* Protected Routes (Require Completed Profile) */}
+                  <Route
+                    path="/profile/edit"
+                    element={
+                      <ProtectedRoute requireProfile={true}>
+                        <EditProfilePage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/discover"
+                    element={
+                      <ProtectedRoute requireProfile={true}>
+                        <DiscoveryFeedPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/profile/:userId"
+                    element={
+                      <ProtectedRoute requireProfile={true}>
+                        <MemberProfileDetailPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/matches"
+                    element={
+                      <ProtectedRoute requireProfile={true}>
+                        <MatchesPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/messages"
+                    element={
+                      <ProtectedRoute requireProfile={true}>
+                        <MessengerPage />
+                      </ProtectedRoute>
+                    }
+                  />
 
-              {/* Consolidated Polymorphic Unblur Photo Access Routes */}
-              <Route
-                path="/unblur/received"
-                element={
-                  <ProtectedRoute requireProfile={true}>
-                    <UnblurActivityPage initialTab="received" />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/unblur/sent"
-                element={
-                  <ProtectedRoute requireProfile={true}>
-                    <UnblurActivityPage initialTab="sent" />
-                  </ProtectedRoute>
-                }
-              />
-              <Route path="/unblur/iAccepted" element={<Navigate to="/unblur/received" replace />} />
-              <Route path="/unblur/theyAccepted" element={<Navigate to="/unblur/sent" replace />} />
-              <Route path="/unblur/iDeclined" element={<Navigate to="/unblur/received" replace />} />
-              <Route path="/unblur/theyDeclined" element={<Navigate to="/unblur/sent" replace />} />
-              <Route path="/photo-access/received" element={<Navigate to="/unblur/received" replace />} />
-              <Route path="/photo-access/sent" element={<Navigate to="/unblur/sent" replace />} />
-              <Route path="/unblur" element={<Navigate to="/unblur/received" replace />} />
-              <Route
-                path="/privacy-settings"
-                element={
-                  <ProtectedRoute requireProfile={true}>
-                    <PrivacySettingsPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/membership/upgrade"
-                element={
-                  <ProtectedRoute requireProfile={false}>
-                    <UpgradeMembershipPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route path="/upgrade" element={<Navigate to="/membership/upgrade" replace />} />
+                  {/* Consolidated Polymorphic Interests Activity Routes */}
+                  <Route
+                    path="/interests/sent"
+                    element={
+                      <ProtectedRoute requireProfile={true}>
+                        <InterestsActivityPage initialTab="sent" />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/interests/received"
+                    element={
+                      <ProtectedRoute requireProfile={true}>
+                        <InterestsActivityPage initialTab="received" />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route path="/interests" element={<Navigate to="/interests/received" replace />} />
+                  <Route path="/interest/iDeclined" element={<Navigate to="/interests/received" replace />} />
+                  <Route path="/interest/theyDeclined" element={<Navigate to="/interests/sent" replace />} />
+                  <Route path="/interests/declined" element={<Navigate to="/interests/received" replace />} />
+                  <Route path="/interests/iDeclined" element={<Navigate to="/interests/received" replace />} />
+                  <Route path="/interests/theyDeclined" element={<Navigate to="/interests/sent" replace />} />
 
-              {/* Help & Support (Accessible to authenticated or onboarding users) */}
-              <Route path="/help" element={<HelpSupportPage />} />
-              <Route path="/support" element={<Navigate to="/help" replace />} />
+                  {/* Consolidated Polymorphic Unblur Photo Access Routes */}
+                  <Route
+                    path="/unblur/received"
+                    element={
+                      <ProtectedRoute requireProfile={true}>
+                        <UnblurActivityPage initialTab="received" />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/unblur/sent"
+                    element={
+                      <ProtectedRoute requireProfile={true}>
+                        <UnblurActivityPage initialTab="sent" />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route path="/unblur/iAccepted" element={<Navigate to="/unblur/received" replace />} />
+                  <Route path="/unblur/theyAccepted" element={<Navigate to="/unblur/sent" replace />} />
+                  <Route path="/unblur/iDeclined" element={<Navigate to="/unblur/received" replace />} />
+                  <Route path="/unblur/theyDeclined" element={<Navigate to="/unblur/sent" replace />} />
+                  <Route path="/photo-access/received" element={<Navigate to="/unblur/received" replace />} />
+                  <Route path="/photo-access/sent" element={<Navigate to="/unblur/sent" replace />} />
+                  <Route path="/unblur" element={<Navigate to="/unblur/received" replace />} />
+                  <Route
+                    path="/privacy-settings"
+                    element={
+                      <ProtectedRoute requireProfile={true}>
+                        <PrivacySettingsPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/membership/upgrade"
+                    element={
+                      <ProtectedRoute requireProfile={false}>
+                        <UpgradeMembershipPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route path="/upgrade" element={<Navigate to="/membership/upgrade" replace />} />
 
-              {/* Success Stories */}
-              <Route path="/stories" element={<SuccessStoriesPage />} />
-              <Route path="/success-stories" element={<Navigate to="/stories" replace />} />
+                  {/* Help & Support (Accessible to authenticated or onboarding users) */}
+                  <Route path="/help" element={<HelpSupportPage />} />
+                  <Route path="/support" element={<Navigate to="/help" replace />} />
 
-              <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
+                  {/* Success Stories */}
+                  <Route path="/stories" element={<SuccessStoriesPage />} />
+                  <Route path="/success-stories" element={<Navigate to="/stories" replace />} />
+
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
               </ErrorBoundary>
             </main>
           </div>

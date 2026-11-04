@@ -122,6 +122,16 @@ Located at [`UpgradeMembershipPage.tsx`](file:///c:/Users/Inboxuser.IBDT01/code/
 
 ## 4. Key Endpoints & Backend Architecture
 
+### Key Session & Auth Endpoints (`auth.controller.ts` & `auth.service.ts`)
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `POST` | `/api/v1/auth/send-otp` | Sends OTP to phone number |
+| `POST` | `/api/v1/auth/verify-otp` | Verifies OTP code |
+| `POST` | `/api/v1/auth/login` | Authenticates user; returns `{ user, profile, membership, accessToken, refreshToken }` |
+| `GET` | `/api/v1/auth/me` | Unified session bootstrap endpoint returning `{ user, profile, membership }` in a single request |
+| `POST` | `/api/v1/auth/refresh` | Refreshes access token with in-flight mutex deduplication in web client |
+| `POST` | `/api/v1/auth/logout` | Clears refresh token cookie and terminates session |
+
 ### Payments & Membership (`payments.controller.ts` & `payments.service.ts`)
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
@@ -132,6 +142,7 @@ Located at [`UpgradeMembershipPage.tsx`](file:///c:/Users/Inboxuser.IBDT01/code/
 ### Matchmaking & Discovery (`matches.controller.ts` & `matches.service.ts`)
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
+| `GET` | `/api/v1/matches/summary` | Lightweight aggregated counts and match IDs for instant navbar/sidebar activity badges |
 | `GET` | `/api/v1/matches/feed` | Fetches active profiles matching user preferences & privacy grants (excludes sent interests and matches) |
 | `POST` | `/api/v1/matches/interest` | Sends interest. If reciprocal pending interest exists, automatically auto-matches both members, initializes conversation, and emits `new_match` |
 | `GET` | `/api/v1/matches/interests/received` | All received interests with complete sender profiles |

@@ -47,7 +47,7 @@ export const LandingPage: React.FC = () => {
     if (!isAuthenticated) {
       openLoginModal();
     } else if (profile) {
-      navigate("/matches");
+      navigate("/discover");
     } else {
       navigate("/onboarding");
     }
@@ -57,7 +57,7 @@ export const LandingPage: React.FC = () => {
     if (!isAuthenticated) {
       openLoginModal();
     } else if (profile) {
-      navigate("/matches");
+      navigate("/discover");
     } else {
       navigate("/onboarding");
     }

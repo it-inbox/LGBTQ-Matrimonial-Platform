@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "../../lib/api";
+import { QUERY_KEYS } from "../../lib/queryKeys";
 import { ActivitySidebar } from "../../components/layout/ActivitySidebar";
 import { EmptyActivityState } from "../../components/layout/EmptyActivityState";
 import { InterestsHeader } from "../../components/layout/InterestsHeader";
@@ -37,7 +38,7 @@ export const InterestsActivityPage: React.FC<InterestsActivityPageProps> = ({
 
   // Fetch Received Interests
   const { data: receivedData, isLoading: isLoadingReceived } = useQuery({
-    queryKey: ["received-interests"],
+    queryKey: QUERY_KEYS.receivedInterests,
     queryFn: async () => {
       const res = await api.get("/matches/interests/received");
       return res.data;
@@ -47,7 +48,7 @@ export const InterestsActivityPage: React.FC<InterestsActivityPageProps> = ({
 
   // Fetch Sent Interests
   const { data: sentData, isLoading: isLoadingSent } = useQuery({
-    queryKey: ["sent-interests"],
+    queryKey: QUERY_KEYS.sentInterests,
     queryFn: async () => {
       const res = await api.get("/matches/interests/sent");
       return res.data;
@@ -65,8 +66,11 @@ export const InterestsActivityPage: React.FC<InterestsActivityPageProps> = ({
           ? "Interest accepted! Profile added to your Mutual Matches."
           : "Interest request declined."
       );
-      queryClient.invalidateQueries({ queryKey: ["received-interests"] });
-      queryClient.invalidateQueries({ queryKey: ["accepted-matches"] });
+      queryClient.setQueryData(QUERY_KEYS.receivedInterests, (old: any[]) => {
+        if (!Array.isArray(old)) return old;
+        return old.map((item) => (item.id === variables.id ? { ...item, status: variables.status } : item));
+      });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.acceptedMatches });
       setTimeout(() => setSuccessToast(null), 4000);
     },
   });
@@ -75,10 +79,13 @@ export const InterestsActivityPage: React.FC<InterestsActivityPageProps> = ({
     mutationFn: async (id: string) => {
       return api.post(`/matches/interest/${id}/unsend`);
     },
-    onSuccess: () => {
+    onSuccess: (_, unsentId) => {
       setSuccessToast("Match interest has been unsent and cancelled.");
-      queryClient.invalidateQueries({ queryKey: ["sent-interests"] });
-      queryClient.invalidateQueries({ queryKey: ["discover-feed"] });
+      queryClient.setQueryData(QUERY_KEYS.sentInterests, (old: any[]) => {
+        if (!Array.isArray(old)) return old;
+        return old.filter((item) => item.id !== unsentId);
+      });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.matchesFeed() });
       setTimeout(() => setSuccessToast(null), 4000);
     },
   });
@@ -144,11 +151,10 @@ export const InterestsActivityPage: React.FC<InterestsActivityPageProps> = ({
                     key={filter}
                     type="button"
                     onClick={() => setStatusFilter(filter)}
-                    className={`px-3 py-1.5 rounded-full font-semibold shrink-0 cursor-pointer transition-colors ${
-                      isSelected
+                    className={`px-3 py-1.5 rounded-full font-semibold shrink-0 cursor-pointer transition-colors ${isSelected
                         ? "bg-slate-900 text-white shadow-2xs"
                         : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                    }`}
+                      }`}
                   >
                     {filter === "ALL" ? "All Interests" : filter.charAt(0) + filter.slice(1).toLowerCase()} ({count})
                   </button>
@@ -171,89 +177,89 @@ export const InterestsActivityPage: React.FC<InterestsActivityPageProps> = ({
               </div>
             ) : (
               <div className="space-y-4">
-              {filteredList.map((item: any) => {
-                const targetProfile = currentTab === "received" ? item.sender?.profile : item.receiver?.profile;
-                if (!targetProfile) return null;
+                {filteredList.map((item: any) => {
+                  const targetProfile = currentTab === "received" ? item.sender?.profile : item.receiver?.profile;
+                  if (!targetProfile) return null;
 
-                return (
-                  <UniversalProfileCard
-                    key={item.id}
-                    profile={targetProfile}
-                    userId={currentTab === "received" ? item.sender?.id : item.receiver?.id}
-                    badge="outness"
-                    headerStatusLeft={
-                      <span>
-                        {currentTab === "received" ? "Received on " : "Sent on "}
-                        {new Date(item.createdAt).toLocaleDateString()}
-                      </span>
-                    }
-                    headerStatusRight={renderStatusBadge(item.status)}
-                    messageSnippet={item.message}
-                    actionsFooter={
-                      currentTab === "received" ? (
-                        item.status === "PENDING" ? (
-                          <>
-                            <button
-                              type="button"
-                              disabled={respondMutation.isPending}
-                              onClick={() =>
-                                respondMutation.mutate({ id: item.id, status: "ACCEPTED" })
-                              }
-                              className="flex-1 flex items-center justify-center gap-1.5 py-2 px-1 text-emerald-600 hover:bg-emerald-50 transition-colors font-bold text-xs cursor-pointer disabled:opacity-50 group"
-                            >
-                              <Check className="w-4 h-4 text-emerald-600 group-hover:scale-110 transition-transform" />
-                              <span>Accept</span>
-                            </button>
-                            <button
-                              type="button"
-                              disabled={respondMutation.isPending}
-                              onClick={() =>
-                                respondMutation.mutate({ id: item.id, status: "DECLINED" })
-                              }
-                              className="flex-1 flex items-center justify-center gap-1.5 py-2 px-1 text-rose-600 hover:bg-rose-50 transition-colors font-bold text-xs cursor-pointer disabled:opacity-50 group"
-                            >
-                              <X className="w-4 h-4 text-rose-600 group-hover:scale-110 transition-transform" />
-                              <span>Decline</span>
-                            </button>
-                          </>
-                        ) : (
-                          <div className="flex-1 flex items-center justify-center py-2 px-3 text-slate-500 font-medium text-xs text-center">
-                            {item.status === "ACCEPTED"
-                              ? "You accepted this interest. Added to Mutual Matches."
-                              : "You declined this match interest."}
-                          </div>
-                        )
-                      ) : (
-                        <div className="flex-1 flex flex-col sm:flex-row items-center justify-between gap-2 px-4 py-2">
-                          <span className="text-slate-600 font-medium text-xs truncate">
-                            {item.status === "ACCEPTED"
-                              ? "Member accepted your match interest! You are now connected."
-                              : item.status === "DECLINED"
-                              ? "Member declined this match interest."
-                              : "Waiting for the member to respond."}
-                          </span>
-                          <div className="flex items-center gap-2 shrink-0">
-                            {renderStatusBadge(item.status)}
-                            {item.status === "PENDING" && (
+                  return (
+                    <UniversalProfileCard
+                      key={item.id}
+                      profile={targetProfile}
+                      userId={currentTab === "received" ? item.sender?.id : item.receiver?.id}
+                      badge="outness"
+                      headerStatusLeft={
+                        <span>
+                          {currentTab === "received" ? "Received on " : "Sent on "}
+                          {new Date(item.createdAt).toLocaleDateString()}
+                        </span>
+                      }
+                      headerStatusRight={renderStatusBadge(item.status)}
+                      messageSnippet={item.message}
+                      actionsFooter={
+                        currentTab === "received" ? (
+                          item.status === "PENDING" ? (
+                            <>
                               <button
                                 type="button"
-                                disabled={unsendMutation.isPending}
-                                onClick={() => setUnsendTarget(item)}
-                                className="px-2.5 py-1 rounded-lg text-rose-600 hover:text-rose-700 hover:bg-rose-50 border border-rose-200 text-xs font-bold transition-colors cursor-pointer disabled:opacity-50"
-                                title="Unsend interest"
+                                disabled={respondMutation.isPending}
+                                onClick={() =>
+                                  respondMutation.mutate({ id: item.id, status: "ACCEPTED" })
+                                }
+                                className="flex-1 flex items-center justify-center gap-1.5 py-2 px-1 text-emerald-600 hover:bg-emerald-50 transition-colors font-bold text-xs cursor-pointer disabled:opacity-50 group"
                               >
-                                Unsend
+                                <Check className="w-4 h-4 text-emerald-600 group-hover:scale-110 transition-transform" />
+                                <span>Accept</span>
                               </button>
-                            )}
+                              <button
+                                type="button"
+                                disabled={respondMutation.isPending}
+                                onClick={() =>
+                                  respondMutation.mutate({ id: item.id, status: "DECLINED" })
+                                }
+                                className="flex-1 flex items-center justify-center gap-1.5 py-2 px-1 text-rose-600 hover:bg-rose-50 transition-colors font-bold text-xs cursor-pointer disabled:opacity-50 group"
+                              >
+                                <X className="w-4 h-4 text-rose-600 group-hover:scale-110 transition-transform" />
+                                <span>Decline</span>
+                              </button>
+                            </>
+                          ) : (
+                            <div className="flex-1 flex items-center justify-center py-2 px-3 text-slate-500 font-medium text-xs text-center">
+                              {item.status === "ACCEPTED"
+                                ? "You accepted this interest. Added to Mutual Matches."
+                                : "You declined this match interest."}
+                            </div>
+                          )
+                        ) : (
+                          <div className="flex-1 flex flex-col sm:flex-row items-center justify-between gap-2 px-4 py-2">
+                            <span className="text-slate-600 font-medium text-xs truncate">
+                              {item.status === "ACCEPTED"
+                                ? "Member accepted your match interest! You are now connected."
+                                : item.status === "DECLINED"
+                                  ? "Member declined this match interest."
+                                  : "Waiting for the member to respond."}
+                            </span>
+                            <div className="flex items-center gap-2 shrink-0">
+                              {renderStatusBadge(item.status)}
+                              {item.status === "PENDING" && (
+                                <button
+                                  type="button"
+                                  disabled={unsendMutation.isPending}
+                                  onClick={() => setUnsendTarget(item)}
+                                  className="px-2.5 py-1 rounded-lg text-rose-600 hover:text-rose-700 hover:bg-rose-50 border border-rose-200 text-xs font-bold transition-colors cursor-pointer disabled:opacity-50"
+                                  title="Unsend interest"
+                                >
+                                  Unsend
+                                </button>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      )
-                    }
-                  />
-                );
-              })}
-            </div>
-          )}
+                        )
+                      }
+                    />
+                  );
+                })}
+              </div>
+            )}
           </div>
         </main>
       </div>

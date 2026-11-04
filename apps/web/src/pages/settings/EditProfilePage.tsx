@@ -203,7 +203,7 @@ const SECTION_TABS: SectionTab[] = [
 ];
 
 export const EditProfilePage: React.FC = () => {
-  const { profile, fetchProfile } = useAuthStore();
+  const { profile, setProfile } = useAuthStore();
   const location = useLocation();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -538,6 +538,7 @@ export const EditProfilePage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return;
     if (!formData.displayName.trim() || formData.displayName.trim().length < 2) {
       const msg = "Display Name must be at least 2 characters.";
       setError(msg);
@@ -607,8 +608,8 @@ export const EditProfilePage: React.FC = () => {
         },
       };
 
-      await api.patch("/profiles/me", payload);
-      await fetchProfile();
+      const res = await api.patch("/profiles/me", payload);
+      setProfile(res.data);
       setSuccess(true);
       showToast("success", "Profile updated successfully!");
       setTimeout(() => setSuccess(false), 3500);

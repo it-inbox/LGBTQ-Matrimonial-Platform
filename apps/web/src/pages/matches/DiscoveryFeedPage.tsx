@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "../../lib/api";
+import { QUERY_KEYS } from "../../lib/queryKeys";
 import { ActivitySidebar } from "../../components/layout/ActivitySidebar";
 import {
   Heart,
@@ -13,6 +14,7 @@ import {
   CheckCircle,
   Search,
   X,
+  Loader2,
   MessageCircle,
   Phone,
   GraduationCap,
@@ -58,7 +60,20 @@ export const DiscoveryFeedPage: React.FC = () => {
   const [activeModalProfile, setActiveModalProfile] = useState<any | null>(null);
   const [modalType, setModalType] = useState<"interest" | "photo" | null>(null);
   const [successToast, setSuccessToast] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState(savedFilters.searchQuery || "");
+  const [searchInput, setSearchInput] = useState(savedFilters.searchQuery || "");
+  const [appliedSearchQuery, setAppliedSearchQuery] = useState(savedFilters.searchQuery || "");
+
+  const handleExecuteSearch = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    setAppliedSearchQuery(searchInput.trim());
+    setCurrentPage(1);
+  };
+
+  const handleClearSearch = () => {
+    setSearchInput("");
+    setAppliedSearchQuery("");
+    setCurrentPage(1);
+  };
   const [activeQuickFilter, setActiveQuickFilter] = useState<string>(savedFilters.activeQuickFilter || "All");
   const [ignoredProfileIds, setIgnoredProfileIds] = useState<string[]>([]);
 
@@ -102,7 +117,7 @@ export const DiscoveryFeedPage: React.FC = () => {
   React.useEffect(() => {
     try {
       const payload: DiscoverySavedFilters = {
-        searchQuery,
+        searchQuery: appliedSearchQuery,
         activeQuickFilter,
         currentPage,
         appliedFilters,
@@ -111,7 +126,7 @@ export const DiscoveryFeedPage: React.FC = () => {
     } catch (e) {
       console.error("Failed to save discovery filters to sessionStorage:", e);
     }
-  }, [searchQuery, activeQuickFilter, currentPage, appliedFilters]);
+  }, [appliedSearchQuery, activeQuickFilter, currentPage, appliedFilters]);
 
   const toggleFilter = (list: string[], setList: React.Dispatch<React.SetStateAction<string[]>>, item: string) => {
     if (list.includes(item)) {
@@ -132,11 +147,11 @@ export const DiscoveryFeedPage: React.FC = () => {
   };
 
   // Fetch matches from NestJS API with database-level multi-select filtering & search
-  const { data: feedResult, isLoading, error } = useQuery({
+  const { data: feedResult, isLoading, isFetching, error } = useQuery({
     queryKey: [
       "matches-feed",
       currentPage,
-      searchQuery,
+      appliedSearchQuery,
       activeQuickFilter,
       [...appliedFilters.nationalities].sort().join(","),
       [...appliedFilters.religions].sort().join(","),
@@ -144,13 +159,13 @@ export const DiscoveryFeedPage: React.FC = () => {
       appliedFilters.minAge,
       appliedFilters.maxAge,
     ],
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       const params = new URLSearchParams({
         page: String(currentPage),
         limit: "20",
       });
 
-      if (searchQuery.trim()) params.set("search", searchQuery.trim());
+      if (appliedSearchQuery) params.set("search", appliedSearchQuery);
       if (activeQuickFilter !== "All") params.set("quickFilter", activeQuickFilter);
       if (appliedFilters.nationalities.length > 0) params.set("nationalities", appliedFilters.nationalities.join(","));
       if (appliedFilters.religions.length > 0) params.set("religions", appliedFilters.religions.join(","));
@@ -158,7 +173,7 @@ export const DiscoveryFeedPage: React.FC = () => {
       if (appliedFilters.minAge > 18) params.set("minAge", String(appliedFilters.minAge));
       if (appliedFilters.maxAge < 60) params.set("maxAge", String(appliedFilters.maxAge));
 
-      const res = await api.get(`/matches/feed?${params.toString()}`);
+      const res = await api.get(`/matches/feed?${params.toString()}`, { signal });
       return res.data;
     },
     staleTime: 5 * 60 * 1000, // 5 minutes cache TTL: navigating between tabs won't re-trigger API/DB calls
@@ -176,8 +191,8 @@ export const DiscoveryFeedPage: React.FC = () => {
     onSuccess: () => {
       setSuccessToast("Interest request sent privately!");
       closeModal();
-      queryClient.invalidateQueries({ queryKey: ["matches-feed"] });
-      queryClient.invalidateQueries({ queryKey: ["sent-interests"] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.matchesFeed() });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.sentInterests });
       setTimeout(() => setSuccessToast(null), 4000);
     },
   });
@@ -258,30 +273,44 @@ export const DiscoveryFeedPage: React.FC = () => {
         <main className="flex-1 min-w-0 flex flex-col h-full overflow-hidden">
           {/* Top Search & Filter Bar: completely stationary */}
           <div className="bg-white rounded-2xl border border-slate-200/90 p-4 mb-4 shadow-xs space-y-3 shrink-0">
-            <div className="relative">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <form onSubmit={handleExecuteSearch} className="relative flex items-center">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
                 type="text"
                 placeholder="Search by Name, City, State, Country, Nationality, Religion, or Profession..."
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  setCurrentPage(1);
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleExecuteSearch();
+                  }
                 }}
-                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:border-brand-500 text-slate-900 placeholder:text-slate-400"
+                className="w-full pl-10 pr-28 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:border-brand-500 text-slate-900 placeholder:text-slate-400"
               />
-              {searchQuery && (
+              <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+                {isFetching && (
+                  <Loader2 className="w-3.5 h-3.5 text-brand-500 animate-spin mr-0.5" />
+                )}
+                {searchInput && (
+                  <button
+                    type="button"
+                    onClick={handleClearSearch}
+                    className="text-slate-400 hover:text-slate-600 cursor-pointer p-1 rounded-md transition-colors"
+                    title="Clear search"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
                 <button
-                  onClick={() => {
-                    setSearchQuery("");
-                    setCurrentPage(1);
-                  }}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                  type="submit"
+                  className="px-3 py-1 bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold rounded-lg transition-colors cursor-pointer flex items-center gap-1 shadow-xs"
+                  title="Search (or press Enter)"
                 >
-                  <X className="w-4 h-4" />
+                  <span>Search</span>
                 </button>
-              )}
-            </div>
+              </div>
+            </form>
 
             {/* Quick Filter Pill Buttons */}
             <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none text-xs">

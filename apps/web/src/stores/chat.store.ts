@@ -1,6 +1,8 @@
 import { create } from "zustand";
 import { io, Socket } from "socket.io-client";
 import { api } from "../lib/api";
+import { queryClient } from "../lib/queryClient";
+import { QUERY_KEYS } from "../lib/queryKeys";
 
 export interface MessageItem {
   id: string;
@@ -152,6 +154,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
     socket.on("incoming_message_notification", ({ conversationId, message, sender }: any) => {
       const currentActiveId = get().activeConversationId;
+      // Invalidate conversations cache so message previews and unread counts update reactively without polling
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.activitySummary });
       // Only show notification if the user does NOT have this conversation open
       if (currentActiveId === conversationId) {
         return;
@@ -175,6 +180,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
     // 2. New Interest received notification
     socket.on("new_interest", ({ interestId, user, message }: any) => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.receivedInterests });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.activitySummary });
       set((state) => ({
         unreadInterestsCount: state.unreadInterestsCount + 1,
         activeNotification: {
@@ -193,6 +200,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
     // 3. Interest Accepted notification
     socket.on("interest_accepted", ({ interestId, user }: any) => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.sentInterests });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.acceptedMatches });
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.activitySummary });
       set((state) => ({
         unreadInterestsCount: Math.max(0, state.unreadInterestsCount - 1),
         newMatchesCount: state.newMatchesCount + 1,
@@ -212,6 +223,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
     // 4. New Match notification (e.g. mutual reciprocal interest auto-match)
     socket.on("new_match", ({ matchId, user }: any) => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.acceptedMatches });
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.activitySummary });
       set((state) => ({
         newMatchesCount: state.newMatchesCount + 1,
         activeNotification: {
@@ -252,6 +266,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
       socket.emit("mark_read", { conversationId });
     }
 
+    if (conversationId) {
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.activitySummary });
+    }
     set({ activeConversationId: conversationId, typingUsers: {} });
   },
 
@@ -286,6 +304,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
         });
 
         if (response?.status === "sent" && response?.message) {
+          queryClient.invalidateQueries({ queryKey: ["conversations"] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.activitySummary });
           return response.message;
         }
       } catch (err) {
@@ -299,6 +319,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
         conversationId,
         content: trimmed,
       });
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.activitySummary });
       return res.data.message || res.data;
     } catch (apiErr) {
       console.error("[ChatStore] Failed to send message via REST fallback:", apiErr);
@@ -383,6 +405,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   },
 
   markConversationAsRead: (conversationId) => {
+    queryClient.invalidateQueries({ queryKey: ["conversations"] });
     const socket = get().socket;
     if (socket && socket.connected) {
       socket.emit("mark_read", { conversationId });

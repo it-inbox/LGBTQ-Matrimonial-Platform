@@ -78,7 +78,7 @@ export interface OnboardingFormData {
 
 export const OnboardingWizard: React.FC = () => {
   const navigate = useNavigate();
-  const { fetchProfile, user, isAuthenticated } = useAuthStore();
+  const { fetchProfile, setProfile, user, isAuthenticated } = useAuthStore();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -479,8 +479,8 @@ export const OnboardingWizard: React.FC = () => {
         },
       };
 
-      await api.post("/profiles", payload);
-      await fetchProfile();
+      const res = await api.post("/profiles", payload);
+      setProfile(res.data);
       localStorage.removeItem("everpride_hero_preferences");
       localStorage.removeItem(storageKey);
       localStorage.removeItem(user?.id ? `everpride_onboarding_step_${user.id}` : "everpride_onboarding_step");

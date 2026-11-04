@@ -79,7 +79,7 @@ export const LoginModal: React.FC = () => {
       closeLoginModal();
       const currentProfile = useAuthStore.getState().profile;
       if (currentProfile) {
-        navigate("/matches");
+        navigate("/discover");
       } else {
         navigate("/onboarding");
       }

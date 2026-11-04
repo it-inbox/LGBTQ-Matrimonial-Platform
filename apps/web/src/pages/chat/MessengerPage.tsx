@@ -4,6 +4,7 @@ import { MessageSquare, Search, Phone, ArrowRight } from "lucide-react";
 import { ActivitySidebar } from "../../components/layout/ActivitySidebar";
 import { ActiveChatView } from "../../components/chat/ActiveChatView";
 import { api } from "../../lib/api";
+import { QUERY_KEYS } from "../../lib/queryKeys";
 import { useChatStore, ConversationItem } from "../../stores/chat.store";
 
 export const MessengerPage: React.FC = () => {
@@ -22,27 +23,16 @@ export const MessengerPage: React.FC = () => {
     connectSocket();
   }, [connectSocket]);
 
-  // 1. Fetch conversations for active filter pill
+  // 1. Fetch conversations with unified cache key (shared with sidebar & navbar badges, no polling)
   const {
-    data: conversations = [],
+    data: allConversations = [],
     isLoading: loadingConversations,
   } = useQuery<ConversationItem[]>({
-    queryKey: ["conversations", filterPill],
-    queryFn: async () => {
-      const res = await api.get(`/chat/conversations?filter=${filterPill}`);
-      return res.data;
-    },
-    refetchInterval: 12000,
-  });
-
-  // Always query all conversations to accurately calculate distinct people with unread messages
-  const { data: allConversations = [] } = useQuery<ConversationItem[]>({
-    queryKey: ["conversations", "all"],
+    queryKey: QUERY_KEYS.conversations("all"),
     queryFn: async () => {
       const res = await api.get(`/chat/conversations?filter=all`);
       return res.data;
     },
-    refetchInterval: 12000,
   });
 
   // Calculate distinct conversations / people with unread messages
@@ -51,15 +41,27 @@ export const MessengerPage: React.FC = () => {
       setTotalUnreadCount(0);
       return;
     }
-    // Count number of distinct people (conversations) that have unread messages
     const distinctPeopleWithUnread = allConversations.filter(
       (c) => (c?.unreadCount || 0) > 0
     ).length;
     setTotalUnreadCount(distinctPeopleWithUnread);
   }, [allConversations, setTotalUnreadCount]);
 
+  // Apply active pill filter locally in memory without triggering server requests
+  const filteredByPill = React.useMemo(() => {
+    if (filterPill === "unread") {
+      return allConversations.filter((c) => (c?.unreadCount || 0) > 0);
+    }
+    if (filterPill === "online") {
+      return allConversations.filter(
+        (c) => c?.partner?.isOnline || (c?.partner?.id && onlineUserIds.has(c.partner.id))
+      );
+    }
+    return allConversations;
+  }, [allConversations, filterPill, onlineUserIds]);
+
   // Filter conversations by local search query
-  const filteredConversations = (conversations || []).filter((c) => {
+  const filteredConversations = filteredByPill.filter((c) => {
     if (!c || !c.partner) return false;
     if (!searchQuery.trim()) return true;
     const name = c.partner.displayName || "Member";
@@ -69,7 +71,7 @@ export const MessengerPage: React.FC = () => {
     return nameMatch || cityMatch;
   });
 
-  const activeConversation = conversations.find((c) => c.id === activeConversationId) || null;
+  const activeConversation = allConversations.find((c) => c.id === activeConversationId) || null;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 h-full flex flex-col">

@@ -1,9 +1,7 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { api } from "../../lib/api";
 import { useAuthStore } from "../../stores/auth.store";
-import { useChatStore } from "../../stores/chat.store";
+import { useActivityBadges } from "../../hooks/useActivityBadges";
 import {
   User,
   ChevronRight,
@@ -19,96 +17,13 @@ interface ActivitySidebarProps {
 export const ActivitySidebar: React.FC<ActivitySidebarProps> = ({ activeTab }) => {
   const profile = useAuthStore((s) => s.profile);
   const user = useAuthStore((s) => s.user);
-  const totalUnreadCount = useChatStore((s) => s.totalUnreadCount);
-  const socketUnreadInterests = useChatStore((s) => s.unreadInterestsCount);
-  const socketNewMatches = useChatStore((s) => s.newMatchesCount);
   const location = useLocation();
 
-  // Query pending received interests
-  const { data: receivedInterests } = useQuery({
-    queryKey: ["received-interests"],
-    queryFn: async () => {
-      const res = await api.get("/matches/interests/received");
-      return res.data;
-    },
-    staleTime: 30000,
-  });
-
-  // Query mutual accepted matches
-  const { data: matchesList } = useQuery({
-    queryKey: ["accepted-matches"],
-    queryFn: async () => {
-      const res = await api.get("/matches/accepted");
-      return res.data;
-    },
-    staleTime: 30000,
-  });
-
-  // Query conversations to keep Connect unread badge in sync with number of distinct people
-  const { data: conversations = [] } = useQuery<any[]>({
-    queryKey: ["conversations", "all"],
-    queryFn: async () => {
-      const res = await api.get("/chat/conversations?filter=all");
-      return res.data;
-    },
-    staleTime: 12000,
-    refetchInterval: 12000,
-  });
-
-  const distinctPeopleWithUnread = React.useMemo(() => {
-    if (!conversations || conversations.length === 0) return 0;
-    return conversations.filter((c: any) => (c?.unreadCount || 0) > 0).length;
-  }, [conversations]);
-
-  // Use the calculated distinct count or the chat store value as fallback
-  const displayConnectBadgeCount = distinctPeopleWithUnread > 0 ? distinctPeopleWithUnread : totalUnreadCount;
-
-  const pendingInterestsCount = (receivedInterests || []).filter(
-    (item: any) => item.status === "PENDING"
-  ).length + socketUnreadInterests;
-
-  // Listen for seen matches updates
-  const [seenMatchIds, setSeenMatchIds] = React.useState<string[]>(() => {
-    try {
-      const raw = localStorage.getItem("everpride_seen_match_ids");
-      return raw ? JSON.parse(raw) : [];
-    } catch {
-      return [];
-    }
-  });
-
-  React.useEffect(() => {
-    const handleUpdate = () => {
-      try {
-        const raw = localStorage.getItem("everpride_seen_match_ids");
-        setSeenMatchIds(raw ? JSON.parse(raw) : []);
-      } catch {
-        setSeenMatchIds([]);
-      }
-    };
-    window.addEventListener("matches_seen_updated", handleUpdate);
-    window.addEventListener("storage", handleUpdate);
-    return () => {
-      window.removeEventListener("matches_seen_updated", handleUpdate);
-      window.removeEventListener("storage", handleUpdate);
-    };
-  }, []);
-
-  // If user is currently on /matches, don't show the badge
-  const isMatchesPage = location.pathname === "/matches";
-
-  const unseenMatchesCount = React.useMemo(() => {
-    if (isMatchesPage) return 0;
-    if (!matchesList || matchesList.length === 0) return socketNewMatches;
-    const seenSet = new Set(seenMatchIds);
-    const unseenList = matchesList.filter((m: any) => {
-      const id = m.interestId || m.user?.id;
-      return id && !seenSet.has(id);
-    });
-    return unseenList.length + socketNewMatches;
-  }, [matchesList, seenMatchIds, socketNewMatches, isMatchesPage]);
-
-  const totalMatchesCount = unseenMatchesCount;
+  const {
+    displayConnectBadgeCount,
+    pendingInterestsCount,
+    totalMatchesCount,
+  } = useActivityBadges();
 
   const getInitials = (name?: string) => {
     if (!name) return "EP";

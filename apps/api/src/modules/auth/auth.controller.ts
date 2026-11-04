@@ -1,7 +1,9 @@
-import { Controller, Post, Body, HttpCode, HttpStatus, Res, Req, UnauthorizedException } from "@nestjs/common";
-import { ApiTags, ApiOperation, ApiResponse } from "@nestjs/swagger";
+import { Controller, Post, Get, Body, HttpCode, HttpStatus, Res, Req, UseGuards, UnauthorizedException } from "@nestjs/common";
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from "@nestjs/swagger";
 import type { Response, Request } from "express";
 import { AuthService } from "./auth.service.js";
+import { AuthGuard } from "../../common/guards/auth.guard.js";
+import { CurrentUser } from "../../common/decorators/current-user.decorator.js";
 import { ZodValidationPipe } from "../../common/pipes/zod-validation.pipe.js";
 import {
   registerSchema,
@@ -29,6 +31,14 @@ export class AuthController {
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       path: "/",
     });
+  }
+
+  @Get("me")
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: "Get current authenticated user session including profile and membership" })
+  async getSession(@CurrentUser("userId") userId: string) {
+    return this.authService.getSession(userId);
   }
 
   @Post("send-otp")

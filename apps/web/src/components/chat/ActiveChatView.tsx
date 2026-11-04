@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { QUERY_KEYS } from "../../lib/queryKeys";
 import {
   Send,
   ArrowLeft,
@@ -40,6 +42,7 @@ export const ActiveChatView: React.FC<ActiveChatViewProps> = ({
   const emitTyping = useChatStore((s) => s.emitTyping);
   const typingUsers = useChatStore((s) => s.typingUsers);
   const onlineUserIds = useChatStore((s) => s.onlineUserIds);
+  const queryClient = useQueryClient();
 
   const [messages, setMessages] = useState<MessageItem[]>([]);
   const [inputText, setInputText] = useState("");
@@ -79,21 +82,21 @@ export const ActiveChatView: React.FC<ActiveChatViewProps> = ({
 
   const isPartnerTyping = !!typingUsers[conversation.partner.id];
 
-  // Check initial block status
-  useEffect(() => {
-    let isMounted = true;
-    api.get(`/profiles/user/${conversation.partner.id}`)
-      .then((res) => {
-        if (isMounted) {
-          setIsBlockedByMe(!!res.data?.interaction?.isBlockedByMe);
-        }
-      })
-      .catch(() => {});
+  // Check block status with cached member profile
+  const { data: partnerProfile } = useQuery({
+    queryKey: QUERY_KEYS.memberProfile(conversation.partner.id),
+    queryFn: async () => {
+      const res = await api.get(`/profiles/user/${conversation.partner.id}`);
+      return res.data;
+    },
+    enabled: !!conversation.partner?.id,
+  });
 
-    return () => {
-      isMounted = false;
-    };
-  }, [conversation.partner.id]);
+  useEffect(() => {
+    if (partnerProfile?.interaction) {
+      setIsBlockedByMe(!!partnerProfile.interaction.isBlockedByMe);
+    }
+  }, [partnerProfile]);
 
   const handleBlockUser = async () => {
     setIsBlocking(true);
@@ -102,6 +105,8 @@ export const ActiveChatView: React.FC<ActiveChatViewProps> = ({
       setIsBlockedByMe(true);
       setShowBlockModal(false);
       setShowOptionsMenu(false);
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.memberProfile(conversation.partner.id) });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.blockedUsers });
     } catch (err: any) {
       setErrorMessage(err.response?.data?.message || "Failed to block user");
     } finally {
@@ -115,6 +120,8 @@ export const ActiveChatView: React.FC<ActiveChatViewProps> = ({
       await api.post(`/matches/unblock/${conversation.partner.id}`);
       setIsBlockedByMe(false);
       setShowOptionsMenu(false);
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.memberProfile(conversation.partner.id) });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.blockedUsers });
     } catch (err: any) {
       setErrorMessage(err.response?.data?.message || "Failed to unblock user");
     } finally {
@@ -500,7 +507,7 @@ export const ActiveChatView: React.FC<ActiveChatViewProps> = ({
       </div>
 
       {/* Message Stream with subtle texture & atmosphere */}
-      <div 
+      <div
         className="flex-1 min-h-0 overflow-y-auto p-4 space-y-3 bg-slate-50/50"
         style={{
           backgroundImage: "radial-gradient(#e2e8f0 0.8px, transparent 0.8px)",
@@ -625,13 +632,12 @@ export const ActiveChatView: React.FC<ActiveChatViewProps> = ({
 
                     {/* Message Bubble with sleek rounded edges and soft shadow */}
                     <div
-                      className={`max-w-[78%] sm:max-w-md px-4 py-2.5 rounded-2xl text-xs sm:text-sm leading-relaxed transition-all ${
-                        isDeleted
+                      className={`max-w-[78%] sm:max-w-md px-4 py-2.5 rounded-2xl text-xs sm:text-sm leading-relaxed transition-all ${isDeleted
                           ? "bg-slate-100 text-slate-400 italic border border-slate-200/60 rounded-2xl"
                           : isOwn
-                          ? "bg-gradient-to-tr from-brand-600 via-rose-600 to-rose-500 text-white rounded-br-xs shadow-subtle selection:bg-white/20"
-                          : "bg-white text-slate-800 border border-slate-200/90 rounded-bl-xs shadow-subtle"
-                      }`}
+                            ? "bg-gradient-to-tr from-brand-600 via-rose-600 to-rose-500 text-white rounded-br-xs shadow-subtle selection:bg-white/20"
+                            : "bg-white text-slate-800 border border-slate-200/90 rounded-bl-xs shadow-subtle"
+                        }`}
                     >
                       <p className="break-words whitespace-pre-wrap">{msg.content}</p>
                     </div>
@@ -757,11 +763,10 @@ export const ActiveChatView: React.FC<ActiveChatViewProps> = ({
             <button
               type="button"
               onClick={() => setShowEmojiPicker((prev) => !prev)}
-              className={`p-2.5 rounded-xl border transition-colors cursor-pointer shrink-0 flex items-center justify-center ${
-                showEmojiPicker
+              className={`p-2.5 rounded-xl border transition-colors cursor-pointer shrink-0 flex items-center justify-center ${showEmojiPicker
                   ? "bg-rose-50 border-rose-200 text-rose-600 shadow-2xs"
                   : "bg-slate-50 border-slate-200 text-slate-500 hover:text-slate-800 hover:bg-slate-100"
-              }`}
+                }`}
               title="Insert emoji"
             >
               <Smile className="w-4 h-4" />

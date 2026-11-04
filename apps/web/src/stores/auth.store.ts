@@ -53,10 +53,13 @@ interface AuthState {
   register: (phoneNumber: string, otp?: string) => Promise<void>;
   logout: () => void;
   fetchProfile: () => Promise<void>;
+  setProfile: (profile: Profile | null) => void;
   fetchMembership: () => Promise<void>;
   setMembership: (membership: UserMembership) => void;
   checkAuth: () => Promise<void>;
 }
+
+let checkAuthPromise: Promise<void> | null = null;
 
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
@@ -80,26 +83,36 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   login: async (phoneNumber: string, otp: string) => {
     const res = await api.post("/auth/login", { phoneNumber, otp });
-    const { user, accessToken, refreshToken } = res.data;
+    const { user, profile, membership, accessToken, refreshToken } = res.data;
     localStorage.setItem("everpride_access_token", accessToken);
     localStorage.setItem("everpride_refresh_token", refreshToken);
-    set({ user, isAuthenticated: true });
-    await get().fetchProfile();
-    await get().fetchMembership();
+    set({
+      user,
+      profile: profile || null,
+      membership: membership || null,
+      isAuthenticated: true,
+      isLoading: false,
+    });
   },
 
   register: async (phoneNumber: string, otp?: string) => {
     const res = await api.post("/auth/register", { phoneNumber, otp });
-    const { user, accessToken, refreshToken } = res.data;
+    const { user, profile, membership, accessToken, refreshToken } = res.data;
     localStorage.setItem("everpride_access_token", accessToken);
     localStorage.setItem("everpride_refresh_token", refreshToken);
-    set({ user, isAuthenticated: true });
+    set({
+      user,
+      profile: profile || null,
+      membership: membership || null,
+      isAuthenticated: true,
+      isLoading: false,
+    });
   },
 
   logout: () => {
     localStorage.removeItem("everpride_access_token");
     localStorage.removeItem("everpride_refresh_token");
-    set({ user: null, profile: null, membership: null, isAuthenticated: false });
+    set({ user: null, profile: null, membership: null, isAuthenticated: false, isLoading: false });
   },
 
   fetchProfile: async () => {
@@ -113,6 +126,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     } catch {
       set({ profile: null });
     }
+  },
+
+  setProfile: (profile: Profile | null) => {
+    set((state) => ({
+      profile,
+      user: state.user || (profile?.userId ? { id: profile.userId, role: "USER" } : null),
+    }));
   },
 
   fetchMembership: async () => {
@@ -129,17 +149,39 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   checkAuth: async () => {
-    const token = localStorage.getItem("everpride_access_token");
-    if (!token) {
-      set({ isLoading: false, isAuthenticated: false, user: null, membership: null });
-      return;
-    }
-    try {
-      await get().fetchProfile();
-      await get().fetchMembership();
-      set({ isAuthenticated: true, isLoading: false });
-    } catch {
-      set({ isAuthenticated: false, isLoading: false });
-    }
+    // Return existing in-flight checkAuth promise if one is already running
+    if (checkAuthPromise) return checkAuthPromise;
+
+    checkAuthPromise = (async () => {
+      const token = localStorage.getItem("everpride_access_token");
+      if (!token) {
+        set({ isLoading: false, isAuthenticated: false, user: null, membership: null });
+        return;
+      }
+
+      // If profile and membership are already hydrated (e.g. immediately after login), skip re-fetching
+      if (get().profile && get().membership) {
+        set({ isAuthenticated: true, isLoading: false });
+        return;
+      }
+
+      try {
+        const res = await api.get("/auth/me");
+        const { user, profile, membership } = res.data;
+        set({
+          user: user || null,
+          profile: profile || null,
+          membership: membership || null,
+          isAuthenticated: true,
+          isLoading: false,
+        });
+      } catch {
+        set({ isAuthenticated: false, isLoading: false, user: null, profile: null, membership: null });
+      } finally {
+        checkAuthPromise = null;
+      }
+    })();
+
+    return checkAuthPromise;
   },
 }));
