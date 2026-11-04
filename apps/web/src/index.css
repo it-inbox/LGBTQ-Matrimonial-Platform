@@ -79,6 +79,22 @@ body {
   }
 }
 
+@keyframes indeterminateProgress {
+  0% {
+    transform: translateX(-100%);
+  }
+  50% {
+    transform: translateX(100%);
+  }
+  100% {
+    transform: translateX(300%);
+  }
+}
+
+.animate-indeterminate {
+  animation: indeterminateProgress 1.5s infinite ease-in-out;
+}
+
 .animate-float-slow {
   animation: floatSlow 6s ease-in-out infinite;
 }

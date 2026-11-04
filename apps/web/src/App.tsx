@@ -19,6 +19,7 @@ import { HelpSupportPage } from "./pages/help/HelpSupportPage";
 import { SuccessStoriesPage } from "./pages/stories/SuccessStoriesPage";
 import { LoginModal } from "./components/auth/LoginModal";
 import { ChatNotificationToast } from "./components/chat/ChatNotificationToast";
+import { AppLoadingScreen } from "./components/common/AppLoadingScreen";
 import { useAuthStore } from "./stores/auth.store";
 import { useChatStore } from "./stores/chat.store";
 
@@ -35,11 +36,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requireProfil
   const { isAuthenticated, profile, isLoading, openLoginModal } = useAuthStore();
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-brand-600 border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
+    return <AppLoadingScreen />;
   }
 
   if (!isAuthenticated) {
@@ -59,11 +56,7 @@ const PublicLandingRoute: React.FC = () => {
   const { isAuthenticated, profile, isLoading } = useAuthStore();
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-brand-600 border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
+    return <AppLoadingScreen />;
   }
 
   if (isAuthenticated) {

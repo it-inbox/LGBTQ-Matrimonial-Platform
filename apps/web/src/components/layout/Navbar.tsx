@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 
 export const Navbar: React.FC = () => {
-  const { isAuthenticated, profile, logout, openLoginModal } = useAuthStore();
+  const { isAuthenticated, profile, isLoading, logout, openLoginModal } = useAuthStore();
   const navigate = useNavigate();
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -54,7 +54,10 @@ export const Navbar: React.FC = () => {
 
         {/* Right Controls: Desktop Profile (lg+) + Mobile/Tablet Hamburger (< lg) */}
         <div className="flex items-center gap-2 sm:gap-3">
-          {isAuthenticated ? (
+          {isLoading ? (
+            /* During initial session hydration, keep controls clean without flickering premature state */
+            <div className="w-24 h-8 bg-slate-100/80 rounded-full animate-pulse" />
+          ) : isAuthenticated ? (
             <>
               {/* Profile link for desktop (lg and above) */}
               <div className="hidden lg:flex items-center gap-2">
@@ -83,12 +86,12 @@ export const Navbar: React.FC = () => {
                       {profile.displayName}
                     </span>
                   </Link>
-                ) : (
+                ) : isOnboardingPage ? (
                   <div className="flex items-center gap-2 pl-3 pr-3.5 py-1.5 rounded-full bg-brand-50 border border-brand-200 text-brand-700 text-xs font-bold select-none">
                     <span className="w-2 h-2 rounded-full bg-brand-500 animate-pulse" />
                     <span>Completing Profile</span>
                   </div>
-                )}
+                ) : null}
                 {!isOnboardingPage && (
                   <button
                     type="button"
