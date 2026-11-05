@@ -49,10 +49,14 @@ api.interceptors.response.use(
               localStorage.setItem("everpride_refresh_token", newRefreshToken);
             }
             return accessToken as string;
-          } catch (refreshErr) {
-            localStorage.removeItem("everpride_access_token");
-            localStorage.removeItem("everpride_refresh_token");
-            window.location.href = "/";
+          } catch (refreshErr: any) {
+            // Only wipe tokens and redirect if the refresh token is genuinely invalid / expired (401 / 403).
+            // Do NOT wipe tokens on transient network drops, 502/503 bad gateway, or server restarts.
+            if (refreshErr.response?.status === 401 || refreshErr.response?.status === 403 || !localStorage.getItem("everpride_refresh_token")) {
+              localStorage.removeItem("everpride_access_token");
+              localStorage.removeItem("everpride_refresh_token");
+              window.location.href = "/";
+            }
             return null;
           } finally {
             refreshPromise = null;

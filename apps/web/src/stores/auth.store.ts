@@ -175,8 +175,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           isAuthenticated: true,
           isLoading: false,
         });
-      } catch {
-        set({ isAuthenticated: false, isLoading: false, user: null, profile: null, membership: null });
+      } catch (err: any) {
+        // If the server explicitly rejected auth (401/403) and refresh failed, clear session
+        if (err.response?.status === 401 || err.response?.status === 403 || !localStorage.getItem("everpride_access_token")) {
+          set({ isAuthenticated: false, isLoading: false, user: null, profile: null, membership: null });
+        } else {
+          // On transient network or server connection issues, do not immediately kick out the user
+          set({ isLoading: false });
+        }
       } finally {
         checkAuthPromise = null;
       }
