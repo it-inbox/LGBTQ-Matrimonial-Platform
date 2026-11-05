@@ -97,6 +97,7 @@ export class MatchesService {
     // 3. Build comprehensive database WHERE clause
     const whereClause: any = {
       userId: { notIn: Array.from(excludedUserIds) },
+      user: { role: 'USER', isActive: true },
     };
 
     // Preference filters

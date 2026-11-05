@@ -867,6 +867,46 @@ async function main() {
   }
 
   // ─────────────────────────────────────────────────────────────
+  // Seed Dedicated Platform Admin Account
+  // ─────────────────────────────────────────────────────────────
+  console.log("Seeding dedicated platform admin account (admin@everpride.com)...");
+  const adminUser = await prisma.user.create({
+    data: {
+      email: "admin@everpride.com",
+      phoneNumber: null,
+      passwordHash: "$2b$12$.jcvwhrTWeRPMYlq4Tcv6.7sNWUufDguyAdQI/uQbHHI8hIO8v6pG", // Precomputed "Admin@123456"
+      role: "ADMIN",
+      isVerified: true,
+      isActive: true,
+      profile: {
+        create: {
+          displayName: "System Administrator",
+          gender: "OTHER",
+          orientation: "QUEER",
+          pronouns: "they/them",
+          outnessStatus: "OUT_TO_ALL",
+          dateOfBirth: new Date("1990-01-01"),
+          heightCm: 175,
+          nationality: "India",
+          religion: "Agnostic",
+          motherTongue: "English",
+          languagesSpoken: ["English", "Hindi"],
+          maritalStatus: "Never Married",
+          city: "Bengaluru",
+          state: "Karnataka",
+          country: "India",
+          profession: "Platform Administrator",
+          sector: "Internal Operations",
+          bio: "Official EverPride Platform Operations & Admin Console Account",
+          diet: "Vegetarian",
+          hobbies: ["Technology", "Community Building"],
+        },
+      },
+    },
+  });
+  console.log(`✓ Seeded Admin User: ${adminUser.email} (Role: ${adminUser.role})`);
+
+  // ─────────────────────────────────────────────────────────────
   // Seed Matches, Interests & Unblur Requests
   // ─────────────────────────────────────────────────────────────
   const aarav = createdUsers[0].user;      // +919876543210 (Logged in test user)

@@ -206,4 +206,13 @@ export class PaymentsService {
       canViewPhoneNumbers: false,
     };
   }
+
+  getAllMemberships(): UserMembership[] {
+    return Array.from(this.memberships.values());
+  }
+
+  setMembership(userId: string, membership: UserMembership): UserMembership {
+    this.memberships.set(userId, membership);
+    return membership;
+  }
 }

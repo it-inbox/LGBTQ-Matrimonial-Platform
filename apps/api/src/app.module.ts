@@ -5,9 +5,17 @@ import { ProfilesModule } from "./modules/profiles/profiles.module.js";
 import { MatchesModule } from "./modules/matches/matches.module.js";
 import { ChatModule } from "./modules/chat/chat.module.js";
 import { PaymentsModule } from "./modules/payments/payments.module.js";
+import { AdminModule } from "./modules/admin/admin.module.js";
 
 @Module({
-  imports: [PrismaModule, AuthModule, ProfilesModule, MatchesModule, ChatModule, PaymentsModule],
+  imports: [
+    PrismaModule,
+    AuthModule,
+    ProfilesModule,
+    MatchesModule,
+    ChatModule,
+    PaymentsModule,
+    AdminModule,
+  ],
 })
 export class AppModule {}
-
