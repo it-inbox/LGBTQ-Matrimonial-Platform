@@ -19,7 +19,7 @@
                       ▼                                                   ▼
          ┌──────────────────────────┐                        ┌──────────────────────────┐
          │     CloudFront (CDN)     │                        │  Application Load        │
-         │  (HTTPS Edge Distribution)│                        │  Balancer (ALB)          │
+         │ (HTTPS Edge Distribution)│                        │  Balancer (ALB)          │
          └────────────┬─────────────┘                        └────────────┬─────────────┘
                       │                                                   │ (HTTP / WebSocket)
                       ▼                                                   ▼

@@ -1,4 +1,6 @@
+
 import { Injectable, Logger } from "@nestjs/common";
+import { PrismaService } from "../prisma/prisma.service.js";
 
 export interface CreateCheckoutSessionDto {
   planTier: "pro" | "pro-max" | "pro-supreme" | "premier-lite";
@@ -42,8 +44,10 @@ export interface UserMembership {
 export class PaymentsService {
   private readonly logger = new Logger(PaymentsService.name);
 
-  // In-memory membership cache for fast simulated lookups (keyed by userId)
+  // In-memory membership cache for fast lookups
   private readonly memberships = new Map<string, UserMembership>();
+
+  constructor(private readonly prisma: PrismaService) {}
 
   /**
    * Creates a checkout session.
@@ -111,7 +115,7 @@ export class PaymentsService {
       this.logger.warn(`Simulated payment failed / declined for user ${userId}`);
       return {
         success: false,
-        membership: this.getMembership(userId),
+        membership: await this.getMembership(userId),
         message: "Payment declined: simulated card error.",
       };
     }
@@ -165,6 +169,53 @@ export class PaymentsService {
 
     this.memberships.set(userId, membership);
 
+    // Persist membership & payment transaction in database
+    try {
+      await this.prisma.client.$transaction([
+        this.prisma.client.membership.upsert({
+          where: { userId },
+          create: {
+            userId,
+            tier: tier as any,
+            planName,
+            status: "ACTIVE",
+            expiresAt: new Date(expiresAt),
+            superInterestsRemaining: superInterests,
+            spotlightsRemaining: spotlights,
+            hasGoldBadge: true,
+            canViewPhoneNumbers: true,
+            lastPaymentAt: now,
+            lastPaymentAmount: dto.amount,
+          },
+          update: {
+            tier: tier as any,
+            planName,
+            status: "ACTIVE",
+            expiresAt: new Date(expiresAt),
+            superInterestsRemaining: superInterests,
+            spotlightsRemaining: spotlights,
+            hasGoldBadge: true,
+            canViewPhoneNumbers: true,
+            lastPaymentAt: now,
+            lastPaymentAmount: dto.amount,
+          },
+        }),
+        this.prisma.client.paymentTransaction.create({
+          data: {
+            userId,
+            sessionId: dto.sessionId,
+            provider: "SIMULATED",
+            planTier: dto.planTier,
+            duration: dto.duration,
+            amount: dto.amount,
+            status: "SUCCESS",
+          },
+        }),
+      ]);
+    } catch (dbErr) {
+      this.logger.error(`Failed to persist membership for user ${userId}`, dbErr);
+    }
+
     this.logger.log(`
 ┌──────────────────────────────────────────────────────────┐
 │  EVERPRIDE PAYMENT SUCCESSFUL (MEMBERSHIP ACTIVATED)     │
@@ -189,10 +240,35 @@ export class PaymentsService {
   /**
    * Retrieves the current user's membership status and active perks.
    */
-  getMembership(userId: string): UserMembership {
+  async getMembership(userId: string): Promise<UserMembership> {
     const cached = this.memberships.get(userId);
     if (cached) {
       return cached;
+    }
+
+    try {
+      const persisted = await this.prisma.client.membership.findUnique({
+        where: { userId },
+      });
+
+      if (persisted) {
+        const mem: UserMembership = {
+          tier: persisted.tier as any,
+          planName: persisted.planName,
+          expiresAt: persisted.expiresAt ? persisted.expiresAt.toISOString() : null,
+          status: persisted.status as any,
+          superInterestsRemaining: persisted.superInterestsRemaining,
+          spotlightsRemaining: persisted.spotlightsRemaining,
+          hasGoldBadge: persisted.hasGoldBadge,
+          canViewPhoneNumbers: persisted.canViewPhoneNumbers,
+          lastPaymentAt: persisted.lastPaymentAt ? persisted.lastPaymentAt.toISOString() : undefined,
+          lastPaymentAmount: persisted.lastPaymentAmount ?? undefined,
+        };
+        this.memberships.set(userId, mem);
+        return mem;
+      }
+    } catch (err) {
+      this.logger.error(`Failed to load persisted membership for user ${userId}`, err);
     }
 
     return {
@@ -207,12 +283,65 @@ export class PaymentsService {
     };
   }
 
-  getAllMemberships(): UserMembership[] {
+  async getAllMemberships(): Promise<UserMembership[]> {
+    try {
+      const persistedList = await this.prisma.client.membership.findMany();
+      if (persistedList.length > 0) {
+        return persistedList.map((p) => ({
+          tier: p.tier as any,
+          planName: p.planName,
+          expiresAt: p.expiresAt ? p.expiresAt.toISOString() : null,
+          status: p.status as any,
+          superInterestsRemaining: p.superInterestsRemaining,
+          spotlightsRemaining: p.spotlightsRemaining,
+          hasGoldBadge: p.hasGoldBadge,
+          canViewPhoneNumbers: p.canViewPhoneNumbers,
+          lastPaymentAt: p.lastPaymentAt ? p.lastPaymentAt.toISOString() : undefined,
+          lastPaymentAmount: p.lastPaymentAmount ?? undefined,
+        }));
+      }
+    } catch (err) {
+      this.logger.error("Failed to load all persisted memberships", err);
+    }
     return Array.from(this.memberships.values());
   }
 
-  setMembership(userId: string, membership: UserMembership): UserMembership {
+  async setMembership(userId: string, membership: UserMembership): Promise<UserMembership> {
     this.memberships.set(userId, membership);
+
+    try {
+      await this.prisma.client.membership.upsert({
+        where: { userId },
+        create: {
+          userId,
+          tier: membership.tier as any,
+          planName: membership.planName,
+          status: membership.status as any,
+          expiresAt: membership.expiresAt ? new Date(membership.expiresAt) : null,
+          superInterestsRemaining: membership.superInterestsRemaining,
+          spotlightsRemaining: membership.spotlightsRemaining,
+          hasGoldBadge: membership.hasGoldBadge,
+          canViewPhoneNumbers: membership.canViewPhoneNumbers,
+          lastPaymentAt: membership.lastPaymentAt ? new Date(membership.lastPaymentAt) : null,
+          lastPaymentAmount: membership.lastPaymentAmount,
+        },
+        update: {
+          tier: membership.tier as any,
+          planName: membership.planName,
+          status: membership.status as any,
+          expiresAt: membership.expiresAt ? new Date(membership.expiresAt) : null,
+          superInterestsRemaining: membership.superInterestsRemaining,
+          spotlightsRemaining: membership.spotlightsRemaining,
+          hasGoldBadge: membership.hasGoldBadge,
+          canViewPhoneNumbers: membership.canViewPhoneNumbers,
+          lastPaymentAt: membership.lastPaymentAt ? new Date(membership.lastPaymentAt) : null,
+          lastPaymentAmount: membership.lastPaymentAmount,
+        },
+      });
+    } catch (err) {
+      this.logger.error(`Failed to persist manual membership update for user ${userId}`, err);
+    }
+
     return membership;
   }
 }

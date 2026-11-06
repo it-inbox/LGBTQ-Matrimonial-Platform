@@ -58,6 +58,32 @@ enum UserRole {
   ADMIN
 }
 
+enum MembershipTier {
+  FREE
+  PRO
+  PRO_MAX
+  PRO_SUPREME
+  PREMIER_LITE
+}
+
+enum MembershipStatus {
+  NONE
+  ACTIVE
+  EXPIRED
+}
+
+enum PaymentProvider {
+  SIMULATED
+  RAZORPAY
+  STRIPE
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
 // ─────────────────────────────────────────────────────────────
 // Authentication & Core User
 // ─────────────────────────────────────────────────────────────
@@ -75,9 +101,12 @@ model User {
   updatedAt    DateTime  @updatedAt @map("updated_at")
 
   @@index([isDummyUser])
+  @@index([role, isActive])
 
   // Relationships
   profile            Profile?
+  membership         Membership?
+  payments           PaymentTransaction[]
   refreshTokens      RefreshToken[]
   sentInterests      MatchInterest[]      @relation("SentInterests")
   receivedInterests  MatchInterest[]      @relation("ReceivedInterests")
@@ -114,6 +143,7 @@ model PhoneVerification {
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
+  @@index([expiresAt])
   @@map("phone_verifications")
 }
 
@@ -186,7 +216,9 @@ model Profile {
 
   @@index([updatedAt(sort: Desc)])
   @@index([gender, orientation])
+  @@index([gender, orientation, dateOfBirth])
   @@index([country, state, city])
+  @@index([city, state])
   @@index([nationality, religion, maritalStatus])
   @@map("profiles")
 }
@@ -220,6 +252,7 @@ model ProfilePhoto {
 
   profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
 
+  @@index([profileId, isPrimary])
   @@map("profile_photos")
 }
 
@@ -237,6 +270,7 @@ model PhotoAccessRequest {
   target    User @relation("ReceivedPhotoRequests", fields: [targetId], references: [id], onDelete: Cascade)
 
   @@unique([requesterId, targetId])
+  @@index([targetId, status])
   @@map("photo_access_requests")
 }
 
@@ -278,6 +312,8 @@ model MatchInterest {
   receiver User @relation("ReceivedInterests", fields: [receiverId], references: [id], onDelete: Cascade)
 
   @@unique([senderId, receiverId])
+  @@index([receiverId, status])
+  @@index([senderId, status])
   @@map("match_interests")
 }
 
@@ -293,6 +329,8 @@ model Conversation {
   messages     Message[]
 
   @@unique([participant1Id, participant2Id])
+  @@index([participant1Id, updatedAt(sort: Desc)])
+  @@index([participant2Id, updatedAt(sort: Desc)])
   @@map("conversations")
 }
 
@@ -310,6 +348,8 @@ model Message {
   conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   sender       User         @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
 
+  @@index([conversationId, createdAt(sort: Asc)])
+  @@index([senderId])
   @@map("messages")
 }
 
@@ -324,5 +364,54 @@ model BlockedUser {
   blocked User @relation("BlockedByUsers", fields: [blockedId], references: [id], onDelete: Cascade)
 
   @@unique([userId, blockedId])
+  @@index([blockedId])
   @@map("blocked_users")
+}
+
+// ─────────────────────────────────────────────────────────────
+// Memberships & Payments Persistence
+// ─────────────────────────────────────────────────────────────
+
+model Membership {
+  id                      String           @id @default(uuid())
+  userId                  String           @unique @map("user_id")
+  tier                    MembershipTier   @default(FREE)
+  planName                String           @default("Free Member") @map("plan_name")
+  status                  MembershipStatus @default(NONE)
+  expiresAt               DateTime?        @map("expires_at")
+  superInterestsRemaining Int              @default(0) @map("super_interests_remaining")
+  spotlightsRemaining     Int              @default(0) @map("spotlights_remaining")
+  hasGoldBadge            Boolean          @default(false) @map("has_gold_badge")
+  canViewPhoneNumbers     Boolean          @default(false) @map("can_view_phone_numbers")
+  lastPaymentAt           DateTime?        @map("last_payment_at")
+  lastPaymentAmount       Float?           @map("last_payment_amount")
+  createdAt               DateTime         @default(now()) @map("created_at")
+  updatedAt               DateTime         @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([tier, status])
+  @@index([expiresAt])
+  @@map("memberships")
+}
+
+model PaymentTransaction {
+  id          String          @id @default(uuid())
+  userId      String          @map("user_id")
+  sessionId   String          @unique @map("session_id")
+  provider    PaymentProvider @default(SIMULATED)
+  providerRef String?         @map("provider_ref")
+  planTier    String          @map("plan_tier")
+  duration    String
+  amount      Float
+  currency    String          @default("USD")
+  status      PaymentStatus   @default(PENDING)
+  createdAt   DateTime        @default(now()) @map("created_at")
+  updatedAt   DateTime        @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status])
+  @@index([createdAt(sort: Desc)])
+  @@map("payment_transactions")
 }
