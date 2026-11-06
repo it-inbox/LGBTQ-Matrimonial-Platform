@@ -150,17 +150,17 @@ export class AuthService {
       select: {
         id: true,
         phoneNumber: true,
-        role: true,
         isVerified: true,
         createdAt: true,
       },
     });
 
-    const tokens = this.generateTokens(user.id, cleanPhone, user.role);
+    const tokens = this.generateTokens(user.id, cleanPhone);
     const membership = this.paymentsService.getMembership(user.id);
     return {
       user: {
         ...user,
+        role: "USER",
         onboardingCompleted: false,
       },
       profile: null,
@@ -199,12 +199,12 @@ export class AuthService {
       Promise.resolve(this.paymentsService.getMembership(user.id)),
     ]);
 
-    const tokens = this.generateTokens(user.id, cleanPhone, user.role);
+    const tokens = this.generateTokens(user.id, cleanPhone);
     return {
       user: {
         id: user.id,
         phoneNumber: user.phoneNumber,
-        role: user.role,
+        role: "USER",
         isVerified: user.isVerified,
         onboardingCompleted: !!profile,
       },
@@ -224,7 +224,7 @@ export class AuthService {
         throw new UnauthorizedException("User no longer active");
       }
 
-      return this.generateTokens(user.id, user.phoneNumber || "", user.role);
+      return this.generateTokens(user.id, user.phoneNumber || "");
     } catch {
       throw new UnauthorizedException("Invalid or expired refresh token");
     }
@@ -237,8 +237,6 @@ export class AuthService {
         select: {
           id: true,
           phoneNumber: true,
-          email: true,
-          role: true,
           isVerified: true,
         },
       }),
@@ -260,6 +258,7 @@ export class AuthService {
     return {
       user: {
         ...user,
+        role: "USER",
         onboardingCompleted: !!profile,
       },
       profile,
@@ -267,7 +266,7 @@ export class AuthService {
     };
   }
 
-  private generateTokens(userId: string, phoneNumber: string, role: string) {
+  private generateTokens(userId: string, phoneNumber: string, role: string = "USER") {
     const payload = { userId, phoneNumber, role };
     return {
       accessToken: this.tokenService.signAccessToken(payload),

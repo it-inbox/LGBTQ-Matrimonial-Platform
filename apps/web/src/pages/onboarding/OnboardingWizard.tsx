@@ -73,7 +73,6 @@ export interface OnboardingFormData {
   preferredOrientations: string[];
   minAge: number;
   maxAge: number;
-  acceptableOutness: string[];
 }
 
 export const OnboardingWizard: React.FC = () => {
@@ -139,7 +138,6 @@ export const OnboardingWizard: React.FC = () => {
     preferredOrientations: ["GAY"],
     minAge: 22,
     maxAge: 32,
-    acceptableOutness: ["DISCREET_NOT_OUT", "OUT_TO_SELECT_FEW", "OUT_TO_ALL"],
   };
 
   const storageKey = user?.id ? `everpride_onboarding_draft_${user.id}` : "everpride_onboarding_draft";
@@ -443,7 +441,6 @@ export const OnboardingWizard: React.FC = () => {
         languagesSpoken: formData.languagesSpoken,
         maritalStatus: formData.maritalStatus,
         phoneNumber: user?.phoneNumber || undefined,
-        phoneVerified: true,
         city: formData.city.trim(),
         state: formData.state.trim(),
         country: formData.country.trim() || "India",
@@ -475,7 +472,6 @@ export const OnboardingWizard: React.FC = () => {
           preferredOrientations: formData.preferredOrientations,
           minAge: Number(formData.minAge),
           maxAge: Number(formData.maxAge),
-          acceptableOutness: formData.acceptableOutness,
         },
       };
 

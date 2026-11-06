@@ -144,8 +144,6 @@ export class ProfilesService {
 
     return {
       ...profile,
-      latitude: undefined,
-      longitude: undefined,
       photos: sanitizedPhotos,
       interaction: {
         isOwn,
@@ -193,13 +191,9 @@ export class ProfilesService {
         languagesSpoken: data.languagesSpoken || [],
         maritalStatus: data.maritalStatus,
         phoneNumber: data.phoneNumber,
-        phoneVerified: data.phoneVerified ?? false,
-        backupEmail: data.backupEmail,
         city: data.city,
         state: data.state,
         country: data.country,
-        latitude: data.latitude,
-        longitude: data.longitude,
         education: data.education,
         degree: data.degree,
         sector: data.sector,
@@ -241,10 +235,7 @@ export class ProfilesService {
               preferredOrientations: data.partnerPreference.preferredOrientations as Orientation[],
               minAge: data.partnerPreference.minAge,
               maxAge: data.partnerPreference.maxAge,
-              minHeightCm: data.partnerPreference.minHeightCm,
-              maxHeightCm: data.partnerPreference.maxHeightCm,
               maxDistanceKm: data.partnerPreference.maxDistanceKm,
-              acceptableOutness: data.partnerPreference.acceptableOutness as OutnessStatus[],
             },
           },
         }),
@@ -324,10 +315,7 @@ export class ProfilesService {
                 preferredOrientations: (partnerPreference.preferredOrientations || []) as Orientation[],
                 minAge: partnerPreference.minAge ?? 21,
                 maxAge: partnerPreference.maxAge ?? 50,
-                minHeightCm: partnerPreference.minHeightCm,
-                maxHeightCm: partnerPreference.maxHeightCm,
                 maxDistanceKm: partnerPreference.maxDistanceKm,
-                acceptableOutness: (partnerPreference.acceptableOutness || []) as OutnessStatus[],
               },
               update: {
                 ...(partnerPreference.preferredGenders && {
@@ -338,12 +326,7 @@ export class ProfilesService {
                 }),
                 ...(partnerPreference.minAge !== undefined && { minAge: partnerPreference.minAge }),
                 ...(partnerPreference.maxAge !== undefined && { maxAge: partnerPreference.maxAge }),
-                ...(partnerPreference.minHeightCm !== undefined && { minHeightCm: partnerPreference.minHeightCm }),
-                ...(partnerPreference.maxHeightCm !== undefined && { maxHeightCm: partnerPreference.maxHeightCm }),
                 ...(partnerPreference.maxDistanceKm !== undefined && { maxDistanceKm: partnerPreference.maxDistanceKm }),
-                ...(partnerPreference.acceptableOutness && {
-                  acceptableOutness: partnerPreference.acceptableOutness as OutnessStatus[],
-                }),
               },
             },
           },

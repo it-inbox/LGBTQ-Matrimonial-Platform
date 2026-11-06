@@ -6,10 +6,7 @@ export const partnerPreferenceSchema = z.object({
   preferredOrientations: z.array(OrientationEnum).default([]),
   minAge: z.number().int().min(18).max(80).default(21),
   maxAge: z.number().int().min(18).max(100).default(50),
-  minHeightCm: z.number().int().min(120).max(250).optional(),
-  maxHeightCm: z.number().int().min(120).max(250).optional(),
   maxDistanceKm: z.number().int().min(5).max(1000).optional(),
-  acceptableOutness: z.array(OutnessStatusEnum).default([]),
 });
 export type PartnerPreferenceInput = z.infer<typeof partnerPreferenceSchema>;
 

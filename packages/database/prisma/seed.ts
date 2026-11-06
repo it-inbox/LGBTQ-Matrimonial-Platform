@@ -3,19 +3,7 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log("Cleaning existing records...");
-  await prisma.message.deleteMany();
-  await prisma.conversation.deleteMany();
-  await prisma.matchInterest.deleteMany();
-  await prisma.photoAccessRequest.deleteMany();
-  await prisma.blockedUser.deleteMany();
-  await prisma.partnerPreference.deleteMany();
-  await prisma.profilePhoto.deleteMany();
-  await prisma.profile.deleteMany();
-  await prisma.refreshToken.deleteMany();
-  await prisma.user.deleteMany();
-
-  console.log("Seeding sample users with phone numbers...");
+  console.log("Preparing database seed...");
 
   const usersData = [
     // 0: Aarav Sharma (Default logged in user)
@@ -35,8 +23,6 @@ async function main() {
         languagesSpoken: ["Hindi", "English"],
         maritalStatus: "Never Married",
         phoneNumber: "+919876543210",
-        phoneVerified: true,
-        backupEmail: "aarav.backup@example.com",
         city: "Bengaluru",
         state: "Karnataka",
         country: "India",
@@ -59,7 +45,6 @@ async function main() {
           preferredOrientations: ["GAY" as const, "BISEXUAL" as const, "QUEER" as const],
           minAge: 22,
           maxAge: 40,
-          acceptableOutness: ["OUT_TO_ALL" as const, "OUT_TO_SELECT_FEW" as const],
         },
       },
     },
@@ -81,8 +66,6 @@ async function main() {
         languagesSpoken: ["English", "Hindi", "Marathi"],
         maritalStatus: "Never Married",
         phoneNumber: "+919811223344",
-        phoneVerified: true,
-        backupEmail: "rohan.v@example.com",
         city: "Mumbai",
         state: "Maharashtra",
         country: "India",
@@ -104,7 +87,6 @@ async function main() {
           preferredOrientations: ["GAY" as const, "QUEER" as const],
           minAge: 25,
           maxAge: 36,
-          acceptableOutness: ["OUT_TO_ALL" as const, "OUT_TO_SELECT_FEW" as const, "DISCREET_NOT_OUT" as const],
         },
       },
     },
@@ -126,8 +108,6 @@ async function main() {
         languagesSpoken: ["Bengali", "English", "Hindi"],
         maritalStatus: "Never Married",
         phoneNumber: "+919877001122",
-        phoneVerified: true,
-        backupEmail: "ananya.sen@example.com",
         city: "Kolkata",
         state: "West Bengal",
         country: "India",
@@ -150,7 +130,6 @@ async function main() {
           preferredOrientations: ["LESBIAN" as const, "BISEXUAL" as const, "QUEER" as const],
           minAge: 23,
           maxAge: 33,
-          acceptableOutness: ["OUT_TO_ALL" as const, "OUT_TO_SELECT_FEW" as const],
         },
       },
     },
@@ -172,8 +151,6 @@ async function main() {
         languagesSpoken: ["Malayalam", "English", "Tamil"],
         maritalStatus: "Never Married",
         phoneNumber: "+919844556677",
-        phoneVerified: true,
-        backupEmail: "priya.nair@example.com",
         city: "Kochi",
         state: "Kerala",
         country: "India",
@@ -195,7 +172,6 @@ async function main() {
           preferredOrientations: ["LESBIAN" as const, "BISEXUAL" as const],
           minAge: 26,
           maxAge: 35,
-          acceptableOutness: ["OUT_TO_ALL" as const, "OUT_TO_SELECT_FEW" as const],
         },
       },
     },
@@ -217,8 +193,6 @@ async function main() {
         languagesSpoken: ["Punjabi", "Hindi", "English"],
         maritalStatus: "Never Married",
         phoneNumber: "+919855667788",
-        phoneVerified: true,
-        backupEmail: "devansh.m@example.com",
         city: "New Delhi",
         state: "Delhi",
         country: "India",
@@ -240,7 +214,6 @@ async function main() {
           preferredOrientations: ["QUEER" as const, "BISEXUAL" as const, "PANSEXUAL" as const],
           minAge: 24,
           maxAge: 35,
-          acceptableOutness: ["OUT_TO_ALL" as const, "OUT_TO_SELECT_FEW" as const],
         },
       },
     },
@@ -262,8 +235,6 @@ async function main() {
         languagesSpoken: ["Marathi", "Hindi", "English"],
         maritalStatus: "Never Married",
         phoneNumber: "+919866778899",
-        phoneVerified: true,
-        backupEmail: "maya.k@example.com",
         city: "Pune",
         state: "Maharashtra",
         country: "India",
@@ -285,7 +256,6 @@ async function main() {
           preferredOrientations: ["GAY" as const, "BISEXUAL" as const, "QUEER" as const],
           minAge: 25,
           maxAge: 37,
-          acceptableOutness: ["OUT_TO_ALL" as const, "OUT_TO_SELECT_FEW" as const],
         },
       },
     },
@@ -307,8 +277,6 @@ async function main() {
         languagesSpoken: ["Hindi", "English"],
         maritalStatus: "Never Married",
         phoneNumber: "+919871122334",
-        phoneVerified: true,
-        backupEmail: "kabir.m@example.com",
         city: "Gurugram",
         state: "Haryana",
         country: "India",
@@ -330,7 +298,6 @@ async function main() {
           preferredOrientations: ["GAY" as const, "BISEXUAL" as const],
           minAge: 26,
           maxAge: 36,
-          acceptableOutness: ["OUT_TO_ALL" as const, "OUT_TO_SELECT_FEW" as const],
         },
       },
     },
@@ -352,8 +319,6 @@ async function main() {
         languagesSpoken: ["Marathi", "Hindi", "English"],
         maritalStatus: "Never Married",
         phoneNumber: "+919822334455",
-        phoneVerified: true,
-        backupEmail: "tara.deshmukh@example.com",
         city: "Mumbai",
         state: "Maharashtra",
         country: "India",
@@ -375,7 +340,6 @@ async function main() {
           preferredOrientations: ["LESBIAN" as const, "BISEXUAL" as const, "QUEER" as const],
           minAge: 25,
           maxAge: 34,
-          acceptableOutness: ["OUT_TO_ALL" as const, "OUT_TO_SELECT_FEW" as const],
         },
       },
     },
@@ -397,8 +361,6 @@ async function main() {
         languagesSpoken: ["Gujarati", "Hindi", "English"],
         maritalStatus: "Never Married",
         phoneNumber: "+919833445566",
-        phoneVerified: true,
-        backupEmail: "sameer.j@example.com",
         city: "Ahmedabad",
         state: "Gujarat",
         country: "India",
@@ -420,7 +382,6 @@ async function main() {
           preferredOrientations: ["GAY" as const, "QUEER" as const],
           minAge: 27,
           maxAge: 35,
-          acceptableOutness: ["OUT_TO_ALL" as const, "OUT_TO_SELECT_FEW" as const],
         },
       },
     },
@@ -442,8 +403,6 @@ async function main() {
         languagesSpoken: ["Bengali", "English", "Hindi"],
         maritalStatus: "Never Married",
         phoneNumber: "+919899001122",
-        phoneVerified: true,
-        backupEmail: "reyansh.roy@example.com",
         city: "Hyderabad",
         state: "Telangana",
         country: "India",
@@ -465,7 +424,6 @@ async function main() {
           preferredOrientations: ["QUEER" as const, "PANSEXUAL" as const, "BISEXUAL" as const],
           minAge: 23,
           maxAge: 34,
-          acceptableOutness: ["OUT_TO_ALL" as const],
         },
       },
     },
@@ -487,8 +445,6 @@ async function main() {
         languagesSpoken: ["Bengali", "English", "Hindi"],
         maritalStatus: "Never Married",
         phoneNumber: "+919811002233",
-        phoneVerified: true,
-        backupEmail: "vikram.s@example.com",
         city: "Kolkata",
         state: "West Bengal",
         country: "India",
@@ -510,7 +466,6 @@ async function main() {
           preferredOrientations: ["GAY" as const, "QUEER" as const],
           minAge: 28,
           maxAge: 38,
-          acceptableOutness: ["OUT_TO_ALL" as const, "OUT_TO_SELECT_FEW" as const],
         },
       },
     },
@@ -532,8 +487,6 @@ async function main() {
         languagesSpoken: ["English", "Urdu", "Hindi"],
         maritalStatus: "Never Married",
         phoneNumber: "+447911123456",
-        phoneVerified: true,
-        backupEmail: "zaid.k@example.com",
         city: "London",
         state: "Greater London",
         country: "United Kingdom",
@@ -555,7 +508,6 @@ async function main() {
           preferredOrientations: ["GAY" as const, "BISEXUAL" as const],
           minAge: 26,
           maxAge: 36,
-          acceptableOutness: ["OUT_TO_ALL" as const],
         },
       },
     },
@@ -577,8 +529,6 @@ async function main() {
         languagesSpoken: ["English", "French"],
         maritalStatus: "Divorced",
         phoneNumber: "+14165550199",
-        phoneVerified: true,
-        backupEmail: "neil.fernandez@example.com",
         city: "Toronto",
         state: "Ontario",
         country: "Canada",
@@ -600,7 +550,6 @@ async function main() {
           preferredOrientations: ["GAY" as const, "QUEER" as const],
           minAge: 28,
           maxAge: 42,
-          acceptableOutness: ["OUT_TO_ALL" as const, "OUT_TO_SELECT_FEW" as const],
         },
       },
     },
@@ -622,8 +571,6 @@ async function main() {
         languagesSpoken: ["Punjabi", "Hindi", "English"],
         maritalStatus: "Divorced",
         phoneNumber: "+919811447788",
-        phoneVerified: true,
-        backupEmail: "sid.bhasin@example.com",
         city: "New Delhi",
         state: "Delhi",
         country: "India",
@@ -645,7 +592,6 @@ async function main() {
           preferredOrientations: ["GAY" as const, "BISEXUAL" as const],
           minAge: 27,
           maxAge: 38,
-          acceptableOutness: ["OUT_TO_ALL" as const, "OUT_TO_SELECT_FEW" as const],
         },
       },
     },
@@ -667,8 +613,6 @@ async function main() {
         languagesSpoken: ["Tibetan", "English", "Hindi"],
         maritalStatus: "Never Married",
         phoneNumber: "+919818889900",
-        phoneVerified: true,
-        backupEmail: "tenzin.d@example.com",
         city: "Bengaluru",
         state: "Karnataka",
         country: "India",
@@ -690,7 +634,6 @@ async function main() {
           preferredOrientations: ["GAY" as const, "QUEER" as const],
           minAge: 24,
           maxAge: 35,
-          acceptableOutness: ["OUT_TO_ALL" as const],
         },
       },
     },
@@ -712,8 +655,6 @@ async function main() {
         languagesSpoken: ["Gujarati", "Hindi", "English"],
         maritalStatus: "Never Married",
         phoneNumber: "+919820011223",
-        phoneVerified: true,
-        backupEmail: "bhavik.shah@example.com",
         city: "Mumbai",
         state: "Maharashtra",
         country: "India",
@@ -735,7 +676,6 @@ async function main() {
           preferredOrientations: ["GAY" as const, "BISEXUAL" as const],
           minAge: 25,
           maxAge: 35,
-          acceptableOutness: ["OUT_TO_ALL" as const, "OUT_TO_SELECT_FEW" as const],
         },
       },
     },
@@ -757,8 +697,6 @@ async function main() {
         languagesSpoken: ["English"],
         maritalStatus: "Never Married",
         phoneNumber: "+61412345678",
-        phoneVerified: true,
-        backupEmail: "liam.oc@example.com",
         city: "Melbourne",
         state: "Victoria",
         country: "Australia",
@@ -780,7 +718,6 @@ async function main() {
           preferredOrientations: ["GAY" as const, "QUEER" as const],
           minAge: 25,
           maxAge: 38,
-          acceptableOutness: ["OUT_TO_ALL" as const],
         },
       },
     },
@@ -802,8 +739,6 @@ async function main() {
         languagesSpoken: ["Hindi", "English", "Punjabi"],
         maritalStatus: "Widowed",
         phoneNumber: "+919817722334",
-        phoneVerified: true,
-        backupEmail: "aditya.k@example.com",
         city: "Chandigarh",
         state: "Chandigarh",
         country: "India",
@@ -825,7 +760,6 @@ async function main() {
           preferredOrientations: ["GAY" as const, "BISEXUAL" as const],
           minAge: 28,
           maxAge: 44,
-          acceptableOutness: ["OUT_TO_ALL" as const, "OUT_TO_SELECT_FEW" as const],
         },
       },
     },
@@ -834,81 +768,117 @@ async function main() {
   const createdUsers: any[] = [];
 
   for (const item of usersData) {
-    const user = await prisma.user.create({
-      data: {
+    const user = await prisma.user.upsert({
+      where: { phoneNumber: item.phoneNumber },
+      create: {
         phoneNumber: item.phoneNumber,
         isVerified: true,
         isActive: true,
+        isDummyUser: true,
+      },
+      update: {
+        isVerified: true,
+        isActive: true,
+        isDummyUser: true,
       },
     });
 
     const { photos, partnerPreference, ...profileData } = item.profile;
 
-    const profile = await prisma.profile.create({
-      data: {
-        ...profileData,
-        userId: user.id,
-        photos: {
-          create: photos.map((url, idx) => ({
-            originalUrl: url,
-            blurredUrl: url,
-            isPrimary: idx === 0,
-            isApproved: true,
-          })),
-        },
-        partnerPreference: {
-          create: partnerPreference,
-        },
-      },
+    let profile = await prisma.profile.findUnique({
+      where: { userId: user.id },
     });
 
+    if (!profile) {
+      profile = await prisma.profile.create({
+        data: {
+          ...profileData,
+          userId: user.id,
+          photos: {
+            create: photos.map((url, idx) => ({
+              originalUrl: url,
+              blurredUrl: url,
+              isPrimary: idx === 0,
+              isApproved: true,
+            })),
+          },
+          educations: {
+            create: [
+              {
+                qualification: profileData.education || "Bachelor's Degree",
+                degree: profileData.degree || "B.Tech",
+                degreeName: profileData.degree || null,
+                institution: "Premier University",
+                year: 2018,
+              },
+            ],
+          },
+          partnerPreference: {
+            create: partnerPreference,
+          },
+        },
+      });
+    }
+
     createdUsers.push({ user, profile });
-    console.log(`✓ Seeded user: ${item.profile.displayName} (${item.phoneNumber})`);
+    console.log(`✓ Seeded user: ${item.profile.displayName} (${item.phoneNumber}) [isDummyUser = true]`);
   }
 
   // ─────────────────────────────────────────────────────────────
   // Seed Dedicated Platform Admin Account
   // ─────────────────────────────────────────────────────────────
   console.log("Seeding dedicated platform admin account (admin@everpride.com)...");
-  const adminUser = await prisma.user.create({
-    data: {
+  const adminUser = await prisma.admin.upsert({
+    where: { email: "admin@everpride.com" },
+    create: {
       email: "admin@everpride.com",
-      phoneNumber: null,
-      passwordHash: "$2b$12$.jcvwhrTWeRPMYlq4Tcv6.7sNWUufDguyAdQI/uQbHHI8hIO8v6pG", // Precomputed "Admin@123456"
+      passwordHash: "$2b$12$PCOWUAKact5yuqokUnDVKuNydSdVeyVV/oOSib7O07R0VzjFii5s2", // "Admin@123456"
       role: "ADMIN",
-      isVerified: true,
+      displayName: "System Administrator",
       isActive: true,
-      profile: {
-        create: {
-          displayName: "System Administrator",
-          gender: "OTHER",
-          orientation: "QUEER",
-          pronouns: "they/them",
-          outnessStatus: "OUT_TO_ALL",
-          dateOfBirth: new Date("1990-01-01"),
-          heightCm: 175,
-          nationality: "India",
-          religion: "Agnostic",
-          motherTongue: "English",
-          languagesSpoken: ["English", "Hindi"],
-          maritalStatus: "Never Married",
-          city: "Bengaluru",
-          state: "Karnataka",
-          country: "India",
-          profession: "Platform Administrator",
-          sector: "Internal Operations",
-          bio: "Official EverPride Platform Operations & Admin Console Account",
-          diet: "Vegetarian",
-          hobbies: ["Technology", "Community Building"],
-        },
-      },
+    },
+    update: {
+      passwordHash: "$2b$12$PCOWUAKact5yuqokUnDVKuNydSdVeyVV/oOSib7O07R0VzjFii5s2",
+      role: "ADMIN",
+      displayName: "System Administrator",
+      isActive: true,
     },
   });
-  console.log(`✓ Seeded Admin User: ${adminUser.email} (Role: ${adminUser.role})`);
+  console.log(`✓ Seeded Dedicated Admin: ${adminUser.email} (Role: ${adminUser.role})`);
 
   // ─────────────────────────────────────────────────────────────
   // Seed Matches, Interests & Unblur Requests
   // ─────────────────────────────────────────────────────────────
+  const seedUserIds = createdUsers.map((u) => u.user.id);
+  // Safely clean only sample data interactions between seeded dummy users
+  await prisma.message.deleteMany({
+    where: { senderId: { in: seedUserIds } },
+  });
+  await prisma.conversation.deleteMany({
+    where: {
+      OR: [
+        { participant1Id: { in: seedUserIds } },
+        { participant2Id: { in: seedUserIds } },
+      ],
+    },
+  });
+  await prisma.matchInterest.deleteMany({
+    where: {
+      OR: [
+        { senderId: { in: seedUserIds } },
+        { receiverId: { in: seedUserIds } },
+      ],
+    },
+  });
+  await prisma.photoAccessRequest.deleteMany({
+    where: {
+      OR: [
+        { requesterId: { in: seedUserIds } },
+        { targetId: { in: seedUserIds } },
+      ],
+    },
+  });
+
   const aarav = createdUsers[0].user;      // +919876543210 (Logged in test user)
   const rohan = createdUsers[1].user;      // PENDING Received Interest & Unblur
   const devansh = createdUsers[4].user;    // They Declined Interest, I Accepted Unblur

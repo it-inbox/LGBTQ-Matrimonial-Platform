@@ -278,9 +278,6 @@ export const EditProfilePage: React.FC = () => {
     preferredOrientations: ["GAY"] as string[],
     minAge: 21,
     maxAge: 50,
-    minHeightCm: 150,
-    maxHeightCm: 200,
-    acceptableOutness: ["DISCREET_NOT_OUT", "OUT_TO_SELECT_FEW", "OUT_TO_ALL"] as string[],
   });
 
   useEffect(() => {
@@ -351,11 +348,6 @@ export const EditProfilePage: React.FC = () => {
         preferredOrientations: pref?.preferredOrientations?.length ? pref.preferredOrientations : ["GAY"],
         minAge: pref?.minAge ?? 21,
         maxAge: pref?.maxAge ?? 50,
-        minHeightCm: pref?.minHeightCm ?? 150,
-        maxHeightCm: pref?.maxHeightCm ?? 200,
-        acceptableOutness: pref?.acceptableOutness?.length
-          ? pref.acceptableOutness
-          : ["DISCREET_NOT_OUT", "OUT_TO_SELECT_FEW", "OUT_TO_ALL"],
       });
     }
   }, [profile]);
@@ -411,7 +403,7 @@ export const EditProfilePage: React.FC = () => {
   };
 
   const toggleArrayItem = (
-    field: "preferredGenders" | "preferredOrientations" | "acceptableOutness" | "languagesSpoken" | "hobbies",
+    field: "preferredGenders" | "preferredOrientations" | "languagesSpoken" | "hobbies",
     value: string
   ) => {
     setError(null);
@@ -421,7 +413,7 @@ export const EditProfilePage: React.FC = () => {
       if (exists) {
         // Enforce minimum 1 for partner preferences
         if (
-          (field === "preferredGenders" || field === "preferredOrientations" || field === "acceptableOutness") &&
+          (field === "preferredGenders" || field === "preferredOrientations") &&
           current.length === 1
         ) {
           return prev;
@@ -602,9 +594,6 @@ export const EditProfilePage: React.FC = () => {
           preferredOrientations: formData.preferredOrientations,
           minAge: Number(formData.minAge),
           maxAge: Number(formData.maxAge),
-          minHeightCm: formData.minHeightCm ? Number(formData.minHeightCm) : undefined,
-          maxHeightCm: formData.maxHeightCm ? Number(formData.maxHeightCm) : undefined,
-          acceptableOutness: formData.acceptableOutness,
         },
       };
 

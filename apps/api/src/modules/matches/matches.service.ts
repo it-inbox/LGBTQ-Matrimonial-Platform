@@ -97,7 +97,7 @@ export class MatchesService {
     // 3. Build comprehensive database WHERE clause
     const whereClause: any = {
       userId: { notIn: Array.from(excludedUserIds) },
-      user: { role: 'USER', isActive: true },
+      user: { isActive: true },
     };
 
     // Preference filters
@@ -201,8 +201,6 @@ export class MatchesService {
 
       return {
         ...p,
-        latitude: undefined, // Obfuscate exact coordinates
-        longitude: undefined,
         photos: this.sanitizePhotos(p.photos, canViewOriginal),
       };
     });
@@ -445,7 +443,6 @@ export class MatchesService {
           sender: {
             select: {
               id: true,
-              email: true,
               phoneNumber: true,
               profile: {
                 select: {
@@ -737,7 +734,6 @@ export class MatchesService {
           receiver: {
             select: {
               id: true,
-              email: true,
               profile: {
                 select: {
                   id: true,
@@ -814,7 +810,6 @@ export class MatchesService {
         sender: {
           select: {
             id: true,
-            email: true,
             profile: {
               select: {
                 id: true,
@@ -861,7 +856,6 @@ export class MatchesService {
         receiver: {
           select: {
             id: true,
-            email: true,
             profile: {
               select: {
                 id: true,
@@ -922,7 +916,6 @@ export class MatchesService {
         receiver: {
           select: {
             id: true,
-            email: true,
             phoneNumber: true,
             profile: {
               select: {
@@ -970,7 +963,6 @@ export class MatchesService {
         sender: {
           select: {
             id: true,
-            email: true,
             phoneNumber: true,
             profile: {
               select: {
@@ -1199,7 +1191,6 @@ export class MatchesService {
         blocked: {
           select: {
             id: true,
-            email: true,
             createdAt: true,
             profile: {
               select: {

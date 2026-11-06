@@ -912,25 +912,6 @@ export const MemberProfileDetailPage: React.FC = () => {
                         {pref.minAge} to {pref.maxAge} Years
                       </span>
                     </div>
-
-                    {(pref.minHeightCm || pref.maxHeightCm) && (
-                      <div className="flex items-center justify-between py-2">
-                        <span className="text-slate-500 font-medium">Preferred Height</span>
-                        <span className="font-bold text-slate-900">
-                          {pref.minHeightCm ? `${pref.minHeightCm}cm` : "Any"} -{" "}
-                          {pref.maxHeightCm ? `${pref.maxHeightCm}cm` : "Any"}
-                        </span>
-                      </div>
-                    )}
-
-                    {pref.acceptableOutness && pref.acceptableOutness.length > 0 && (
-                      <div className="flex items-center justify-between py-2">
-                        <span className="text-slate-500 font-medium">Acceptable Outness</span>
-                        <span className="font-bold text-slate-900">
-                          {pref.acceptableOutness.map((o: string) => o.replace(/_/g, " ")).join(", ")}
-                        </span>
-                      </div>
-                    )}
                   </div>
                 </div>
               )}

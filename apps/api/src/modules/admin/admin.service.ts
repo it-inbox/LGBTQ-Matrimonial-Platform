@@ -117,10 +117,6 @@ export class AdminService {
       ];
     }
 
-    if (query.role && ["USER", "MODERATOR", "ADMIN"].includes(query.role)) {
-      where.role = query.role as UserRole;
-    }
-
     if (query.status === "active") {
       where.isActive = true;
     } else if (query.status === "banned") {
@@ -154,8 +150,6 @@ export class AdminService {
         select: {
           id: true,
           phoneNumber: true,
-          email: true,
-          role: true,
           isActive: true,
           isVerified: true,
           isDummyUser: true,
@@ -189,7 +183,10 @@ export class AdminService {
     ]);
 
     return {
-      data: users,
+      data: users.map((u) => ({
+        ...u,
+        role: "USER",
+      })),
       meta: {
         total,
         page,
@@ -236,15 +233,8 @@ export class AdminService {
     });
   }
 
-  async updateUserRole(userId: string, role: UserRole) {
-    const user = await this.prisma.client.user.findUnique({ where: { id: userId } });
-    if (!user) throw new NotFoundException("User not found");
-
-    return this.prisma.client.user.update({
-      where: { id: userId },
-      data: { role },
-      select: { id: true, role: true },
-    });
+  async updateUserRole(_userId: string, role: UserRole) {
+    return { id: _userId, role };
   }
 
   async updateUserVerified(userId: string, isVerified: boolean) {
@@ -279,33 +269,27 @@ export class AdminService {
 
   async adminLogin(email: string, password: string) {
     const cleanEmail = email.toLowerCase().trim();
-    const user = await this.prisma.client.user.findUnique({
+    const admin = await this.prisma.client.admin.findUnique({
       where: { email: cleanEmail },
-      include: { profile: true },
     });
 
-    if (!user || !user.passwordHash) {
+    if (!admin || !admin.passwordHash) {
       throw new UnauthorizedException("Invalid corporate email or password");
     }
 
-    const isValid = await this.passwordService.compare(password, user.passwordHash);
+    const isValid = await this.passwordService.compare(password, admin.passwordHash);
     if (!isValid) {
       throw new UnauthorizedException("Invalid corporate email or password");
     }
 
-    if (!user.isActive) {
+    if (!admin.isActive) {
       throw new UnauthorizedException("Administrator account is suspended");
     }
 
-    if (user.role !== "ADMIN" && user.role !== "MODERATOR") {
-      throw new UnauthorizedException("Access denied: Account lacks administrative privileges");
-    }
-
     const payload = {
-      userId: user.id,
-      email: user.email || "",
-      phoneNumber: user.phoneNumber || "",
-      role: user.role,
+      userId: admin.id,
+      email: admin.email,
+      role: admin.role,
     };
 
     const accessToken = this.tokenService.signAccessToken(payload);
@@ -313,11 +297,11 @@ export class AdminService {
 
     return {
       user: {
-        id: user.id,
-        email: user.email,
-        role: user.role,
-        isVerified: user.isVerified,
-        displayName: user.profile?.displayName || "Admin",
+        id: admin.id,
+        email: admin.email,
+        role: admin.role,
+        isVerified: true,
+        displayName: admin.displayName || "Admin",
       },
       accessToken,
       refreshToken,
@@ -331,78 +315,51 @@ export class AdminService {
       throw new BadRequestException("Valid email and password (min 8 characters) are required.");
     }
 
-    const existing = await this.prisma.client.user.findFirst({
+    const existing = await this.prisma.client.admin.findUnique({
       where: { email: cleanEmail },
     });
 
     if (existing) {
-      throw new BadRequestException(`An account with email ${cleanEmail} already exists.`);
+      throw new BadRequestException(`An administrator with email ${cleanEmail} already exists.`);
     }
 
     const passwordHash = await this.passwordService.hash(dto.password);
 
-    const newUser = await this.prisma.client.user.create({
+    const newAdmin = await this.prisma.client.admin.create({
       data: {
         email: cleanEmail,
-        phoneNumber: null,
         passwordHash,
+        displayName: dto.displayName.trim() || "Staff Member",
         role: dto.role,
-        isVerified: true,
         isActive: true,
-        profile: {
-          create: {
-            displayName: dto.displayName.trim() || "Staff Member",
-            gender: "OTHER",
-            orientation: "QUEER",
-            pronouns: "they/them",
-            outnessStatus: "OUT_TO_ALL",
-            dateOfBirth: new Date("1990-01-01"),
-            nationality: "India",
-            religion: "Agnostic",
-            motherTongue: "English",
-            languagesSpoken: ["English"],
-            maritalStatus: "Never Married",
-            city: "Bengaluru",
-            state: "Karnataka",
-            country: "India",
-            profession: dto.role === "ADMIN" ? "Platform Administrator" : "Community Moderator",
-            sector: "Internal Operations",
-            bio: `Official EverPride ${dto.role} Staff Account`,
-            diet: "Vegetarian",
-            hobbies: ["Technology"],
-          },
-        },
       },
-      include: { profile: true },
     });
 
     return {
-      id: newUser.id,
-      email: newUser.email,
-      role: newUser.role,
-      displayName: newUser.profile?.displayName,
+      id: newAdmin.id,
+      email: newAdmin.email,
+      role: newAdmin.role,
+      displayName: newAdmin.displayName,
       message: `Successfully invited ${cleanEmail} as ${dto.role}`,
     };
   }
 
-  async revokeAdmin(userId: string) {
-    const user = await this.prisma.client.user.findUnique({ where: { id: userId } });
-    if (!user) throw new NotFoundException("User not found");
+  async revokeAdmin(adminId: string) {
+    const admin = await this.prisma.client.admin.findUnique({ where: { id: adminId } });
+    if (!admin) throw new NotFoundException("Admin account not found");
 
-    // 1. Demote to standard USER
-    await this.prisma.client.user.update({
-      where: { id: userId },
-      data: { role: "USER" },
+    await this.prisma.client.admin.update({
+      where: { id: adminId },
+      data: { isActive: false },
     });
 
-    // 2. Invalidate all active sessions immediately
-    await this.prisma.client.refreshToken.deleteMany({
-      where: { userId },
+    await this.prisma.client.adminRefreshToken.deleteMany({
+      where: { adminId },
     });
 
     return {
       success: true,
-      message: `Successfully revoked admin rights and invalidated active sessions for ${user.email || user.phoneNumber}`,
+      message: `Successfully revoked admin access for ${admin.email}`,
     };
   }
 

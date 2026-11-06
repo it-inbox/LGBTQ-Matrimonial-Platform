@@ -23,14 +23,6 @@ export const Navbar: React.FC = () => {
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
   const isOnboardingPage = location.pathname.startsWith("/onboarding");
 
-  // Compute display member ID
-  const memberDisplayId = React.useMemo(() => {
-    if (!profile) return "EP-MEMBER";
-    const rawId = (profile as any)?.user?.id || profile.id || profile.userId || "9109";
-    const shortCode = rawId.replace(/-/g, "").slice(-4).toUpperCase();
-    return `ID - SATX${shortCode}`;
-  }, [profile]);
-
   return (
     <header className="sticky top-0 z-40 w-full border-b border-slate-200/80 bg-white/80 backdrop-blur-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
@@ -187,13 +179,10 @@ export const Navbar: React.FC = () => {
                         </div>
                       );
                     })()}
-                    <div className="min-w-0 flex-1 pr-6">
+                    <div className="min-w-0 flex-1 pr-6 flex items-center">
                       <h3 className="font-extrabold text-slate-900 text-lg leading-tight truncate">
                         {profile.displayName || "Member"}
                       </h3>
-                      <p className="text-xs font-semibold text-slate-400 mt-1 uppercase tracking-wider">
-                        {memberDisplayId}
-                      </p>
                     </div>
                   </div>
                 )}
