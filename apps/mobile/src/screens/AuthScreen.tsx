@@ -40,6 +40,7 @@ export const AuthScreen: React.FC = () => {
   };
 
   const handleLogin = async () => {
+    if (busy) return;
     if (!otp || otp.length < 4) {
       setErrorMsg("Please enter the verification code.");
       return;
@@ -52,7 +53,6 @@ export const AuthScreen: React.FC = () => {
       setErrorMsg(
         err.response?.data?.message || "Login failed. Please check the code."
       );
-    } finally {
       setBusy(false);
     }
   };
