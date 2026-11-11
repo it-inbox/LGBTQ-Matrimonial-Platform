@@ -1,20 +1,42 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../stores/auth.store";
-import { allCountries } from "../../data/countries";
-import { Phone, AlertCircle, ArrowRight, X, Lock } from "lucide-react";
+import { ALL_COUNTRIES } from "@everpride/shared";
+import { Phone, AlertCircle, ArrowRight, X, Lock, Search, Check, ChevronDown } from "lucide-react";
 
 export const LoginModal: React.FC = () => {
   const { isLoginModalOpen, closeLoginModal, login, sendOtp } = useAuthStore();
   const navigate = useNavigate();
 
-  const [selectedCountryCode, setSelectedCountryCode] = useState("");
+  const [selectedCountryCode, setSelectedCountryCode] = useState("+91");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [otpCode, setOtpCode] = useState("");
   const [otpSent, setOtpSent] = useState(false);
   const [cooldown, setCooldown] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [countryPickerOpen, setCountryPickerOpen] = useState(false);
+  const [countrySearch, setCountrySearch] = useState("");
+  const countryDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (countryDropdownRef.current && !countryDropdownRef.current.contains(e.target as Node)) {
+        setCountryPickerOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const filteredCountries = countrySearch.trim()
+    ? ALL_COUNTRIES.filter(
+        (c) =>
+          c.name.toLowerCase().includes(countrySearch.toLowerCase()) ||
+          c.dialCode.includes(countrySearch) ||
+          c.code.toLowerCase().includes(countrySearch.toLowerCase())
+      )
+    : ALL_COUNTRIES;
 
   // Cooldown countdown timer
   React.useEffect(() => {
@@ -127,35 +149,72 @@ export const LoginModal: React.FC = () => {
               Mobile Number <span className="text-rose-500">*</span>
             </label>
             <div className="flex gap-2">
-              {/* Country Code Dropdown: exact same dropdown from /onboarding */}
-              <div className="relative shrink-0">
-                <select
+              {/* Searchable Country Code Dropdown */}
+              <div className="relative shrink-0" ref={countryDropdownRef}>
+                <button
+                  type="button"
                   disabled={loading}
-                  value={selectedCountryCode}
-                  onChange={(e) => setSelectedCountryCode(e.target.value)}
-                  className="opacity-0 absolute inset-0 w-full h-full cursor-pointer z-10 disabled:cursor-not-allowed"
-                  title="Select Country Code"
+                  onClick={() => {
+                    setCountryPickerOpen(!countryPickerOpen);
+                    setCountrySearch("");
+                  }}
+                  className="h-full px-3 py-2.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 flex items-center gap-1.5 select-none transition-colors cursor-pointer"
                 >
-                  <option value="">Select Code</option>
-                  {allCountries.map((c) => (
-                    <option key={`${c.code}-${c.dialCode}`} value={c.dialCode}>
-                      {c.name} ({c.dialCode})
-                    </option>
-                  ))}
-                </select>
-                <div className="h-full px-3 py-2.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 flex items-center gap-1.5 select-none transition-colors">
                   {selectedCountryCode ? (
                     <>
                       <span className="bg-brand-100 text-brand-700 font-extrabold px-1.5 py-0.5 rounded text-[11px] tracking-wide">
-                        {allCountries.find((c) => c.dialCode === selectedCountryCode)?.code || ""}
+                        {ALL_COUNTRIES.find((c) => c.dialCode === selectedCountryCode)?.code || ""}
                       </span>
                       <span className="text-slate-600 font-mono text-xs">{selectedCountryCode}</span>
                     </>
                   ) : (
                     <span className="text-slate-400 font-normal text-xs">Code</span>
                   )}
-                  <span className="text-[10px] text-slate-400">▼</span>
-                </div>
+                  <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+                </button>
+
+                {countryPickerOpen && (
+                  <div className="absolute top-full left-0 mt-1.5 w-64 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 overflow-hidden animate-fadeIn">
+                    <div className="p-2 border-b border-slate-100 bg-slate-50 flex items-center gap-2">
+                      <Search className="w-3.5 h-3.5 text-slate-400" />
+                      <input
+                        type="text"
+                        autoFocus
+                        value={countrySearch}
+                        onChange={(e) => setCountrySearch(e.target.value)}
+                        placeholder="Search country or code..."
+                        className="w-full bg-transparent text-xs text-slate-900 focus:outline-none placeholder:text-slate-400 font-medium"
+                      />
+                    </div>
+                    <div className="max-h-52 overflow-y-auto p-1 space-y-0.5">
+                      {filteredCountries.map((c) => {
+                        const isSelected = selectedCountryCode === c.dialCode;
+                        return (
+                          <button
+                            type="button"
+                            key={`${c.code}-${c.dialCode}`}
+                            onClick={() => {
+                              setSelectedCountryCode(c.dialCode);
+                              setCountryPickerOpen(false);
+                            }}
+                            className={`w-full px-2.5 py-1.5 rounded-lg text-left text-xs flex items-center justify-between transition-colors cursor-pointer ${
+                              isSelected
+                                ? "bg-brand-50 text-brand-700 font-bold"
+                                : "text-slate-700 hover:bg-slate-50"
+                            }`}
+                          >
+                            <span className="truncate pr-2">
+                              {c.name} ({c.code})
+                            </span>
+                            <span className="font-mono text-slate-500 font-bold shrink-0">
+                              {c.dialCode}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
 
               <input

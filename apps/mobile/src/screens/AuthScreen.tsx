@@ -12,12 +12,12 @@ import {
 } from "react-native";
 import { useAuthStore } from "../stores/auth.store";
 import { Heart, Phone, KeyRound, ArrowRight, ChevronDown, Search, X } from "lucide-react-native";
-import { allCountries, CountryData } from "../data/countries";
+import { ALL_COUNTRIES, CountryData } from "@everpride/shared";
 
 export const AuthScreen: React.FC = () => {
   const { sendOtp, login, isLoading } = useAuthStore();
   const [selectedCountry, setSelectedCountry] = useState<CountryData>(() => {
-    return allCountries.find((c) => c.dialCode === "+91") || allCountries[0];
+    return ALL_COUNTRIES.find((c: CountryData) => c.dialCode === "+91") || ALL_COUNTRIES[0];
   });
   const [phoneNumber, setPhoneNumber] = useState("");
   const [otp, setOtp] = useState("");
@@ -28,13 +28,13 @@ export const AuthScreen: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
 
   const filteredCountries = searchQuery.trim()
-    ? allCountries.filter(
-        (c) =>
+    ? ALL_COUNTRIES.filter(
+        (c: CountryData) =>
           c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
           c.dialCode.includes(searchQuery) ||
           c.code.toLowerCase().includes(searchQuery.toLowerCase())
       )
-    : allCountries;
+    : ALL_COUNTRIES;
 
   const getFullPhoneNumber = () => {
     const raw = phoneNumber.trim().replace(/\s+/g, "").replace(/^0+/, "");
@@ -256,7 +256,7 @@ export const AuthScreen: React.FC = () => {
 
             {/* Country list */}
             <ScrollView className="space-y-1">
-              {filteredCountries.map((c) => {
+              {filteredCountries.map((c: CountryData) => {
                 const isSelected = selectedCountry.code === c.code;
                 return (
                   <TouchableOpacity

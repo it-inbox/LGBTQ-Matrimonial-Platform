@@ -19,7 +19,6 @@ import {
   Heart,
   Sparkles,
   User,
-  MapPin,
   Briefcase,
   GraduationCap,
   Shield,
@@ -33,21 +32,28 @@ import {
   Plus,
   Trash2,
   Lock,
-  Eye,
-  Users,
   X,
   ChevronDown,
   Search,
   UploadCloud,
 } from "lucide-react-native";
 import {
-  LANGUAGES_LIST,
-  RELIGIONS_LIST,
-  SECTORS_LIST,
-  MARITAL_STATUSES,
-  HOBBIES_LIST,
-} from "../data/onboardingData";
-import { allCountries, CountryData } from "../data/countries";
+  ALL_COUNTRIES,
+  CountryData,
+  GENDER_OPTIONS,
+  ORIENTATION_OPTIONS,
+  OUTNESS_OPTIONS,
+  MARITAL_STATUS_OPTIONS,
+  QUALIFICATION_OPTIONS,
+  SECTOR_OPTIONS,
+  RELIGION_OPTIONS,
+  LANGUAGE_OPTIONS,
+  HOBBY_OPTIONS,
+  DIET_OPTIONS,
+  DRINKING_OPTIONS,
+  SMOKING_OPTIONS,
+  PHOTO_VISIBILITY_OPTIONS,
+} from "@everpride/shared";
 import { getStatesForCountry, getCitiesForState } from "../data/locations";
 
 export interface EducationEntry {
@@ -104,7 +110,7 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
   const [step, setStep] = useState(1);
   const totalSteps = 9;
 
-  // Exact parity: Remove defaults for Institution, Degree Name, Major, Profession, Bio
+  // Single Source of Truth defaults matching Web exactly
   const [formData, setFormData] = useState<OnboardingFormData>({
     displayName: "",
     dateOfBirth: "1998-05-15",
@@ -148,7 +154,7 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
 
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  // Dropdown Modals
+  // Searchable modal pickers
   const [activeModal, setActiveModal] = useState<"nationality" | "state" | "city" | null>(null);
   const [searchFilter, setSearchFilter] = useState("");
 
@@ -224,7 +230,6 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
     });
   };
 
-  // Device Photo Picker
   const handlePickImage = async () => {
     setErrorMsg(null);
     if (formData.photos.length >= 6) {
@@ -478,19 +483,18 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
               </Text>
             </View>
 
-            {/* Date of Birth (with native date input on web) */}
+            {/* Date of Birth */}
             <View className="flex-row gap-3 mt-3">
               <View className="flex-1">
                 <Text className="text-slate-300 text-xs font-semibold mb-1">
                   Date of Birth <Text className="text-rose-500">*</Text>
                 </Text>
                 {Platform.OS === "web" ? (
-                  // @ts-ignore - input element on web
+                  // @ts-ignore
                   <input
                     type="date"
                     value={formData.dateOfBirth}
                     onChange={(e: any) => handleChange("dateOfBirth", e.target.value)}
-                    className="w-full bg-slate-800 text-white p-3 rounded-xl border border-slate-700 text-sm focus:outline-none focus:border-rose-500"
                     style={{
                       backgroundColor: "#1e293b",
                       color: "#ffffff",
@@ -498,6 +502,8 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
                       borderRadius: "12px",
                       border: "1px solid #334155",
                       fontSize: "14px",
+                      width: "100%",
+                      outline: "none",
                     }}
                   />
                 ) : (
@@ -580,13 +586,13 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
               </View>
             </View>
 
-            {/* Religion (All 12 options from Web) */}
+            {/* Religion from Shared Single Source */}
             <View className="mt-4">
               <Text className="text-slate-300 text-xs font-semibold mb-1.5">
                 Religion / Belief
               </Text>
               <View className="flex-row flex-wrap gap-1.5">
-                {RELIGIONS_LIST.map((rel) => {
+                {RELIGION_OPTIONS.map((rel) => {
                   const sel = formData.religion === rel;
                   return (
                     <TouchableOpacity
@@ -605,7 +611,7 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
               </View>
             </View>
 
-            {/* Languages Spoken (All 50 options from Web) */}
+            {/* Languages Spoken (Scrollable Container with No Clipping) */}
             <View className="mt-4">
               <View className="flex-row items-center justify-between mb-1.5">
                 <Text className="text-slate-300 text-xs font-semibold">Languages Spoken</Text>
@@ -613,24 +619,31 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
                   {formData.languagesSpoken.length} selected
                 </Text>
               </View>
-              <View className="flex-row flex-wrap gap-1.5 max-h-48 overflow-hidden">
-                {LANGUAGES_LIST.map((lang) => {
-                  const sel = formData.languagesSpoken.includes(lang);
-                  return (
-                    <TouchableOpacity
-                      key={lang}
-                      onPress={() => toggleArrayItem("languagesSpoken", lang)}
-                      className={`px-3 py-1.5 rounded-full border ${
-                        sel ? "bg-brand-600 border-brand-500" : "bg-slate-800 border-slate-700"
-                      }`}
-                    >
-                      <Text className={`text-xs ${sel ? "text-white font-bold" : "text-slate-300"}`}>
-                        {lang}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
+              <ScrollView
+                nestedScrollEnabled
+                showsVerticalScrollIndicator
+                style={{ maxHeight: 220 }}
+                className="bg-slate-800/40 p-2.5 rounded-xl border border-slate-700/60"
+              >
+                <View className="flex-row flex-wrap gap-1.5">
+                  {LANGUAGE_OPTIONS.map((lang) => {
+                    const sel = formData.languagesSpoken.includes(lang);
+                    return (
+                      <TouchableOpacity
+                        key={lang}
+                        onPress={() => toggleArrayItem("languagesSpoken", lang)}
+                        className={`px-3 py-1.5 rounded-full border ${
+                          sel ? "bg-brand-600 border-brand-500" : "bg-slate-800 border-slate-700"
+                        }`}
+                      >
+                        <Text className={`text-xs ${sel ? "text-white font-bold" : "text-slate-300"}`}>
+                          {lang}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </ScrollView>
             </View>
           </View>
         )}
@@ -648,20 +661,13 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
               </View>
             </View>
 
-            {/* Gender Identity */}
+            {/* Gender Identity (Includes Agender, Other, etc. from Shared) */}
             <View className="mt-2">
               <Text className="text-slate-300 text-xs font-semibold mb-2">
                 Gender Identity <Text className="text-rose-500">*</Text>
               </Text>
               <View className="flex-row flex-wrap gap-2">
-                {[
-                  { label: "Man", value: "MAN" },
-                  { label: "Woman", value: "WOMAN" },
-                  { label: "Non-Binary", value: "NON_BINARY" },
-                  { label: "Trans Man", value: "TRANSGENDER_MAN" },
-                  { label: "Trans Woman", value: "TRANSGENDER_WOMAN" },
-                  { label: "Genderqueer", value: "GENDERQUEER" },
-                ].map((g) => {
+                {GENDER_OPTIONS.map((g) => {
                   const sel = formData.gender === g.value;
                   return (
                     <TouchableOpacity
@@ -680,20 +686,13 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
               </View>
             </View>
 
-            {/* Sexual Orientation */}
+            {/* Sexual Orientation (Includes Demisexual, Other, etc. from Shared) */}
             <View className="mt-4">
               <Text className="text-slate-300 text-xs font-semibold mb-2">
                 Sexual / Romantic Orientation <Text className="text-rose-500">*</Text>
               </Text>
               <View className="flex-row flex-wrap gap-2">
-                {[
-                  { label: "Gay", value: "GAY" },
-                  { label: "Lesbian", value: "LESBIAN" },
-                  { label: "Bisexual", value: "BISEXUAL" },
-                  { label: "Pansexual", value: "PANSEXUAL" },
-                  { label: "Queer", value: "QUEER" },
-                  { label: "Asexual", value: "ASEXUAL" },
-                ].map((o) => {
+                {ORIENTATION_OPTIONS.map((o) => {
                   const sel = formData.orientation === o.value;
                   return (
                     <TouchableOpacity
@@ -730,11 +729,7 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
                 Outness Status <Text className="text-rose-500">*</Text>
               </Text>
               <View className="space-y-2">
-                {[
-                  { id: "DISCREET_NOT_OUT", label: "Discreet / Not out" },
-                  { id: "OUT_TO_SELECT_FEW", label: "Out to select few friends" },
-                  { id: "OUT_TO_ALL", label: "Openly out" },
-                ].map((out) => {
+                {OUTNESS_OPTIONS.map((out) => {
                   const sel = formData.outnessStatus === out.id;
                   return (
                     <TouchableOpacity
@@ -770,7 +765,7 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
             </View>
 
             <View className="space-y-2.5 mt-2">
-              {MARITAL_STATUSES.map((ms) => {
+              {MARITAL_STATUS_OPTIONS.map((ms) => {
                 const sel = formData.maritalStatus === ms.id;
                 return (
                   <TouchableOpacity
@@ -832,18 +827,11 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
                   )}
                 </View>
 
-                {/* Qualification Level with High School and Other */}
+                {/* Qualification Options from Shared */}
                 <View>
                   <Text className="text-slate-400 text-[11px] mb-1">Qualification Level</Text>
                   <View className="flex-row flex-wrap gap-1.5">
-                    {[
-                      "Doctorate / Ph.D",
-                      "Master's Degree",
-                      "Bachelor's Degree",
-                      "Diploma",
-                      "High School",
-                      "Other",
-                    ].map((deg) => {
+                    {QUALIFICATION_OPTIONS.map((deg) => {
                       const sel = edu.degree === deg;
                       return (
                         <TouchableOpacity
@@ -927,7 +915,7 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
             <View className="mt-4">
               <Text className="text-slate-300 text-xs font-semibold mb-2">Industry Sector</Text>
               <View className="flex-row flex-wrap gap-2">
-                {SECTORS_LIST.map((sec) => {
+                {SECTOR_OPTIONS.map((sec) => {
                   const sel = formData.sector === sec;
                   return (
                     <TouchableOpacity
@@ -1003,26 +991,7 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
 
             {/* Privacy Shield Options */}
             <View className="space-y-2.5 mt-3">
-              {[
-                {
-                  id: "MUTUAL_MATCHES_ONLY",
-                  title: "Mutual Matches Only",
-                  badge: "Recommended",
-                  desc: "Photos unblur automatically when interest is reciprocal.",
-                },
-                {
-                  id: "REQUEST_REQUIRED",
-                  title: "Require My Approval",
-                  badge: "Maximum Privacy",
-                  desc: "You approve photo access requests one member at a time.",
-                },
-                {
-                  id: "ALL_MEMBERS",
-                  title: "Visible to All Members",
-                  badge: "Open",
-                  desc: "Clear photos visible to all authenticated members.",
-                },
-              ].map((opt) => {
+              {PHOTO_VISIBILITY_OPTIONS.map((opt) => {
                 const sel = formData.photoVisibility === opt.id;
                 return (
                   <TouchableOpacity
@@ -1150,7 +1119,7 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
             <View className="mt-2">
               <Text className="text-slate-300 text-xs font-semibold mb-2">Dietary Preference</Text>
               <View className="flex-row flex-wrap gap-2">
-                {["Vegetarian", "Vegan", "Eggetarian", "Non-Vegetarian"].map((d) => {
+                {DIET_OPTIONS.map((d) => {
                   const sel = formData.diet === d;
                   return (
                     <TouchableOpacity
@@ -1174,18 +1143,18 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
               <View className="flex-1">
                 <Text className="text-slate-300 text-xs font-semibold mb-1">Drinking</Text>
                 <View className="space-y-1.5">
-                  {["Non-drinker", "Socially", "Regularly"].map((dr) => {
-                    const sel = formData.drinking === dr;
+                  {DRINKING_OPTIONS.map((dr) => {
+                    const sel = formData.drinking === dr.id;
                     return (
                       <TouchableOpacity
-                        key={dr}
-                        onPress={() => handleChange("drinking", dr)}
+                        key={dr.id}
+                        onPress={() => handleChange("drinking", dr.id)}
                         className={`p-2 rounded-lg border ${
                           sel ? "bg-brand-600 border-brand-500" : "bg-slate-800 border-slate-700"
                         }`}
                       >
                         <Text className={`text-[11px] ${sel ? "text-white font-bold" : "text-slate-300"}`}>
-                          {dr}
+                          {dr.label}
                         </Text>
                       </TouchableOpacity>
                     );
@@ -1196,18 +1165,18 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
               <View className="flex-1">
                 <Text className="text-slate-300 text-xs font-semibold mb-1">Smoking</Text>
                 <View className="space-y-1.5">
-                  {["Non-smoker", "Occasionally", "Regularly", "Trying to quit"].map((sm) => {
-                    const sel = formData.smoking === sm;
+                  {SMOKING_OPTIONS.map((sm) => {
+                    const sel = formData.smoking === sm.id;
                     return (
                       <TouchableOpacity
-                        key={sm}
-                        onPress={() => handleChange("smoking", sm)}
+                        key={sm.id}
+                        onPress={() => handleChange("smoking", sm.id)}
                         className={`p-2 rounded-lg border ${
                           sel ? "bg-brand-600 border-brand-500" : "bg-slate-800 border-slate-700"
                         }`}
                       >
                         <Text className={`text-[11px] ${sel ? "text-white font-bold" : "text-slate-300"}`}>
-                          {sm}
+                          {sm.label}
                         </Text>
                       </TouchableOpacity>
                     );
@@ -1216,7 +1185,7 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
               </View>
             </View>
 
-            {/* Hobbies (Exact 50 options from Web) */}
+            {/* Hobbies (Scrollable Container with No Clipping) */}
             <View className="mt-4">
               <View className="flex-row items-center justify-between mb-2">
                 <Text className="text-slate-300 text-xs font-semibold">Hobbies & Interests</Text>
@@ -1224,24 +1193,31 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
                   {formData.hobbies.length} selected
                 </Text>
               </View>
-              <View className="flex-row flex-wrap gap-1.5 max-h-56 overflow-hidden">
-                {HOBBIES_LIST.map((hobby) => {
-                  const sel = formData.hobbies.includes(hobby);
-                  return (
-                    <TouchableOpacity
-                      key={hobby}
-                      onPress={() => toggleArrayItem("hobbies", hobby)}
-                      className={`px-3 py-1.5 rounded-full border ${
-                        sel ? "bg-brand-600 border-brand-500" : "bg-slate-800 border-slate-700"
-                      }`}
-                    >
-                      <Text className={`text-xs ${sel ? "text-white font-bold" : "text-slate-300"}`}>
-                        {hobby}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
+              <ScrollView
+                nestedScrollEnabled
+                showsVerticalScrollIndicator
+                style={{ maxHeight: 240 }}
+                className="bg-slate-800/40 p-2.5 rounded-xl border border-slate-700/60"
+              >
+                <View className="flex-row flex-wrap gap-1.5">
+                  {HOBBY_OPTIONS.map((hobby) => {
+                    const sel = formData.hobbies.includes(hobby);
+                    return (
+                      <TouchableOpacity
+                        key={hobby}
+                        onPress={() => toggleArrayItem("hobbies", hobby)}
+                        className={`px-3 py-1.5 rounded-full border ${
+                          sel ? "bg-brand-600 border-brand-500" : "bg-slate-800 border-slate-700"
+                        }`}
+                      >
+                        <Text className={`text-xs ${sel ? "text-white font-bold" : "text-slate-300"}`}>
+                          {hobby}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </ScrollView>
             </View>
           </View>
         )}
@@ -1310,7 +1286,7 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
 
             <ScrollView className="space-y-1">
               {activeModal === "nationality" &&
-                allCountries
+                ALL_COUNTRIES
                   .filter((c) =>
                     c.name.toLowerCase().includes(searchFilter.toLowerCase())
                   )

@@ -27,9 +27,24 @@ import {
   Eye,
   Users,
 } from "lucide-react";
-import { allCountries } from "../../data/countries";
+import {
+  ALL_COUNTRIES,
+  GENDER_OPTIONS,
+  ORIENTATION_OPTIONS,
+  OUTNESS_OPTIONS,
+  MARITAL_STATUS_OPTIONS,
+  QUALIFICATION_OPTIONS,
+  SECTOR_OPTIONS,
+  RELIGION_OPTIONS,
+  LANGUAGE_OPTIONS,
+  HOBBY_OPTIONS,
+  DIET_OPTIONS,
+  DRINKING_OPTIONS,
+  SMOKING_OPTIONS,
+  PHOTO_VISIBILITY_OPTIONS,
+} from "@everpride/shared";
+import { SearchableSelect } from "../../components/common/SearchableSelect";
 import { getStatesForCountry, getCitiesForState } from "../../data/locations";
-import { HOBBIES_LIST } from "../../data/hobbies";
 
 export interface EducationEntry {
   qualification?: string;
@@ -586,77 +601,55 @@ export const OnboardingWizard: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                  Nationality
-                </label>
-                <select
-                  value={formData.nationality}
-                  onChange={(e) => {
-                    const newNat = e.target.value;
-                    handleChange("nationality", newNat);
-                    if (newNat) {
-                      handleChange("country", newNat);
-                      handleChange("state", "");
-                      handleChange("city", "");
-                    }
-                  }}
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-500"
-                >
-                  <option value="">Select</option>
-                  {allCountries.map((c) => (
-                    <option key={c.code} value={c.name}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                  State / Province <span className="text-rose-500">*</span>
-                </label>
-                <select
-                  value={formData.state}
-                  disabled={!formData.nationality}
-                  onChange={(e) => {
-                    handleChange("state", e.target.value);
+              <SearchableSelect
+                label="Nationality"
+                value={formData.nationality}
+                options={ALL_COUNTRIES.map((c) => ({ label: c.name, value: c.name }))}
+                placeholder="Search & select country..."
+                onChange={(newNat) => {
+                  handleChange("nationality", newNat);
+                  if (newNat) {
+                    handleChange("country", newNat);
+                    handleChange("state", "");
                     handleChange("city", "");
-                  }}
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-500 disabled:opacity-50"
-                >
-                  <option value="">{formData.nationality ? "Select" : "Select Nationality First"}</option>
-                  {formData.nationality &&
-                    getStatesForCountry(formData.nationality).map((st) => (
-                      <option key={st} value={st}>
-                        {st}
-                      </option>
-                    ))}
-                </select>
-              </div>
+                  }
+                }}
+              />
+
+              <SearchableSelect
+                label="State / Province"
+                required
+                disabled={!formData.nationality}
+                disabledMessage="Select Nationality First"
+                value={formData.state}
+                options={
+                  formData.nationality
+                    ? getStatesForCountry(formData.nationality)
+                    : []
+                }
+                placeholder="Search & select state..."
+                onChange={(newState) => {
+                  handleChange("state", newState);
+                  handleChange("city", "");
+                }}
+              />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                  City <span className="text-rose-500">*</span>
-                </label>
-                <select
-                  value={formData.city}
-                  disabled={!formData.state}
-                  onChange={(e) => handleChange("city", e.target.value)}
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-500 disabled:opacity-50"
-                >
-                  <option value="">{formData.state ? "Select" : "Select State First"}</option>
-                  {formData.nationality &&
-                    formData.state &&
-                    getCitiesForState(formData.nationality, formData.state).map((ct) => (
-                      <option key={ct} value={ct}>
-                        {ct}
-                      </option>
-                    ))}
-                </select>
-              </div>
+              <SearchableSelect
+                label="City"
+                required
+                disabled={!formData.state}
+                disabledMessage="Select State First"
+                value={formData.city}
+                options={
+                  formData.nationality && formData.state
+                    ? getCitiesForState(formData.nationality, formData.state)
+                    : []
+                }
+                placeholder="Search & select city..."
+                onChange={(newCity) => handleChange("city", newCity)}
+              />
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
@@ -668,18 +661,11 @@ export const OnboardingWizard: React.FC = () => {
                   className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-500"
                 >
                   <option value="">Select</option>
-                  <option value="Christianity">Christianity</option>
-                  <option value="Islam">Islam</option>
-                  <option value="Hinduism">Hinduism</option>
-                  <option value="Buddhism">Buddhism</option>
-                  <option value="Folk Religion / Shinto / Taoism">Folk Religion / Shinto / Taoism</option>
-                  <option value="Sikhism">Sikhism</option>
-                  <option value="Judaism">Judaism</option>
-                  <option value="Jainism">Jainism</option>
-                  <option value="Baháʼí">Baháʼí</option>
-                  <option value="Spiritual but not religious">Spiritual but not religious</option>
-                  <option value="Atheist / Agnostic">Atheist / Agnostic</option>
-                  <option value="Other">Other</option>
+                  {RELIGION_OPTIONS.map((rel) => (
+                    <option key={rel} value={rel}>
+                      {rel}
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>
@@ -695,59 +681,7 @@ export const OnboardingWizard: React.FC = () => {
                 </span>
               </div>
               <div className="flex flex-wrap gap-2 p-1.5 border border-slate-100 rounded-2xl bg-slate-50/50">
-                {[
-                  "Amharic",
-                  "Arabic",
-                  "Bengali",
-                  "Bhojpuri",
-                  "Burmese",
-                  "Dutch",
-                  "English",
-                  "Farsi (Persian)",
-                  "French",
-                  "German",
-                  "Gujarati",
-                  "Hausa",
-                  "Hindi",
-                  "Indonesian",
-                  "Italian",
-                  "Japanese",
-                  "Javanese",
-                  "Kannada",
-                  "Korean",
-                  "Maithili",
-                  "Malay",
-                  "Malayalam",
-                  "Mandarin Chinese",
-                  "Marathi",
-                  "Nigerian Pidgin",
-                  "Odia (Oriya)",
-                  "Pashto",
-                  "Polish",
-                  "Portuguese",
-                  "Punjabi",
-                  "Romanian",
-                  "Russian",
-                  "Sindhi",
-                  "Sinhala",
-                  "Somali",
-                  "Spanish",
-                  "Sundanese",
-                  "Swahili",
-                  "Tagalog (Filipino)",
-                  "Tamil",
-                  "Telugu",
-                  "Thai",
-                  "Turkish",
-                  "Ukrainian",
-                  "Urdu",
-                  "Uzbek",
-                  "Vietnamese",
-                  "Wu Chinese (Shanghainese)",
-                  "Yoruba",
-                  "Yue Chinese (Cantonese)",
-                  "Other",
-                ].map((lang) => {
+                {LANGUAGE_OPTIONS.map((lang) => {
                   const selected = formData.languagesSpoken.includes(lang);
                   return (
                     <button
@@ -794,14 +728,11 @@ export const OnboardingWizard: React.FC = () => {
                   className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-500"
                 >
                   <option value="">Select</option>
-                  <option value="MAN">Man</option>
-                  <option value="WOMAN">Woman</option>
-                  <option value="NON_BINARY">Non-Binary</option>
-                  <option value="TRANS_MAN">Trans Man</option>
-                  <option value="TRANS_WOMAN">Trans Woman</option>
-                  <option value="GENDERQUEER">Genderqueer</option>
-                  <option value="AGENDER">Agender</option>
-                  <option value="OTHER">Other</option>
+                  {GENDER_OPTIONS.map((g) => (
+                    <option key={g.value} value={g.value}>
+                      {g.label}
+                    </option>
+                  ))}
                 </select>
               </div>
 
@@ -815,14 +746,11 @@ export const OnboardingWizard: React.FC = () => {
                   className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-500"
                 >
                   <option value="">Select</option>
-                  <option value="GAY">Gay</option>
-                  <option value="LESBIAN">Lesbian</option>
-                  <option value="BISEXUAL">Bisexual</option>
-                  <option value="PANSEXUAL">Pansexual</option>
-                  <option value="QUEER">Queer</option>
-                  <option value="ASEXUAL">Asexual</option>
-                  <option value="DEMISEXUAL">Demisexual</option>
-                  <option value="OTHER">Other</option>
+                  {ORIENTATION_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>
@@ -874,13 +802,7 @@ export const OnboardingWizard: React.FC = () => {
             </div>
 
             <div className="space-y-3">
-              {[
-                { id: "Never Married", desc: "Single, never legally or ritually married." },
-                { id: "Divorced", desc: "Previously married, legally separated/divorced." },
-                { id: "Widowed", desc: "Spouse has passed away." },
-                { id: "Awaiting Divorce", desc: "Divorce proceedings currently underway." },
-                { id: "Annulled", desc: "Previous marriage was officially annulled." },
-              ].map((status) => (
+              {MARITAL_STATUS_OPTIONS.map((status) => (
                 <label
                   key={status.id}
                   onClick={() => handleChange("maritalStatus", status.id)}
@@ -1052,15 +974,11 @@ export const OnboardingWizard: React.FC = () => {
                   className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-500"
                 >
                   <option value="">Select</option>
-                  <option value="Private / IT">Technology & IT</option>
-                  <option value="Finance & Banking">Finance & Banking</option>
-                  <option value="Healthcare & Medicine">Healthcare & Medicine</option>
-                  <option value="Education & Academia">Education & Academia</option>
-                  <option value="Government / PSU">Government / Public Sector</option>
-                  <option value="Business / Entrepreneur">Business / Entrepreneur</option>
-                  <option value="Media & Creative">Media, Design & Creative</option>
-                  <option value="Legal & Law">Legal & Law</option>
-                  <option value="Other">Other</option>
+                  {SECTOR_OPTIONS.map((sec) => (
+                    <option key={sec} value={sec}>
+                      {sec}
+                    </option>
+                  ))}
                 </select>
               </div>
 
@@ -1466,7 +1384,7 @@ export const OnboardingWizard: React.FC = () => {
               </div>
 
               <div className="flex flex-wrap gap-2 pt-1">
-                {HOBBIES_LIST.map((hobby) => {
+                {HOBBY_OPTIONS.map((hobby) => {
                   const selected = formData.hobbies.includes(hobby);
                   return (
                     <button

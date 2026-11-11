@@ -66,3 +66,4 @@ export const getCitiesForState = (countryName: string, stateName: string): strin
 
   return [...cityNames, "Other"];
 };
+

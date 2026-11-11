@@ -4,7 +4,7 @@ export interface CountryData {
   dialCode: string;
 }
 
-export const allCountries: CountryData[] = [
+export const ALL_COUNTRIES: CountryData[] = [
   { name: "Afghanistan", code: "AF", dialCode: "+93" },
   { name: "Albania", code: "AL", dialCode: "+355" },
   { name: "Algeria", code: "DZ", dialCode: "+213" },
