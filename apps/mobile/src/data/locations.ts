@@ -1,0 +1,68 @@
+import { Country, State, City } from "country-state-city";
+
+const countryNameToIsoMap = new Map<string, string>();
+Country.getAllCountries().forEach((c) => {
+  countryNameToIsoMap.set(c.name.toLowerCase(), c.isoCode);
+});
+
+countryNameToIsoMap.set("usa", "US");
+countryNameToIsoMap.set("uk", "GB");
+countryNameToIsoMap.set("russia", "RU");
+countryNameToIsoMap.set("south korea", "KR");
+countryNameToIsoMap.set("north korea", "KP");
+countryNameToIsoMap.set("syria", "SY");
+countryNameToIsoMap.set("vietnam", "VN");
+countryNameToIsoMap.set("laos", "LA");
+countryNameToIsoMap.set("iran", "IR");
+countryNameToIsoMap.set("bolivia", "BO");
+countryNameToIsoMap.set("venezuela", "VE");
+countryNameToIsoMap.set("tanzania", "TZ");
+
+export const getCountryIso = (countryName: string): string => {
+  if (!countryName) return "";
+  return countryNameToIsoMap.get(countryName.toLowerCase()) || "";
+};
+
+export const getStatesForCountry = (countryName: string): string[] => {
+  if (!countryName) return [];
+  const iso = getCountryIso(countryName);
+  if (!iso) return ["Other"];
+
+  const rawStates = State.getStatesOfCountry(iso);
+  if (!rawStates || rawStates.length === 0) {
+    return ["Other"];
+  }
+
+  const stateNames = rawStates
+    .map((s) => s.name)
+    .filter(Boolean)
+    .sort((a, b) => a.localeCompare(b));
+
+  return [...stateNames, "Other"];
+};
+
+export const getCitiesForState = (countryName: string, stateName: string): string[] => {
+  if (!countryName || !stateName) return [];
+  if (stateName === "Other") return ["Other"];
+
+  const countryIso = getCountryIso(countryName);
+  if (!countryIso) return ["Other"];
+
+  const rawStates = State.getStatesOfCountry(countryIso);
+  const matchedState = rawStates?.find(
+    (s) => s.name.toLowerCase() === stateName.toLowerCase()
+  );
+
+  if (!matchedState) return ["Other"];
+
+  const rawCities = City.getCitiesOfState(countryIso, matchedState.isoCode);
+  if (!rawCities || rawCities.length === 0) {
+    return ["Other"];
+  }
+
+  const cityNames = Array.from(
+    new Set(rawCities.map((c) => c.name).filter(Boolean))
+  ).sort((a, b) => a.localeCompare(b));
+
+  return [...cityNames, "Other"];
+};

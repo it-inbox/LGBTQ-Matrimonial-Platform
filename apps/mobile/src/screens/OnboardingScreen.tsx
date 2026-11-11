@@ -7,8 +7,10 @@ import {
   ScrollView,
   ActivityIndicator,
   Platform,
+  Modal,
 } from "react-native";
 import { Image } from "expo-image";
+import * as ImagePicker from "expo-image-picker";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "../lib/api";
 import { QUERY_KEYS } from "../lib/queryKeys";
@@ -34,6 +36,9 @@ import {
   Eye,
   Users,
   X,
+  ChevronDown,
+  Search,
+  UploadCloud,
 } from "lucide-react-native";
 import {
   LANGUAGES_LIST,
@@ -42,6 +47,8 @@ import {
   MARITAL_STATUSES,
   HOBBIES_LIST,
 } from "../data/onboardingData";
+import { allCountries, CountryData } from "../data/countries";
+import { getStatesForCountry, getCitiesForState } from "../data/locations";
 
 export interface EducationEntry {
   qualification?: string;
@@ -97,51 +104,53 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
   const [step, setStep] = useState(1);
   const totalSteps = 9;
 
+  // Exact parity: Remove defaults for Institution, Degree Name, Major, Profession, Bio
   const [formData, setFormData] = useState<OnboardingFormData>({
     displayName: "",
     dateOfBirth: "1998-05-15",
-    heightCm: 172,
+    heightCm: 170,
     nationality: "India",
     country: "India",
     state: "Maharashtra",
     city: "Mumbai",
     religion: "Hinduism",
-    languagesSpoken: ["English", "Hindi"],
+    languagesSpoken: ["English"],
     gender: "MAN",
     orientation: "GAY",
-    pronouns: "he/him",
+    pronouns: "",
     outnessStatus: "OUT_TO_ALL",
     maritalStatus: "Never Married",
     education: "Bachelor's Degree",
-    degree: "B.Tech",
+    degree: "",
     educations: [
       {
         degree: "Bachelor's Degree",
-        degreeName: "B.Tech",
-        major: "Computer Science",
-        institution: "University",
+        degreeName: "",
+        major: "",
+        institution: "",
       },
     ],
-    sector: "Technology & IT",
-    profession: "Software Engineer",
-    photos: [
-      "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80",
-    ],
+    sector: "Private / IT",
+    profession: "",
+    photos: [],
     photoVisibility: "MUTUAL_MATCHES_ONLY",
-    bio: "Looking for a meaningful, long-term relationship built on mutual respect and shared values.",
+    bio: "",
     diet: "Vegetarian",
     drinking: "Non-drinker",
     smoking: "Non-smoker",
-    hobbies: ["Reading", "Travel", "Music", "Fitness"],
+    hobbies: [],
     ghostModeEnabled: false,
     preferredGenders: ["MAN"],
     preferredOrientations: ["GAY"],
     minAge: 21,
-    maxAge: 38,
+    maxAge: 40,
   });
 
-  const [photoInputUrl, setPhotoInputUrl] = useState("");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  // Dropdown Modals
+  const [activeModal, setActiveModal] = useState<"nationality" | "state" | "city" | null>(null);
+  const [searchFilter, setSearchFilter] = useState("");
 
   const stepTitles = [
     "About You",
@@ -156,6 +165,12 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
   ];
 
   const progressPercent = Math.round((step / totalSteps) * 100);
+
+  const availableStates = formData.nationality ? getStatesForCountry(formData.nationality) : [];
+  const availableCities =
+    formData.nationality && formData.state
+      ? getCitiesForState(formData.nationality, formData.state)
+      : [];
 
   const handleChange = (field: keyof OnboardingFormData, value: any) => {
     setErrorMsg(null);
@@ -209,17 +224,37 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
     });
   };
 
-  const handleAddPhoto = () => {
-    if (!photoInputUrl.trim()) return;
+  // Device Photo Picker
+  const handlePickImage = async () => {
+    setErrorMsg(null);
     if (formData.photos.length >= 6) {
       setErrorMsg("Maximum of 6 photos allowed.");
       return;
     }
-    setFormData((prev) => ({
-      ...prev,
-      photos: [...prev.photos, photoInputUrl.trim()],
-    }));
-    setPhotoInputUrl("");
+
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [3, 4],
+        quality: 0.8,
+        base64: true,
+      });
+
+      if (!result.canceled && result.assets && result.assets[0]) {
+        const asset = result.assets[0];
+        let photoUri = asset.uri;
+        if (asset.base64) {
+          photoUri = `data:image/jpeg;base64,${asset.base64}`;
+        }
+        setFormData((prev) => ({
+          ...prev,
+          photos: [...prev.photos, photoUri],
+        }));
+      }
+    } catch (err: any) {
+      setErrorMsg("Failed to pick image: " + (err.message || "Unknown error"));
+    }
   };
 
   const handleRemovePhoto = (index: number) => {
@@ -251,11 +286,15 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
       const ageDiff = Date.now() - dob.getTime();
       const age = Math.abs(new Date(ageDiff).getUTCFullYear() - 1970);
       if (age < 18) {
-        setErrorMsg("You must be at least 18 years old to join.");
+        setErrorMsg("You must be at least 18 years old to create a profile.");
         return false;
       }
-      if (!formData.city.trim() || !formData.state.trim()) {
-        setErrorMsg("City and State are required.");
+      if (!formData.nationality.trim()) {
+        setErrorMsg("Please select your Nationality.");
+        return false;
+      }
+      if (!formData.state.trim() || !formData.city.trim()) {
+        setErrorMsg("Please select your State and City.");
         return false;
       }
     }
@@ -439,18 +478,37 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
               </Text>
             </View>
 
+            {/* Date of Birth (with native date input on web) */}
             <View className="flex-row gap-3 mt-3">
               <View className="flex-1">
                 <Text className="text-slate-300 text-xs font-semibold mb-1">
                   Date of Birth <Text className="text-rose-500">*</Text>
                 </Text>
-                <TextInput
-                  value={formData.dateOfBirth}
-                  onChangeText={(val) => handleChange("dateOfBirth", val)}
-                  className="bg-slate-800 text-white p-3 rounded-xl border border-slate-700 text-sm"
-                  placeholder="YYYY-MM-DD"
-                  placeholderTextColor="#64748b"
-                />
+                {Platform.OS === "web" ? (
+                  // @ts-ignore - input element on web
+                  <input
+                    type="date"
+                    value={formData.dateOfBirth}
+                    onChange={(e: any) => handleChange("dateOfBirth", e.target.value)}
+                    className="w-full bg-slate-800 text-white p-3 rounded-xl border border-slate-700 text-sm focus:outline-none focus:border-rose-500"
+                    style={{
+                      backgroundColor: "#1e293b",
+                      color: "#ffffff",
+                      padding: "12px",
+                      borderRadius: "12px",
+                      border: "1px solid #334155",
+                      fontSize: "14px",
+                    }}
+                  />
+                ) : (
+                  <TextInput
+                    value={formData.dateOfBirth}
+                    onChangeText={(val) => handleChange("dateOfBirth", val)}
+                    className="bg-slate-800 text-white p-3 rounded-xl border border-slate-700 text-sm"
+                    placeholder="YYYY-MM-DD"
+                    placeholderTextColor="#64748b"
+                  />
+                )}
               </View>
               <View className="flex-1">
                 <Text className="text-slate-300 text-xs font-semibold mb-1">Height (cm)</Text>
@@ -465,38 +523,70 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
               </View>
             </View>
 
+            {/* Nationality, State, City Cascading Selectors */}
+            <View className="mt-3">
+              <Text className="text-slate-300 text-xs font-semibold mb-1">
+                Nationality <Text className="text-rose-500">*</Text>
+              </Text>
+              <TouchableOpacity
+                onPress={() => {
+                  setSearchFilter("");
+                  setActiveModal("nationality");
+                }}
+                className="bg-slate-800 p-3 rounded-xl border border-slate-700 flex-row items-center justify-between"
+              >
+                <Text className="text-white text-sm font-medium">
+                  {formData.nationality || "Select Nationality"}
+                </Text>
+                <ChevronDown size={16} color="#94a3b8" />
+              </TouchableOpacity>
+            </View>
+
             <View className="flex-row gap-3 mt-3">
+              <View className="flex-1">
+                <Text className="text-slate-300 text-xs font-semibold mb-1">
+                  State / Province <Text className="text-rose-500">*</Text>
+                </Text>
+                <TouchableOpacity
+                  onPress={() => {
+                    setSearchFilter("");
+                    setActiveModal("state");
+                  }}
+                  className="bg-slate-800 p-3 rounded-xl border border-slate-700 flex-row items-center justify-between"
+                >
+                  <Text className="text-white text-xs font-medium truncate flex-1 pr-1">
+                    {formData.state || "Select State"}
+                  </Text>
+                  <ChevronDown size={14} color="#94a3b8" />
+                </TouchableOpacity>
+              </View>
+
               <View className="flex-1">
                 <Text className="text-slate-300 text-xs font-semibold mb-1">
                   City <Text className="text-rose-500">*</Text>
                 </Text>
-                <TextInput
-                  value={formData.city}
-                  onChangeText={(val) => handleChange("city", val)}
-                  className="bg-slate-800 text-white p-3 rounded-xl border border-slate-700 text-sm"
-                  placeholder="Mumbai"
-                  placeholderTextColor="#64748b"
-                />
-              </View>
-              <View className="flex-1">
-                <Text className="text-slate-300 text-xs font-semibold mb-1">
-                  State <Text className="text-rose-500">*</Text>
-                </Text>
-                <TextInput
-                  value={formData.state}
-                  onChangeText={(val) => handleChange("state", val)}
-                  className="bg-slate-800 text-white p-3 rounded-xl border border-slate-700 text-sm"
-                  placeholder="Maharashtra"
-                  placeholderTextColor="#64748b"
-                />
+                <TouchableOpacity
+                  onPress={() => {
+                    setSearchFilter("");
+                    setActiveModal("city");
+                  }}
+                  className="bg-slate-800 p-3 rounded-xl border border-slate-700 flex-row items-center justify-between"
+                >
+                  <Text className="text-white text-xs font-medium truncate flex-1 pr-1">
+                    {formData.city || "Select City"}
+                  </Text>
+                  <ChevronDown size={14} color="#94a3b8" />
+                </TouchableOpacity>
               </View>
             </View>
 
-            {/* Religion */}
-            <View className="mt-3">
-              <Text className="text-slate-300 text-xs font-semibold mb-1">Religion / Faith</Text>
+            {/* Religion (All 12 options from Web) */}
+            <View className="mt-4">
+              <Text className="text-slate-300 text-xs font-semibold mb-1.5">
+                Religion / Belief
+              </Text>
               <View className="flex-row flex-wrap gap-1.5">
-                {RELIGIONS_LIST.slice(0, 6).map((rel) => {
+                {RELIGIONS_LIST.map((rel) => {
                   const sel = formData.religion === rel;
                   return (
                     <TouchableOpacity
@@ -515,11 +605,16 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
               </View>
             </View>
 
-            {/* Languages Spoken */}
-            <View className="mt-3">
-              <Text className="text-slate-300 text-xs font-semibold mb-1">Languages Spoken</Text>
-              <View className="flex-row flex-wrap gap-1.5">
-                {LANGUAGES_LIST.slice(0, 10).map((lang) => {
+            {/* Languages Spoken (All 50 options from Web) */}
+            <View className="mt-4">
+              <View className="flex-row items-center justify-between mb-1.5">
+                <Text className="text-slate-300 text-xs font-semibold">Languages Spoken</Text>
+                <Text className="text-brand-400 text-[10px] font-bold">
+                  {formData.languagesSpoken.length} selected
+                </Text>
+              </View>
+              <View className="flex-row flex-wrap gap-1.5 max-h-48 overflow-hidden">
+                {LANGUAGES_LIST.map((lang) => {
                   const sel = formData.languagesSpoken.includes(lang);
                   return (
                     <TouchableOpacity
@@ -737,27 +832,33 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
                   )}
                 </View>
 
+                {/* Qualification Level with High School and Other */}
                 <View>
                   <Text className="text-slate-400 text-[11px] mb-1">Qualification Level</Text>
                   <View className="flex-row flex-wrap gap-1.5">
-                    {["Bachelor's Degree", "Master's Degree", "Doctorate / Ph.D", "Diploma"].map(
-                      (deg) => {
-                        const sel = edu.degree === deg;
-                        return (
-                          <TouchableOpacity
-                            key={deg}
-                            onPress={() => handleUpdateEducation(idx, "degree", deg)}
-                            className={`px-2.5 py-1 rounded-lg border ${
-                              sel ? "bg-brand-600 border-brand-500" : "bg-slate-700 border-slate-600"
-                            }`}
-                          >
-                            <Text className={`text-[11px] ${sel ? "text-white font-bold" : "text-slate-300"}`}>
-                              {deg}
-                            </Text>
-                          </TouchableOpacity>
-                        );
-                      }
-                    )}
+                    {[
+                      "Doctorate / Ph.D",
+                      "Master's Degree",
+                      "Bachelor's Degree",
+                      "Diploma",
+                      "High School",
+                      "Other",
+                    ].map((deg) => {
+                      const sel = edu.degree === deg;
+                      return (
+                        <TouchableOpacity
+                          key={deg}
+                          onPress={() => handleUpdateEducation(idx, "degree", deg)}
+                          className={`px-2.5 py-1 rounded-lg border ${
+                            sel ? "bg-brand-600 border-brand-500" : "bg-slate-700 border-slate-600"
+                          }`}
+                        >
+                          <Text className={`text-[11px] ${sel ? "text-white font-bold" : "text-slate-300"}`}>
+                            {deg}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
                   </View>
                 </View>
 
@@ -959,7 +1060,7 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
               </View>
               <View>
                 <Text className="text-white text-lg font-bold">Profile Photos</Text>
-                <Text className="text-slate-400 text-xs">Upload or add photos protected by your Shield.</Text>
+                <Text className="text-slate-400 text-xs">Upload photos directly from your device.</Text>
               </View>
             </View>
 
@@ -981,27 +1082,23 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
                   )}
                 </View>
               ))}
-            </View>
 
-            {/* Add Photo Input */}
-            <View className="mt-3">
-              <Text className="text-slate-300 text-xs font-semibold mb-1">Add Photo by URL</Text>
-              <View className="flex-row gap-2">
-                <TextInput
-                  value={photoInputUrl}
-                  onChangeText={setPhotoInputUrl}
-                  className="flex-1 bg-slate-800 text-white p-2.5 rounded-xl border border-slate-700 text-xs"
-                  placeholder="https://images.unsplash.com/..."
-                  placeholderTextColor="#64748b"
-                />
+              {formData.photos.length < 6 && (
                 <TouchableOpacity
-                  onPress={handleAddPhoto}
-                  className="bg-brand-600 px-4 rounded-xl items-center justify-center"
+                  onPress={handlePickImage}
+                  className="w-24 h-28 rounded-xl border-2 border-dashed border-slate-700 bg-slate-800/50 items-center justify-center p-2"
                 >
-                  <Text className="text-white text-xs font-bold">Add</Text>
+                  <UploadCloud size={24} color="#f43f5e" />
+                  <Text className="text-white text-[10px] font-bold mt-1.5 text-center">
+                    + Upload Photo
+                  </Text>
+                  <Text className="text-slate-500 text-[8px] mt-0.5">Device Gallery</Text>
                 </TouchableOpacity>
-              </View>
+              )}
             </View>
+            <Text className="text-[11px] text-slate-500 mt-1">
+              Upload up to 6 pictures. Your photos will be protected according to your Privacy Shield.
+            </Text>
           </View>
         )}
 
@@ -1099,7 +1196,7 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
               <View className="flex-1">
                 <Text className="text-slate-300 text-xs font-semibold mb-1">Smoking</Text>
                 <View className="space-y-1.5">
-                  {["Non-smoker", "Occasionally", "Regularly"].map((sm) => {
+                  {["Non-smoker", "Occasionally", "Regularly", "Trying to quit"].map((sm) => {
                     const sel = formData.smoking === sm;
                     return (
                       <TouchableOpacity
@@ -1119,7 +1216,7 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
               </View>
             </View>
 
-            {/* Hobbies */}
+            {/* Hobbies (Exact 50 options from Web) */}
             <View className="mt-4">
               <View className="flex-row items-center justify-between mb-2">
                 <Text className="text-slate-300 text-xs font-semibold">Hobbies & Interests</Text>
@@ -1127,7 +1224,7 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
                   {formData.hobbies.length} selected
                 </Text>
               </View>
-              <View className="flex-row flex-wrap gap-1.5">
+              <View className="flex-row flex-wrap gap-1.5 max-h-56 overflow-hidden">
                 {HOBBIES_LIST.map((hobby) => {
                   const sel = formData.hobbies.includes(hobby);
                   return (
@@ -1185,6 +1282,105 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
           )}
         </TouchableOpacity>
       </View>
+
+      {/* Cascading Location Picker Modal (Nationality, State, City) */}
+      <Modal visible={activeModal !== null} transparent animationType="slide">
+        <View className="flex-1 bg-black/80 justify-end">
+          <View className="bg-slate-900 border-t border-slate-800 rounded-t-3xl p-5 max-h-[80%]">
+            <View className="flex-row items-center justify-between pb-3 border-b border-slate-800">
+              <Text className="text-white font-bold text-base capitalize">
+                Select {activeModal}
+              </Text>
+              <TouchableOpacity onPress={() => setActiveModal(null)}>
+                <X size={20} color="#94a3b8" />
+              </TouchableOpacity>
+            </View>
+
+            {/* Search Filter */}
+            <View className="flex-row items-center bg-slate-800 rounded-xl px-3 py-2 my-3 border border-slate-700">
+              <Search size={16} color="#64748b" />
+              <TextInput
+                value={searchFilter}
+                onChangeText={setSearchFilter}
+                placeholder={`Search ${activeModal}...`}
+                placeholderTextColor="#64748b"
+                className="flex-1 text-white text-xs ml-2"
+              />
+            </View>
+
+            <ScrollView className="space-y-1">
+              {activeModal === "nationality" &&
+                allCountries
+                  .filter((c) =>
+                    c.name.toLowerCase().includes(searchFilter.toLowerCase())
+                  )
+                  .map((c) => (
+                    <TouchableOpacity
+                      key={c.code}
+                      onPress={() => {
+                        handleChange("nationality", c.name);
+                        handleChange("country", c.name);
+                        handleChange("state", "");
+                        handleChange("city", "");
+                        setActiveModal(null);
+                      }}
+                      className={`p-3 rounded-xl flex-row items-center justify-between ${
+                        formData.nationality === c.name
+                          ? "bg-brand-600/20 border border-brand-500/40"
+                          : "hover:bg-slate-800"
+                      }`}
+                    >
+                      <Text className="text-white text-xs font-medium">{c.name}</Text>
+                      {formData.nationality === c.name && <Check size={16} color="#f43f5e" />}
+                    </TouchableOpacity>
+                  ))}
+
+              {activeModal === "state" &&
+                availableStates
+                  .filter((st) => st.toLowerCase().includes(searchFilter.toLowerCase()))
+                  .map((st) => (
+                    <TouchableOpacity
+                      key={st}
+                      onPress={() => {
+                        handleChange("state", st);
+                        handleChange("city", "");
+                        setActiveModal(null);
+                      }}
+                      className={`p-3 rounded-xl flex-row items-center justify-between ${
+                        formData.state === st
+                          ? "bg-brand-600/20 border border-brand-500/40"
+                          : "hover:bg-slate-800"
+                      }`}
+                    >
+                      <Text className="text-white text-xs font-medium">{st}</Text>
+                      {formData.state === st && <Check size={16} color="#f43f5e" />}
+                    </TouchableOpacity>
+                  ))}
+
+              {activeModal === "city" &&
+                availableCities
+                  .filter((ct) => ct.toLowerCase().includes(searchFilter.toLowerCase()))
+                  .map((ct) => (
+                    <TouchableOpacity
+                      key={ct}
+                      onPress={() => {
+                        handleChange("city", ct);
+                        setActiveModal(null);
+                      }}
+                      className={`p-3 rounded-xl flex-row items-center justify-between ${
+                        formData.city === ct
+                          ? "bg-brand-600/20 border border-brand-500/40"
+                          : "hover:bg-slate-800"
+                      }`}
+                    >
+                      <Text className="text-white text-xs font-medium">{ct}</Text>
+                      {formData.city === ct && <Check size={16} color="#f43f5e" />}
+                    </TouchableOpacity>
+                  ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 };
