@@ -20,9 +20,23 @@ import {
 const prisma = new PrismaClient();
 
 // Configuration
-const TARGET_USERS = 100_000; // Fast initial large batch (100k)
-const BATCH_SIZE = 2_500; // 2,500 records per transaction chunk to balance memory and speed
-const PRECOMPUTED_PASSWORD_HASH = "$2b$10$wN1rM7Q4LzM8d3eR2vVbGe3V4x3a1B2C3D4E5F6G7H8I9J0K1L2M"; // Precomputed "Password@123"
+const TARGET_USERS = 10_000; // Target: 10,000 dummy users
+const BATCH_SIZE = 1_000; // 1,000 records per transaction chunk for fast reliable SQL delivery
+
+const DEGREE_MAP: Record<string, string[]> = {
+  "Doctorate / Ph.D": ["Ph.D. Computer Science", "Ph.D. Economics", "M.D. Medicine", "Ph.D. Molecular Biology"],
+  "Master's Degree": ["M.Tech Software Engineering", "MBA International Business", "M.Sc Data Analytics", "LL.M International Law", "M.A. Psychology"],
+  "Bachelor's Degree": ["B.Tech Computer Science", "B.Des Product Design", "B.Sc Mathematics", "B.A. Literature", "B.Com Finance", "B.Arch Architecture"],
+  "Diploma": ["Diploma in Graphic Design", "Diploma in Culinary Arts", "Diploma in Web Technologies"],
+  "High School": ["High School Diploma", "Senior Secondary"],
+  "Other": ["Professional Certificate", "Certified Associate"],
+};
+
+const INSTITUTIONS = [
+  "IIT Delhi", "IIT Bombay", "BITS Pilani", "Delhi University", "Stanford University",
+  "UC Berkeley", "University of Melbourne", "University of Toronto", "Oxford University",
+  "National University of Singapore", "ETH Zurich", "Indian School of Business", "London School of Economics"
+];
 
 function getRandomItem<T>(arr: readonly T[] | T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
@@ -46,7 +60,7 @@ function formatSqlArray(arr: string[]): string {
 }
 
 async function runSeeder() {
-  console.log(`🚀 Preparing to seed ${TARGET_USERS.toLocaleString()} dummy users using Multi-Row Raw SQL...`);
+  console.log(`🚀 Preparing to seed ${TARGET_USERS.toLocaleString()} dummy users using multi-row raw SQL...`);
   console.log("🌍 Building weighted location pools (Tier 1: 65% same-sex marriage nations)...");
 
   const { tier1, tier2, tier3 } = buildLocationPool();
@@ -64,6 +78,7 @@ async function runSeeder() {
 
     const userRows: string[] = [];
     const profileRows: string[] = [];
+    const educationRows: string[] = [];
     const preferenceRows: string[] = [];
     const photoRows: string[] = [];
 
@@ -90,9 +105,8 @@ async function runSeeder() {
       const orientation = getRandomItem(ORIENTATIONS);
       const outness = getRandomItem(OUTNESS);
 
-      // Distinct non-routable dummy phone & email
+      // Distinct non-routable dummy phone: +999000000001 through +999000010000
       const dummyPhone = `+999${String(globalIndex).padStart(9, "0")}`;
-      const dummyEmail = `dummy_${globalIndex}@dummy.everpride.internal`;
 
       // Demographics
       const birthYear = 1970 + Math.floor(Math.random() * 34); // 1970 to 2004 (ages 22 - 56)
@@ -106,10 +120,15 @@ async function runSeeder() {
       const profession = getRandomItem(PROFESSIONS);
       const sector = getRandomItem(SECTORS);
       const education = getRandomItem(EDUCATIONS);
+      const degreeList = DEGREE_MAP[education] || ["Graduate Degree"];
+      const degree = getRandomItem(degreeList);
+      const institution = getRandomItem(INSTITUTIONS);
+      const gradYear = birthYear + 22 + Math.floor(Math.random() * 5);
+
       const diet = getRandomItem(DIETS);
       const hobbiesList = getRandomSubset(HOBBIES, 4);
 
-      // Photo visibility: 45% ALL_MEMBERS (unblurred/public), 35% MUTUAL_MATCHES_ONLY, 20% REQUEST_REQUIRED
+      // Photo visibility: 45% ALL_MEMBERS, 35% MUTUAL_MATCHES_ONLY, 20% REQUEST_REQUIRED
       const photoRand = Math.random();
       const photoVisibility =
         photoRand < 0.45
@@ -119,13 +138,10 @@ async function runSeeder() {
           : "REQUEST_REQUIRED";
       const samplePhoto = getRandomItem(PHOTO_URLS);
 
-      // User SQL Row
+      // User SQL Row: id, phone_number, is_verified, is_active, is_dummy_user, created_at, updated_at
       userRows.push(`(
         '${userId}',
         '${dummyPhone}',
-        '${dummyEmail}',
-        '${PRECOMPUTED_PASSWORD_HASH}',
-        'USER',
         true,
         true,
         true,
@@ -147,19 +163,23 @@ async function runSeeder() {
         ${escapeSql(loc.country)},
         ${escapeSql(religion)},
         'English',
-        ${formatSqlArray(["English", "Spanish"])},
+        ${formatSqlArray(["English", "Hindi"])},
         ${escapeSql(marital)},
         ${escapeSql(dummyPhone)},
-        true,
         ${escapeSql(loc.city)},
         ${escapeSql(loc.state)},
         ${escapeSql(loc.country)},
         ${escapeSql(education)},
+        ${escapeSql(degree)},
         ${escapeSql(sector)},
         ${escapeSql(profession)},
+        NULL,
         '₹15 Lakh - ₹25 Lakh',
-        'Excited to connect with genuine people on EverPride.',
+        'Excited to connect with genuine, like-minded people on EverPride.',
         ${escapeSql(diet)},
+        'Socially',
+        'Never',
+        'Dog lover',
         ${formatSqlArray(hobbiesList)},
         '${photoVisibility}',
         false,
@@ -167,7 +187,20 @@ async function runSeeder() {
         NOW()
       )`);
 
-      // Preference SQL Row
+      // Profile Education SQL Row
+      educationRows.push(`(
+        '${randomUUID()}',
+        '${profileId}',
+        ${escapeSql(education)},
+        ${escapeSql(degree)},
+        ${escapeSql(degree)},
+        NULL,
+        ${escapeSql(institution)},
+        ${gradYear},
+        NOW()
+      )`);
+
+      // Preference SQL Row: id, profile_id, preferred_genders, preferred_orientations, min_age, max_age, max_distance_km, created_at, updated_at
       preferenceRows.push(`(
         '${randomUUID()}',
         '${profileId}',
@@ -175,14 +208,12 @@ async function runSeeder() {
         '{GAY,LESBIAN,QUEER,BISEXUAL}',
         21,
         55,
-        150,
-        195,
-        '{OUT_TO_ALL,OUT_TO_SELECT_FEW,DISCREET_NOT_OUT}',
+        NULL,
         NOW(),
         NOW()
       )`);
 
-      // Photo SQL Row
+      // Photo SQL Row: id, profile_id, original_url, blurred_url, is_primary, is_watermarked, is_approved, created_at
       photoRows.push(`(
         '${randomUUID()}',
         '${profileId}',
@@ -198,22 +229,28 @@ async function runSeeder() {
     // Execute in transaction
     await prisma.$transaction(async (tx) => {
       await tx.$executeRawUnsafe(`
-        INSERT INTO "users" (id, phone_number, email, password_hash, role, is_verified, is_active, is_dummy_user, created_at, updated_at)
+        INSERT INTO "users" (id, phone_number, is_verified, is_active, is_dummy_user, created_at, updated_at)
         VALUES ${userRows.join(",")};
       `);
 
       await tx.$executeRawUnsafe(`
         INSERT INTO "profiles" (
           id, user_id, display_name, gender, orientation, pronouns, outness_status, date_of_birth, height_cm,
-          nationality, religion, mother_tongue, languages_spoken, marital_status, phone_number, phone_verified,
-          city, state, country, education, sector, profession, annual_income, bio, diet, hobbies,
-          photo_visibility, ghost_mode_enabled, created_at, updated_at
+          nationality, religion, mother_tongue, languages_spoken, marital_status, phone_number,
+          city, state, country, education, degree, sector, profession, company, annual_income, bio, diet,
+          drinking, smoking, pets, hobbies, photo_visibility, ghost_mode_enabled, created_at, updated_at
         ) VALUES ${profileRows.join(",")};
       `);
 
       await tx.$executeRawUnsafe(`
+        INSERT INTO "profile_educations" (
+          id, profile_id, qualification, degree, degree_name, major, institution, year, created_at
+        ) VALUES ${educationRows.join(",")};
+      `);
+
+      await tx.$executeRawUnsafe(`
         INSERT INTO "partner_preferences" (
-          id, profile_id, preferred_genders, preferred_orientations, min_age, max_age, min_height_cm, max_height_cm, acceptable_outness, created_at, updated_at
+          id, profile_id, preferred_genders, preferred_orientations, min_age, max_age, max_distance_km, created_at, updated_at
         ) VALUES ${preferenceRows.join(",")};
       `);
 
@@ -226,7 +263,7 @@ async function runSeeder() {
 
     totalInserted += currentBatchSize;
     const elapsedSec = (Date.now() - startTime) / 1000;
-    const rate = Math.round(totalInserted / elapsedSec);
+    const rate = Math.round(totalInserted / (elapsedSec || 1));
     const progress = ((totalInserted / TARGET_USERS) * 100).toFixed(1);
 
     console.log(
