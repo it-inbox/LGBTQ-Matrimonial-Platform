@@ -14,7 +14,15 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 5 * 60 * 1000,
-      retry: 1,
+      refetchOnWindowFocus: false,
+      retry: (failureCount, error: any) => {
+        // Do not retry 4xx client errors (400, 401, 403, 404)
+        const status = error?.response?.status;
+        if (status && status >= 400 && status < 500) {
+          return false;
+        }
+        return failureCount < 1;
+      },
     },
   },
 });

@@ -13,6 +13,7 @@ import { Image } from "expo-image";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "../lib/api";
 import { QUERY_KEYS } from "../lib/queryKeys";
+import { useAuthStore } from "../stores/auth.store";
 import {
   Heart,
   Star,
@@ -25,12 +26,15 @@ import {
   ChevronRight,
   Shield,
   Layers,
+  AlertCircle,
+  UserCheck,
 } from "lucide-react-native";
 
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get("window");
 
 export const DiscoverScreen: React.FC = () => {
   const queryClient = useQueryClient();
+  const { profile } = useAuthStore();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [interestModalVisible, setInterestModalVisible] = useState(false);
   const [customMessage, setCustomMessage] = useState("");
@@ -38,7 +42,7 @@ export const DiscoverScreen: React.FC = () => {
   const [actionNotice, setActionNotice] = useState<string | null>(null);
 
   // Fetch feed matches
-  const { data: feedResult, isLoading, refetch } = useQuery({
+  const { data: feedResult, isLoading, error, refetch } = useQuery({
     queryKey: QUERY_KEYS.matchesFeed(1),
     queryFn: async () => {
       const res = await api.get("/matches/feed?page=1&limit=25");
@@ -85,6 +89,37 @@ export const DiscoverScreen: React.FC = () => {
       <View className="flex-1 items-center justify-center bg-slate-950">
         <ActivityIndicator size="large" color="#f43f5e" />
         <Text className="text-slate-400 mt-4 font-medium">Finding genuine matches...</Text>
+      </View>
+    );
+  }
+
+  // Handle errors distinctly (e.g. Incomplete profile or network error)
+  if (error) {
+    const errorData = (error as any)?.response?.data;
+    const isProfileIncomplete =
+      errorData?.statusCode === 400 ||
+      errorData?.message?.includes("complete your profile");
+
+    return (
+      <View className="flex-1 items-center justify-center bg-slate-950 px-6">
+        <View className="w-16 h-16 rounded-full bg-brand-500/10 items-center justify-center mb-4 border border-brand-500/30">
+          <AlertCircle size={32} color="#f43f5e" />
+        </View>
+        <Text className="text-white text-xl font-bold text-center">
+          {isProfileIncomplete
+            ? "Complete Your Profile First"
+            : "Unable to Load Matches"}
+        </Text>
+        <Text className="text-slate-400 text-sm mt-2 text-center leading-5">
+          {errorData?.message ||
+            "We encountered an issue loading your matches. Please check your connection and try again."}
+        </Text>
+        <TouchableOpacity
+          onPress={() => refetch()}
+          className="mt-6 bg-brand-600 px-6 py-3 rounded-full flex-row items-center"
+        >
+          <Text className="text-white font-semibold">Try Again</Text>
+        </TouchableOpacity>
       </View>
     );
   }
