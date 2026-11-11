@@ -8,3 +8,4 @@ export const QUERY_KEYS = {
   myProfile: ["profile", "me"],
   membership: ["payments", "membership"],
 };
+

@@ -177,3 +177,4 @@ export const AuthScreen: React.FC = () => {
     </KeyboardAvoidingView>
   );
 };
+

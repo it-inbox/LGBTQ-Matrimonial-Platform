@@ -127,3 +127,4 @@ export const ProfileScreen: React.FC = () => {
     </ScrollView>
   );
 };
+
