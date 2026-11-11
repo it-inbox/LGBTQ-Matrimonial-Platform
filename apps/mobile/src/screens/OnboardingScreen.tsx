@@ -598,9 +598,8 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
                     <TouchableOpacity
                       key={rel}
                       onPress={() => handleChange("religion", rel)}
-                      className={`px-3 py-1.5 rounded-full border ${
-                        sel ? "bg-brand-600 border-brand-500" : "bg-slate-800 border-slate-700"
-                      }`}
+                      className={`px-3 py-1.5 rounded-full border ${sel ? "bg-brand-600 border-brand-500" : "bg-slate-800 border-slate-700"
+                        }`}
                     >
                       <Text className={`text-xs ${sel ? "text-white font-bold" : "text-slate-300"}`}>
                         {rel}
@@ -632,9 +631,8 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
                       <TouchableOpacity
                         key={lang}
                         onPress={() => toggleArrayItem("languagesSpoken", lang)}
-                        className={`px-3 py-1.5 rounded-full border ${
-                          sel ? "bg-brand-600 border-brand-500" : "bg-slate-800 border-slate-700"
-                        }`}
+                        className={`px-3 py-1.5 rounded-full border ${sel ? "bg-brand-600 border-brand-500" : "bg-slate-800 border-slate-700"
+                          }`}
                       >
                         <Text className={`text-xs ${sel ? "text-white font-bold" : "text-slate-300"}`}>
                           {lang}
@@ -673,9 +671,8 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
                     <TouchableOpacity
                       key={g.value}
                       onPress={() => handleChange("gender", g.value)}
-                      className={`px-3 py-2 rounded-xl border ${
-                        sel ? "bg-brand-600 border-brand-500" : "bg-slate-800 border-slate-700"
-                      }`}
+                      className={`px-3 py-2 rounded-xl border ${sel ? "bg-brand-600 border-brand-500" : "bg-slate-800 border-slate-700"
+                        }`}
                     >
                       <Text className={`text-xs ${sel ? "text-white font-bold" : "text-slate-300"}`}>
                         {g.label}
@@ -698,9 +695,8 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
                     <TouchableOpacity
                       key={o.value}
                       onPress={() => handleChange("orientation", o.value)}
-                      className={`px-3 py-2 rounded-xl border ${
-                        sel ? "bg-brand-600 border-brand-500" : "bg-slate-800 border-slate-700"
-                      }`}
+                      className={`px-3 py-2 rounded-xl border ${sel ? "bg-brand-600 border-brand-500" : "bg-slate-800 border-slate-700"
+                        }`}
                     >
                       <Text className={`text-xs ${sel ? "text-white font-bold" : "text-slate-300"}`}>
                         {o.label}
@@ -735,9 +731,8 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
                     <TouchableOpacity
                       key={out.id}
                       onPress={() => handleChange("outnessStatus", out.id)}
-                      className={`p-3 rounded-xl border flex-row items-center justify-between ${
-                        sel ? "bg-brand-600/20 border-brand-500" : "bg-slate-800 border-slate-700"
-                      }`}
+                      className={`p-3 rounded-xl border flex-row items-center justify-between ${sel ? "bg-brand-600/20 border-brand-500" : "bg-slate-800 border-slate-700"
+                        }`}
                     >
                       <Text className={`text-xs ${sel ? "text-brand-300 font-bold" : "text-slate-300"}`}>
                         {out.label}
@@ -771,9 +766,8 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
                   <TouchableOpacity
                     key={ms.id}
                     onPress={() => handleChange("maritalStatus", ms.id)}
-                    className={`p-4 rounded-xl border ${
-                      sel ? "bg-brand-600/20 border-brand-500" : "bg-slate-800 border-slate-700"
-                    }`}
+                    className={`p-4 rounded-xl border ${sel ? "bg-brand-600/20 border-brand-500" : "bg-slate-800 border-slate-700"
+                      }`}
                   >
                     <View className="flex-row items-center justify-between">
                       <Text className={`text-sm font-bold ${sel ? "text-brand-300" : "text-white"}`}>
@@ -837,9 +831,8 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
                         <TouchableOpacity
                           key={deg}
                           onPress={() => handleUpdateEducation(idx, "degree", deg)}
-                          className={`px-2.5 py-1 rounded-lg border ${
-                            sel ? "bg-brand-600 border-brand-500" : "bg-slate-700 border-slate-600"
-                          }`}
+                          className={`px-2.5 py-1 rounded-lg border ${sel ? "bg-brand-600 border-brand-500" : "bg-slate-700 border-slate-600"
+                            }`}
                         >
                           <Text className={`text-[11px] ${sel ? "text-white font-bold" : "text-slate-300"}`}>
                             {deg}
@@ -921,9 +914,8 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
                     <TouchableOpacity
                       key={sec}
                       onPress={() => handleChange("sector", sec)}
-                      className={`px-3 py-2 rounded-xl border ${
-                        sel ? "bg-brand-600 border-brand-500" : "bg-slate-800 border-slate-700"
-                      }`}
+                      className={`px-3 py-2 rounded-xl border ${sel ? "bg-brand-600 border-brand-500" : "bg-slate-800 border-slate-700"
+                        }`}
                     >
                       <Text className={`text-xs ${sel ? "text-white font-bold" : "text-slate-300"}`}>
                         {sec}
@@ -956,9 +948,8 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
                   source={{
                     uri: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
                   }}
-                  className={`w-full h-full ${
-                    formData.photoVisibility !== "ALL_MEMBERS" ? "blur-md opacity-40" : ""
-                  }`}
+                  className={`w-full h-full ${formData.photoVisibility !== "ALL_MEMBERS" ? "blur-md opacity-40" : ""
+                    }`}
                   contentFit="cover"
                 />
                 {formData.photoVisibility !== "ALL_MEMBERS" && (
@@ -997,9 +988,8 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
                   <TouchableOpacity
                     key={opt.id}
                     onPress={() => handleChange("photoVisibility", opt.id)}
-                    className={`p-3.5 rounded-xl border ${
-                      sel ? "bg-brand-600/20 border-brand-500" : "bg-slate-800 border-slate-700"
-                    }`}
+                    className={`p-3.5 rounded-xl border ${sel ? "bg-brand-600/20 border-brand-500" : "bg-slate-800 border-slate-700"
+                      }`}
                   >
                     <View className="flex-row items-center justify-between">
                       <View className="flex-row items-center gap-2">
@@ -1125,9 +1115,8 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
                     <TouchableOpacity
                       key={d}
                       onPress={() => handleChange("diet", d)}
-                      className={`px-3 py-1.5 rounded-xl border ${
-                        sel ? "bg-brand-600 border-brand-500" : "bg-slate-800 border-slate-700"
-                      }`}
+                      className={`px-3 py-1.5 rounded-xl border ${sel ? "bg-brand-600 border-brand-500" : "bg-slate-800 border-slate-700"
+                        }`}
                     >
                       <Text className={`text-xs ${sel ? "text-white font-bold" : "text-slate-300"}`}>
                         {d}
@@ -1149,9 +1138,8 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
                       <TouchableOpacity
                         key={dr.id}
                         onPress={() => handleChange("drinking", dr.id)}
-                        className={`p-2 rounded-lg border ${
-                          sel ? "bg-brand-600 border-brand-500" : "bg-slate-800 border-slate-700"
-                        }`}
+                        className={`p-2 rounded-lg border ${sel ? "bg-brand-600 border-brand-500" : "bg-slate-800 border-slate-700"
+                          }`}
                       >
                         <Text className={`text-[11px] ${sel ? "text-white font-bold" : "text-slate-300"}`}>
                           {dr.label}
@@ -1171,9 +1159,8 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
                       <TouchableOpacity
                         key={sm.id}
                         onPress={() => handleChange("smoking", sm.id)}
-                        className={`p-2 rounded-lg border ${
-                          sel ? "bg-brand-600 border-brand-500" : "bg-slate-800 border-slate-700"
-                        }`}
+                        className={`p-2 rounded-lg border ${sel ? "bg-brand-600 border-brand-500" : "bg-slate-800 border-slate-700"
+                          }`}
                       >
                         <Text className={`text-[11px] ${sel ? "text-white font-bold" : "text-slate-300"}`}>
                           {sm.label}
@@ -1206,9 +1193,8 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
                       <TouchableOpacity
                         key={hobby}
                         onPress={() => toggleArrayItem("hobbies", hobby)}
-                        className={`px-3 py-1.5 rounded-full border ${
-                          sel ? "bg-brand-600 border-brand-500" : "bg-slate-800 border-slate-700"
-                        }`}
+                        className={`px-3 py-1.5 rounded-full border ${sel ? "bg-brand-600 border-brand-500" : "bg-slate-800 border-slate-700"
+                          }`}
                       >
                         <Text className={`text-xs ${sel ? "text-white font-bold" : "text-slate-300"}`}>
                           {hobby}
@@ -1300,11 +1286,10 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
                         handleChange("city", "");
                         setActiveModal(null);
                       }}
-                      className={`p-3 rounded-xl flex-row items-center justify-between ${
-                        formData.nationality === c.name
+                      className={`p-3 rounded-xl flex-row items-center justify-between ${formData.nationality === c.name
                           ? "bg-brand-600/20 border border-brand-500/40"
                           : "hover:bg-slate-800"
-                      }`}
+                        }`}
                     >
                       <Text className="text-white text-xs font-medium">{c.name}</Text>
                       {formData.nationality === c.name && <Check size={16} color="#f43f5e" />}
@@ -1322,11 +1307,10 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
                         handleChange("city", "");
                         setActiveModal(null);
                       }}
-                      className={`p-3 rounded-xl flex-row items-center justify-between ${
-                        formData.state === st
+                      className={`p-3 rounded-xl flex-row items-center justify-between ${formData.state === st
                           ? "bg-brand-600/20 border border-brand-500/40"
                           : "hover:bg-slate-800"
-                      }`}
+                        }`}
                     >
                       <Text className="text-white text-xs font-medium">{st}</Text>
                       {formData.state === st && <Check size={16} color="#f43f5e" />}
@@ -1343,11 +1327,10 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
                         handleChange("city", ct);
                         setActiveModal(null);
                       }}
-                      className={`p-3 rounded-xl flex-row items-center justify-between ${
-                        formData.city === ct
+                      className={`p-3 rounded-xl flex-row items-center justify-between ${formData.city === ct
                           ? "bg-brand-600/20 border border-brand-500/40"
                           : "hover:bg-slate-800"
-                      }`}
+                        }`}
                     >
                       <Text className="text-white text-xs font-medium">{ct}</Text>
                       {formData.city === ct && <Check size={16} color="#f43f5e" />}
