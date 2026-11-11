@@ -8,6 +8,8 @@ import { useAuthStore } from "./src/stores/auth.store";
 import { DiscoverScreen } from "./src/screens/DiscoverScreen";
 import { AuthScreen } from "./src/screens/AuthScreen";
 import { ProfileScreen } from "./src/screens/ProfileScreen";
+import { MatchesScreen } from "./src/screens/MatchesScreen";
+import { MessagesScreen } from "./src/screens/MessagesScreen";
 import { Sparkles, Heart, MessageSquare, User } from "lucide-react-native";
 
 const queryClient = new QueryClient({
@@ -32,6 +34,12 @@ type TabType = "discover" | "matches" | "messages" | "profile";
 function MainContent() {
   const { isAuthenticated, isLoading, checkAuth } = useAuthStore();
   const [activeTab, setActiveTab] = React.useState<TabType>("discover");
+  const [chatPartnerUserId, setChatPartnerUserId] = React.useState<string | null>(null);
+
+  const handleOpenChatWithPartner = (partnerUserId: string) => {
+    setChatPartnerUserId(partnerUserId);
+    setActiveTab("messages");
+  };
 
   useEffect(() => {
     checkAuth();
@@ -58,22 +66,10 @@ function MainContent() {
       <View className="flex-1">
         {activeTab === "discover" && <DiscoverScreen />}
         {activeTab === "matches" && (
-          <View className="flex-1 items-center justify-center p-6">
-            <Heart size={40} color="#f43f5e" />
-            <Text className="text-white text-lg font-bold mt-3">Mutual Matches</Text>
-            <Text className="text-slate-400 text-xs text-center mt-1">
-              Conversations unlock here when both of you express mutual interest!
-            </Text>
-          </View>
+          <MatchesScreen onNavigateToChat={handleOpenChatWithPartner} />
         )}
         {activeTab === "messages" && (
-          <View className="flex-1 items-center justify-center p-6">
-            <MessageSquare size={40} color="#38bdf8" />
-            <Text className="text-white text-lg font-bold mt-3">Private Messenger</Text>
-            <Text className="text-slate-400 text-xs text-center mt-1">
-              End-to-end encrypted messaging with verified connections.
-            </Text>
-          </View>
+          <MessagesScreen initialPartnerUserId={chatPartnerUserId} />
         )}
         {activeTab === "profile" && <ProfileScreen />}
       </View>
