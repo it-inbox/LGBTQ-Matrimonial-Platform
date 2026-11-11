@@ -32,7 +32,9 @@ import {
 
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get("window");
 
-export const DiscoverScreen: React.FC = () => {
+export const DiscoverScreen: React.FC<{ onOpenOnboarding?: () => void }> = ({
+  onOpenOnboarding,
+}) => {
   const queryClient = useQueryClient();
   const { profile } = useAuthStore();
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -114,12 +116,22 @@ export const DiscoverScreen: React.FC = () => {
           {errorData?.message ||
             "We encountered an issue loading your matches. Please check your connection and try again."}
         </Text>
-        <TouchableOpacity
-          onPress={() => refetch()}
-          className="mt-6 bg-brand-600 px-6 py-3 rounded-full flex-row items-center"
-        >
-          <Text className="text-white font-semibold">Try Again</Text>
-        </TouchableOpacity>
+        <View className="flex-row gap-3 mt-6">
+          <TouchableOpacity
+            onPress={() => refetch()}
+            className="bg-slate-800 px-5 py-3 rounded-full flex-row items-center border border-slate-700"
+          >
+            <Text className="text-white font-semibold">Try Again</Text>
+          </TouchableOpacity>
+          {isProfileIncomplete && onOpenOnboarding && (
+            <TouchableOpacity
+              onPress={onOpenOnboarding}
+              className="bg-brand-600 px-5 py-3 rounded-full flex-row items-center"
+            >
+              <Text className="text-white font-semibold">Create Profile</Text>
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
     );
   }

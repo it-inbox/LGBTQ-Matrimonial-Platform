@@ -23,8 +23,20 @@ export interface Profile {
   city: string;
   state: string;
   bio?: string;
+  profession?: string;
   occupation?: string;
   heightCm?: number;
+  diet?: string;
+  smoking?: string;
+  drinking?: string;
+  hobbies?: string[];
+  partnerPreference?: {
+    preferredGenders?: string[];
+    preferredOrientations?: string[];
+    minAge?: number;
+    maxAge?: number;
+    maxDistanceKm?: number | null;
+  };
   dateOfBirth?: string;
   age?: number;
   photos?: Array<{

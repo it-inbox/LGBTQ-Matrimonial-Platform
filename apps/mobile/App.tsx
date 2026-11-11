@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import "./global.css";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
@@ -10,6 +10,7 @@ import { AuthScreen } from "./src/screens/AuthScreen";
 import { ProfileScreen } from "./src/screens/ProfileScreen";
 import { MatchesScreen } from "./src/screens/MatchesScreen";
 import { MessagesScreen } from "./src/screens/MessagesScreen";
+import { OnboardingScreen } from "./src/screens/OnboardingScreen";
 import { Sparkles, Heart, MessageSquare, User } from "lucide-react-native";
 
 const queryClient = new QueryClient({
@@ -32,9 +33,10 @@ const queryClient = new QueryClient({
 type TabType = "discover" | "matches" | "messages" | "profile";
 
 function MainContent() {
-  const { isAuthenticated, isLoading, checkAuth } = useAuthStore();
+  const { isAuthenticated, isLoading, profile, fetchProfile, checkAuth } = useAuthStore();
   const [activeTab, setActiveTab] = React.useState<TabType>("discover");
   const [chatPartnerUserId, setChatPartnerUserId] = React.useState<string | null>(null);
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   const handleOpenChatWithPartner = (partnerUserId: string) => {
     setChatPartnerUserId(partnerUserId);
@@ -60,11 +62,27 @@ function MainContent() {
     return <AuthScreen />;
   }
 
+  // If user is authenticated but has no profile, show onboarding wizard
+  if (!profile || showOnboarding) {
+    return (
+      <SafeAreaView className="flex-1 bg-slate-950">
+        <OnboardingScreen
+          onSuccess={() => {
+            setShowOnboarding(false);
+            fetchProfile();
+          }}
+        />
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView className="flex-1 bg-slate-950">
       {/* Screen view based on active tab */}
       <View className="flex-1">
-        {activeTab === "discover" && <DiscoverScreen />}
+        {activeTab === "discover" && (
+          <DiscoverScreen onOpenOnboarding={() => setShowOnboarding(true)} />
+        )}
         {activeTab === "matches" && (
           <MatchesScreen onNavigateToChat={handleOpenChatWithPartner} />
         )}
