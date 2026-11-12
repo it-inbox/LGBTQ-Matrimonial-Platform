@@ -20,33 +20,13 @@ import {
   Search,
   X,
   AlertCircle,
-  LogIn,
 } from "lucide-react-native";
-import {
-  ALL_COUNTRIES,
-  CountryData,
-  GENDER_OPTIONS,
-  ORIENTATION_OPTIONS,
-} from "@everpride/shared";
+import { ALL_COUNTRIES, CountryData } from "@everpride/shared";
 
 const heroCoupleImg = require("../../assets/hero-couple.jpg");
 
 export const AuthScreen: React.FC = () => {
   const { sendOtp, login, isLoading } = useAuthStore();
-
-  // "Looking For" Hero Matchmaker Card State
-  const [lookingFor, setLookingFor] = useState({
-    gender: "MAN",
-    orientation: "GAY",
-    minAge: 22,
-    maxAge: 32,
-  });
-
-  // Modal selector pickers for "Looking For" Card
-  const [genderPickerVisible, setGenderPickerVisible] = useState(false);
-  const [orientationPickerVisible, setOrientationPickerVisible] = useState(false);
-  const [minAgePickerVisible, setMinAgePickerVisible] = useState(false);
-  const [maxAgePickerVisible, setMaxAgePickerVisible] = useState(false);
 
   // Auth / Login Modal State
   const [loginModalVisible, setLoginModalVisible] = useState(false);
@@ -132,15 +112,9 @@ export const AuthScreen: React.FC = () => {
     }
   };
 
-  // Ages from 18 to 40, plus 40+
-  const ageOptions = [
-    ...Array.from({ length: 23 }, (_, i) => ({ value: 18 + i, label: `${18 + i}` })),
-    { value: 41, label: "40+" },
-  ];
-
   return (
     <View className="flex-1 bg-slate-900">
-      {/* Background Image matching Web */}
+      {/* Background Hero Image matching Web */}
       <Image
         source={heroCoupleImg}
         style={StyleSheet.absoluteFill}
@@ -148,120 +122,38 @@ export const AuthScreen: React.FC = () => {
         transition={300}
       />
 
-      {/* Dark Gradient Overlay for optimal contrast and readability */}
+      {/* Subtle overlay for contrast */}
       <View
         style={StyleSheet.absoluteFill}
-        className="bg-black/20"
+        className="bg-black/25"
       />
 
-      {/* Scrollable Container with "Looking For" Card positioned towards the bottom */}
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        className="flex-1"
-      >
-        <ScrollView
-          contentContainerStyle={{
-            flexGrow: 1,
-            justifyContent: "flex-end",
-            paddingHorizontal: 20,
-            paddingBottom: 36,
-            paddingTop: 48,
-          }}
-          showsVerticalScrollIndicator={false}
-        >
-          {/* Hero "Looking For" Card matching Web */}
-          <View className="bg-white/95 rounded-3xl border border-slate-200/90 p-5 shadow-2xl">
-            {/* Field 1: I'm looking for a */}
-            <View className="mb-3.5">
-              <Text className="text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">
-                I'm looking for a
-              </Text>
-              <TouchableOpacity
-                onPress={() => setGenderPickerVisible(true)}
-                className="flex-row items-center justify-between px-3.5 py-3 bg-slate-50 border border-slate-200 rounded-xl"
-              >
-                <Text className="text-sm font-medium text-slate-800">
-                  {GENDER_OPTIONS.find((g) => g.value === lookingFor.gender)?.label ||
-                    lookingFor.gender}
-                </Text>
-                <ChevronDown size={16} color="#64748b" />
-              </TouchableOpacity>
+      {/* Main Content Area: Logo + Let's Begin Button */}
+      <View className="flex-1 justify-end px-6 pb-12">
+        {/* Brand Logo & Name directly above the button */}
+        <View className="items-center mb-6">
+          <View className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-rose-600 via-pink-500 to-amber-400 p-0.5 shadow-xl shadow-rose-950/50 mb-3">
+            <View className="w-full h-full bg-white rounded-[14px] items-center justify-center">
+              <Heart size={32} color="#e11d48" fill="#e11d48" />
             </View>
-
-            {/* Field 2: Sexual Orientation */}
-            <View className="mb-3.5">
-              <Text className="text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">
-                Orientation
-              </Text>
-              <TouchableOpacity
-                onPress={() => setOrientationPickerVisible(true)}
-                className="flex-row items-center justify-between px-3.5 py-3 bg-slate-50 border border-slate-200 rounded-xl"
-              >
-                <Text className="text-sm font-medium text-slate-800">
-                  {ORIENTATION_OPTIONS.find((o) => o.value === lookingFor.orientation)
-                    ?.label || lookingFor.orientation}
-                </Text>
-                <ChevronDown size={16} color="#64748b" />
-              </TouchableOpacity>
-            </View>
-
-            {/* Field 3: Aged (Min Age to Max Age) */}
-            <View className="mb-4">
-              <Text className="text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">
-                Aged
-              </Text>
-              <View className="flex-row items-center gap-2">
-                <TouchableOpacity
-                  onPress={() => setMinAgePickerVisible(true)}
-                  className="flex-1 flex-row items-center justify-between px-3 py-3 bg-slate-50 border border-slate-200 rounded-xl"
-                >
-                  <Text className="text-sm font-medium text-slate-800">
-                    {ageOptions.find((a) => a.value === lookingFor.minAge)?.label ||
-                      lookingFor.minAge}
-                  </Text>
-                  <ChevronDown size={14} color="#64748b" />
-                </TouchableOpacity>
-
-                <Text className="text-xs text-slate-400 font-bold">to</Text>
-
-                <TouchableOpacity
-                  onPress={() => setMaxAgePickerVisible(true)}
-                  className="flex-1 flex-row items-center justify-between px-3 py-3 bg-slate-50 border border-slate-200 rounded-xl"
-                >
-                  <Text className="text-sm font-medium text-slate-800">
-                    {ageOptions.find((a) => a.value === lookingFor.maxAge)?.label ||
-                      lookingFor.maxAge}
-                  </Text>
-                  <ChevronDown size={14} color="#64748b" />
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            {/* "Let's Begin" CTA Button */}
-            <TouchableOpacity
-              onPress={openAuthModal}
-              className="w-full py-3.5 rounded-xl font-bold bg-rose-600 active:bg-rose-700 shadow-md shadow-rose-500/20 flex-row items-center justify-center gap-2"
-            >
-              <Text className="text-white font-bold text-sm">Let's Begin</Text>
-              <ArrowRight size={16} color="#ffffff" />
-            </TouchableOpacity>
           </View>
+          <Text className="text-3xl font-extrabold tracking-tight text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]">
+            Ever<Text className="text-rose-500">Pride</Text>
+          </Text>
+        </View>
 
-          {/* Separate "Sign In" Button Below "Looking for" Card */}
-          <TouchableOpacity
-            onPress={openAuthModal}
-            className="mt-3.5 w-full py-3.5 rounded-2xl bg-white/95 active:bg-white border border-slate-200/90 shadow-lg flex-row items-center justify-center gap-2"
-          >
-            <LogIn size={16} color="#e11d48" />
-            <Text className="text-slate-900 font-bold text-sm">
-              Already have an account? <Text className="text-rose-600">Sign In</Text>
-            </Text>
-          </TouchableOpacity>
-        </ScrollView>
-      </KeyboardAvoidingView>
+        {/* Let's Begin Action Button */}
+        <TouchableOpacity
+          onPress={openAuthModal}
+          className="w-full py-4 rounded-2xl bg-rose-600 active:bg-rose-700 shadow-xl shadow-rose-950/40 flex-row items-center justify-center gap-2"
+        >
+          <Text className="text-white font-bold text-base">Let's Begin</Text>
+          <ArrowRight size={18} color="#ffffff" />
+        </TouchableOpacity>
+      </View>
 
       {/* ─────────────────────────────────────────────────────────────
-          AUTH / LOGIN MODAL SHEET (Matching Web Login Modal)
+          AUTH / LOGIN MODAL SHEET
          ───────────────────────────────────────────────────────────── */}
       <Modal
         visible={loginModalVisible}
@@ -414,174 +306,6 @@ export const AuthScreen: React.FC = () => {
             </Text>
           </View>
         </KeyboardAvoidingView>
-      </Modal>
-
-      {/* ─────────────────────────────────────────────────────────────
-          PICKER MODAL: Gender
-         ───────────────────────────────────────────────────────────── */}
-      <Modal visible={genderPickerVisible} transparent animationType="slide">
-        <View className="flex-1 bg-black/60 justify-end">
-          <View className="bg-white rounded-t-3xl p-5 max-h-[70%]">
-            <View className="flex-row items-center justify-between pb-3 border-b border-slate-100">
-              <Text className="text-slate-900 font-bold text-base">I'm looking for a</Text>
-              <TouchableOpacity onPress={() => setGenderPickerVisible(false)}>
-                <X size={20} color="#64748b" />
-              </TouchableOpacity>
-            </View>
-            <ScrollView className="mt-2">
-              {GENDER_OPTIONS.map((opt) => (
-                <TouchableOpacity
-                  key={opt.value}
-                  onPress={() => {
-                    setLookingFor({ ...lookingFor, gender: opt.value });
-                    setGenderPickerVisible(false);
-                  }}
-                  className={`p-3.5 rounded-xl my-0.5 ${
-                    lookingFor.gender === opt.value
-                      ? "bg-rose-50 border border-rose-200"
-                      : "active:bg-slate-50"
-                  }`}
-                >
-                  <Text
-                    className={`text-sm ${
-                      lookingFor.gender === opt.value
-                        ? "text-rose-600 font-bold"
-                        : "text-slate-800 font-medium"
-                    }`}
-                  >
-                    {opt.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </View>
-        </View>
-      </Modal>
-
-      {/* ─────────────────────────────────────────────────────────────
-          PICKER MODAL: Orientation
-         ───────────────────────────────────────────────────────────── */}
-      <Modal visible={orientationPickerVisible} transparent animationType="slide">
-        <View className="flex-1 bg-black/60 justify-end">
-          <View className="bg-white rounded-t-3xl p-5 max-h-[70%]">
-            <View className="flex-row items-center justify-between pb-3 border-b border-slate-100">
-              <Text className="text-slate-900 font-bold text-base">Orientation</Text>
-              <TouchableOpacity onPress={() => setOrientationPickerVisible(false)}>
-                <X size={20} color="#64748b" />
-              </TouchableOpacity>
-            </View>
-            <ScrollView className="mt-2">
-              {ORIENTATION_OPTIONS.map((opt) => (
-                <TouchableOpacity
-                  key={opt.value}
-                  onPress={() => {
-                    setLookingFor({ ...lookingFor, orientation: opt.value });
-                    setOrientationPickerVisible(false);
-                  }}
-                  className={`p-3.5 rounded-xl my-0.5 ${
-                    lookingFor.orientation === opt.value
-                      ? "bg-rose-50 border border-rose-200"
-                      : "active:bg-slate-50"
-                  }`}
-                >
-                  <Text
-                    className={`text-sm ${
-                      lookingFor.orientation === opt.value
-                        ? "text-rose-600 font-bold"
-                        : "text-slate-800 font-medium"
-                    }`}
-                  >
-                    {opt.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </View>
-        </View>
-      </Modal>
-
-      {/* ─────────────────────────────────────────────────────────────
-          PICKER MODAL: Min Age
-         ───────────────────────────────────────────────────────────── */}
-      <Modal visible={minAgePickerVisible} transparent animationType="slide">
-        <View className="flex-1 bg-black/60 justify-end">
-          <View className="bg-white rounded-t-3xl p-5 max-h-[70%]">
-            <View className="flex-row items-center justify-between pb-3 border-b border-slate-100">
-              <Text className="text-slate-900 font-bold text-base">Minimum Age</Text>
-              <TouchableOpacity onPress={() => setMinAgePickerVisible(false)}>
-                <X size={20} color="#64748b" />
-              </TouchableOpacity>
-            </View>
-            <ScrollView className="mt-2">
-              {ageOptions.map((opt) => (
-                <TouchableOpacity
-                  key={`min-${opt.value}`}
-                  onPress={() => {
-                    setLookingFor({ ...lookingFor, minAge: Number(opt.value) });
-                    setMinAgePickerVisible(false);
-                  }}
-                  className={`p-3.5 rounded-xl my-0.5 ${
-                    lookingFor.minAge === opt.value
-                      ? "bg-rose-50 border border-rose-200"
-                      : "active:bg-slate-50"
-                  }`}
-                >
-                  <Text
-                    className={`text-sm ${
-                      lookingFor.minAge === opt.value
-                        ? "text-rose-600 font-bold"
-                        : "text-slate-800 font-medium"
-                    }`}
-                  >
-                    {opt.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </View>
-        </View>
-      </Modal>
-
-      {/* ─────────────────────────────────────────────────────────────
-          PICKER MODAL: Max Age
-         ───────────────────────────────────────────────────────────── */}
-      <Modal visible={maxAgePickerVisible} transparent animationType="slide">
-        <View className="flex-1 bg-black/60 justify-end">
-          <View className="bg-white rounded-t-3xl p-5 max-h-[70%]">
-            <View className="flex-row items-center justify-between pb-3 border-b border-slate-100">
-              <Text className="text-slate-900 font-bold text-base">Maximum Age</Text>
-              <TouchableOpacity onPress={() => setMaxAgePickerVisible(false)}>
-                <X size={20} color="#64748b" />
-              </TouchableOpacity>
-            </View>
-            <ScrollView className="mt-2">
-              {ageOptions.map((opt) => (
-                <TouchableOpacity
-                  key={`max-${opt.value}`}
-                  onPress={() => {
-                    setLookingFor({ ...lookingFor, maxAge: Number(opt.value) });
-                    setMaxAgePickerVisible(false);
-                  }}
-                  className={`p-3.5 rounded-xl my-0.5 ${
-                    lookingFor.maxAge === opt.value
-                      ? "bg-rose-50 border border-rose-200"
-                      : "active:bg-slate-50"
-                  }`}
-                >
-                  <Text
-                    className={`text-sm ${
-                      lookingFor.maxAge === opt.value
-                        ? "text-rose-600 font-bold"
-                        : "text-slate-800 font-medium"
-                    }`}
-                  >
-                    {opt.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </View>
-        </View>
       </Modal>
 
       {/* ─────────────────────────────────────────────────────────────
