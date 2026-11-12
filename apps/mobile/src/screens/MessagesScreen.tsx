@@ -19,9 +19,13 @@ import {
   Send,
   ArrowLeft,
   Shield,
-  Circle,
-  Clock,
+  PhoneCall,
+  Check,
+  CheckCheck,
 } from "lucide-react-native";
+
+type ConnectTab = "messages" | "calls";
+type ChatFilter = "ALL" | "UNREAD" | "ONLINE";
 
 export const MessagesScreen: React.FC<{ initialPartnerUserId?: string | null }> = ({
   initialPartnerUserId,
@@ -30,6 +34,8 @@ export const MessagesScreen: React.FC<{ initialPartnerUserId?: string | null }> 
   const { user } = useAuthStore();
   const [selectedConversation, setSelectedConversation] = useState<any | null>(null);
   const [messageText, setMessageText] = useState("");
+  const [activeTab, setActiveTab] = useState<ConnectTab>("messages");
+  const [chatFilter, setChatFilter] = useState<ChatFilter>("ALL");
   const flatListRef = useRef<FlatList>(null);
 
   // 1. Fetch conversations list
@@ -89,18 +95,65 @@ export const MessagesScreen: React.FC<{ initialPartnerUserId?: string | null }> 
     sendMutation.mutate(messageText.trim());
   };
 
-  // If in an active conversation detail view
-  if (selectedConversation) {
+  // Helper to extract partner photo and display info
+  const getPartnerInfo = (conversationItem: any) => {
     const partner =
-      selectedConversation.partner ||
-      (selectedConversation.user1Id === user?.id
-        ? selectedConversation.user2
-        : selectedConversation.user1) ||
+      conversationItem.partner ||
+      (conversationItem.user1Id === user?.id
+        ? conversationItem.user2
+        : conversationItem.user1) ||
       {};
     const partnerProfile = partner.profile || partner;
-    const photo =
+    const displayName = partner.displayName || partnerProfile.displayName || "Member";
+
+    const photoUrl =
+      partner.avatarUrl ||
+      partnerProfile.photos?.find((p: any) => p.isPrimary)?.originalUrl ||
+      partnerProfile.photos?.find((p: any) => p.isPrimary)?.thumbnailUrl ||
+      partnerProfile.photos?.[0]?.originalUrl ||
       partnerProfile.photos?.[0]?.url ||
-      "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80";
+      partnerProfile.photoUrl ||
+      null;
+
+    const isOnline = !!partner.isOnline;
+    const initial = (displayName || "?")[0]?.toUpperCase();
+
+    return {
+      partner,
+      partnerProfile,
+      displayName,
+      photoUrl,
+      isOnline,
+      initial,
+    };
+  };
+
+  // Calculate filter counts
+  const allCount = conversations.length;
+  const unreadCount = conversations.filter(
+    (c: any) => (c.unreadCount || 0) > 0 || (c.lastMessage && !c.lastMessage.isRead && !c.lastMessage.isOwn)
+  ).length;
+  const onlineCount = conversations.filter((c: any) => {
+    const info = getPartnerInfo(c);
+    return info.isOnline;
+  }).length;
+
+  // Filter conversations
+  const filteredConversations = conversations.filter((c: any) => {
+    if (chatFilter === "UNREAD") {
+      return (c.unreadCount || 0) > 0 || (c.lastMessage && !c.lastMessage.isRead && !c.lastMessage.isOwn);
+    }
+    if (chatFilter === "ONLINE") {
+      const info = getPartnerInfo(c);
+      return info.isOnline;
+    }
+    return true;
+  });
+
+  // If in an active conversation detail view
+  if (selectedConversation) {
+    const { partner, partnerProfile, displayName, photoUrl, isOnline, initial } =
+      getPartnerInfo(selectedConversation);
 
     return (
       <KeyboardAvoidingView
@@ -116,23 +169,36 @@ export const MessagesScreen: React.FC<{ initialPartnerUserId?: string | null }> 
             <ArrowLeft size={20} color="#334155" />
           </TouchableOpacity>
 
-          <Image
-            source={{ uri: photo }}
-            className="w-10 h-10 rounded-full border border-rose-200"
-            contentFit="cover"
-          />
+          <View className="relative">
+            {photoUrl ? (
+              <Image
+                source={{ uri: photoUrl }}
+                className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200"
+                contentFit="cover"
+              />
+            ) : (
+              <View className="w-10 h-10 rounded-full bg-rose-100 items-center justify-center border border-rose-200">
+                <Text className="text-rose-600 font-extrabold text-sm">{initial}</Text>
+              </View>
+            )}
+            {isOnline && (
+              <View className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full" />
+            )}
+          </View>
 
           <View className="ml-3 flex-1">
             <View className="flex-row items-center">
-              <Text className="text-slate-900 font-bold text-base">
-                {partnerProfile.displayName || "Member"}
+              <Text className="text-slate-900 font-bold text-base" numberOfLines={1}>
+                {displayName}
               </Text>
               {partner.isVerified && (
                 <Shield size={13} color="#10b981" style={{ marginLeft: 4 }} />
               )}
             </View>
-            <Text className="text-slate-500 text-xs">
-              {[partnerProfile.city, partnerProfile.state].filter(Boolean).join(", ") || "India"}
+            <Text className="text-slate-500 text-xs" numberOfLines={1}>
+              {isOnline
+                ? "Online"
+                : [partnerProfile.city, partnerProfile.state].filter(Boolean).join(", ") || "Connected"}
             </Text>
           </View>
         </View>
@@ -162,36 +228,33 @@ export const MessagesScreen: React.FC<{ initialPartnerUserId?: string | null }> 
                   <View
                     className={`px-4 py-2.5 rounded-2xl ${
                       isMine
-                        ? "bg-rose-600 rounded-tr-none shadow-xs"
-                        : "bg-white border border-slate-200 rounded-tl-none shadow-xs"
+                        ? "bg-rose-600 rounded-br-xs"
+                        : "bg-white border border-slate-200/90 rounded-bl-xs"
                     }`}
                   >
                     <Text
-                      className={`text-sm leading-5 ${
-                        isMine ? "text-white" : "text-slate-800"
+                      className={`text-sm ${
+                        isMine ? "text-white font-medium" : "text-slate-800"
                       }`}
                     >
                       {item.content}
                     </Text>
                   </View>
                   <Text className="text-[10px] text-slate-400 mt-1 px-1">
-                    {item.createdAt
-                      ? new Date(item.createdAt).toLocaleTimeString([], {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })
-                      : ""}
+                    {new Date(item.createdAt).toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
                   </Text>
                 </View>
               );
             }}
             ListEmptyComponent={
-              <View className="flex-1 items-center justify-center py-24">
-                <MessageSquare size={36} color="#cbd5e1" />
-                <Text className="text-slate-700 font-bold text-sm mt-3">
-                  Say hello to {partnerProfile.displayName}!
+              <View className="flex-1 items-center justify-center py-20 px-6">
+                <Text className="text-slate-800 text-sm font-bold text-center">
+                  Say Hello to {displayName}!
                 </Text>
-                <Text className="text-slate-400 text-xs mt-1 text-center max-w-xs">
+                <Text className="text-slate-500 text-xs text-center mt-1 max-w-xs leading-4">
                   Your chat is end-to-end encrypted and completely private.
                 </Text>
               </View>
@@ -226,61 +289,167 @@ export const MessagesScreen: React.FC<{ initialPartnerUserId?: string | null }> 
     );
   }
 
-  // Conversations List View
+  // Conversations / Calls List View
   return (
     <View className="flex-1 bg-slate-50">
-      {/* Title Header */}
-      <View className="px-5 py-4 bg-white border-b border-slate-200/90">
-        <Text className="text-xl font-bold text-slate-900">Messages</Text>
+      {/* Top Segmented Control & Filter Pills (No "Messages" header) */}
+      <View className="px-4 pt-3 pb-2.5 bg-white border-b border-slate-200">
+        {/* Messages / Calls Radio-style Toggle */}
+        <View className="flex-row bg-slate-100 rounded-xl p-1">
+          <TouchableOpacity
+            onPress={() => setActiveTab("messages")}
+            className={`flex-1 py-1.5 rounded-lg items-center ${
+              activeTab === "messages" ? "bg-white shadow-xs" : ""
+            }`}
+            activeOpacity={0.7}
+          >
+            <Text
+              className={`text-xs font-bold ${
+                activeTab === "messages" ? "text-rose-600" : "text-slate-600"
+              }`}
+            >
+              Messages
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => setActiveTab("calls")}
+            className={`flex-1 py-1.5 rounded-lg items-center ${
+              activeTab === "calls" ? "bg-white shadow-xs" : ""
+            }`}
+            activeOpacity={0.7}
+          >
+            <Text
+              className={`text-xs font-bold ${
+                activeTab === "calls" ? "text-rose-600" : "text-slate-600"
+              }`}
+            >
+              Calls
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* All / Unread / Online Filter Pills (for Messages tab) */}
+        {activeTab === "messages" && (
+          <View className="flex-row items-center gap-2 mt-3">
+            {[
+              { id: "ALL", label: `All (${allCount})` },
+              { id: "UNREAD", label: `Unread (${unreadCount})` },
+              { id: "ONLINE", label: `Online (${onlineCount})` },
+            ].map((chip) => {
+              const isSelected = chatFilter === chip.id;
+              return (
+                <TouchableOpacity
+                  key={chip.id}
+                  onPress={() => setChatFilter(chip.id as ChatFilter)}
+                  className={`px-3 py-1.5 rounded-full ${
+                    isSelected ? "bg-slate-900" : "bg-slate-100"
+                  }`}
+                  activeOpacity={0.7}
+                >
+                  <Text
+                    className={`text-xs font-semibold ${
+                      isSelected ? "text-white" : "text-slate-700"
+                    }`}
+                  >
+                    {chip.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        )}
       </View>
 
-      {loadingConversations ? (
+      {/* Calls Tab Content */}
+      {activeTab === "calls" ? (
+        <View className="flex-1 items-center justify-center py-24 px-6">
+          <View className="w-16 h-16 rounded-full bg-rose-50 items-center justify-center mb-4">
+            <PhoneCall size={32} color="#e11d48" />
+          </View>
+          <Text className="text-slate-800 text-base font-bold text-center">
+            No Call History
+          </Text>
+          <Text className="text-slate-500 text-xs text-center mt-1.5 max-w-xs leading-4">
+            Audio and video call records with your mutual matches will appear here.
+          </Text>
+        </View>
+      ) : loadingConversations ? (
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator size="large" color="#e11d48" />
         </View>
       ) : (
         <FlatList
-          data={conversations}
+          data={filteredConversations}
           keyExtractor={(item) => item.id || String(Math.random())}
           showsVerticalScrollIndicator={true}
           indicatorStyle="black"
           renderItem={({ item }) => {
-            const partner =
-              item.partner ||
-              (item.user1Id === user?.id ? item.user2 : item.user1) ||
-              {};
-            const partnerProfile = partner.profile || partner;
-            const photo =
-              partnerProfile.photos?.[0]?.url ||
-              "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80";
+            const { displayName, photoUrl, isOnline, initial } = getPartnerInfo(item);
+            const lastMsg = item.lastMessage;
+            const hasUnread =
+              (item.unreadCount || 0) > 0 || (lastMsg && !lastMsg.isRead && !lastMsg.isOwn);
 
             return (
               <TouchableOpacity
                 onPress={() => setSelectedConversation(item)}
                 className="flex-row items-center p-4 bg-white border-b border-slate-100 active:bg-slate-50"
+                activeOpacity={0.7}
               >
-                <Image
-                  source={{ uri: photo }}
-                  className="w-14 h-14 rounded-full border border-rose-200"
-                  contentFit="cover"
-                />
+                {/* Real User Picture with Fallback Initial */}
+                <View className="relative">
+                  {photoUrl ? (
+                    <Image
+                      source={{ uri: photoUrl }}
+                      className="w-13 h-13 rounded-full bg-slate-100 border border-slate-200"
+                      contentFit="cover"
+                    />
+                  ) : (
+                    <View className="w-13 h-13 rounded-full bg-rose-100 items-center justify-center border border-rose-200">
+                      <Text className="text-rose-600 font-extrabold text-base">{initial}</Text>
+                    </View>
+                  )}
+                  {isOnline && (
+                    <View className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-500 border-2 border-white rounded-full" />
+                  )}
+                </View>
+
+                {/* Conversation Details */}
                 <View className="ml-3.5 flex-1">
                   <View className="flex-row items-center justify-between">
-                    <Text className="text-slate-900 font-bold text-base">
-                      {partnerProfile.displayName || "Member"}
+                    <Text
+                      className={`text-base ${
+                        hasUnread ? "font-extrabold text-slate-900" : "font-bold text-slate-800"
+                      }`}
+                      numberOfLines={1}
+                    >
+                      {displayName}
                     </Text>
-                    {item.lastMessageAt && (
-                      <Text className="text-[11px] text-slate-400">
-                        {new Date(item.lastMessageAt).toLocaleDateString([], {
+                    {item.updatedAt || lastMsg?.createdAt ? (
+                      <Text
+                        className={`text-[11px] ${
+                          hasUnread ? "text-rose-600 font-bold" : "text-slate-400"
+                        }`}
+                      >
+                        {new Date(lastMsg?.createdAt || item.updatedAt).toLocaleDateString([], {
                           month: "short",
                           day: "numeric",
                         })}
                       </Text>
+                    ) : null}
+                  </View>
+                  <View className="flex-row items-center justify-between mt-1">
+                    <Text
+                      numberOfLines={1}
+                      className={`text-xs flex-1 mr-2 ${
+                        hasUnread ? "text-slate-900 font-semibold" : "text-slate-500"
+                      }`}
+                    >
+                      {lastMsg?.content || item.lastMessageContent || "Say hello..."}
+                    </Text>
+                    {hasUnread && (
+                      <View className="w-2.5 h-2.5 rounded-full bg-rose-600" />
                     )}
                   </View>
-                  <Text numberOfLines={1} className="text-slate-500 text-xs mt-1">
-                    {item.lastMessageContent || "Start a new conversation..."}
-                  </Text>
                 </View>
               </TouchableOpacity>
             );
@@ -289,7 +458,9 @@ export const MessagesScreen: React.FC<{ initialPartnerUserId?: string | null }> 
             <View className="flex-1 items-center justify-center py-24 px-6">
               <MessageSquare size={48} color="#cbd5e1" />
               <Text className="text-slate-800 text-base font-bold mt-4 text-center">
-                No active conversations
+                {chatFilter === "ALL"
+                  ? "No active conversations"
+                  : `No ${chatFilter.toLowerCase()} conversations`}
               </Text>
               <Text className="text-slate-500 text-xs text-center mt-1.5 max-w-xs leading-4">
                 When you connect with mutual matches, direct messaging threads will appear here!

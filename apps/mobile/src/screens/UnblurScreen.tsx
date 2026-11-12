@@ -179,15 +179,10 @@ export const UnblurScreen: React.FC = () => {
 
   return (
     <View className="flex-1 bg-slate-50">
-      {/* Header */}
-      <View className="px-5 pt-3 pb-2 bg-white border-b border-slate-200">
-        <Text className="text-xl font-bold text-slate-900">Unblur Requests</Text>
-        <Text className="text-xs text-slate-500 mt-0.5">
-          Manage access permissions for blurred photos
-        </Text>
-
+      {/* Tabs Container without Header */}
+      <View className="px-4 pt-3 pb-2.5 bg-white border-b border-slate-200">
         {/* Tabs: Received / Sent */}
-        <View className="flex-row bg-slate-100 rounded-xl p-1 mt-3">
+        <View className="flex-row bg-slate-100 rounded-xl p-1">
           <TouchableOpacity
             onPress={() => setActiveTab("received")}
             className={`flex-1 py-1.5 rounded-lg items-center ${activeTab === "received" ? "bg-white shadow-xs" : ""
