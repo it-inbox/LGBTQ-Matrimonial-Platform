@@ -556,10 +556,10 @@ export const OnboardingWizard: React.FC = () => {
               </div>
             </div>
 
-            {/* Display Name */}
+            {/* Name */}
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                Name <span className="text-rose-500">*</span>
+                NAME <span className="text-rose-500">*</span>
               </label>
               <input
                 type="text"
@@ -577,7 +577,7 @@ export const OnboardingWizard: React.FC = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                  Date of Birth <span className="text-rose-500">*</span>
+                  DATE OF BIRTH <span className="text-rose-500">*</span>
                 </label>
                 <input
                   type="date"
@@ -590,7 +590,7 @@ export const OnboardingWizard: React.FC = () => {
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                  Height (cm)
+                  HEIGHT (CM)
                 </label>
                 <input
                   type="number"
@@ -603,7 +603,7 @@ export const OnboardingWizard: React.FC = () => {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <SearchableSelect
-                label="Nationality"
+                label="NATIONALITY"
                 value={formData.nationality}
                 options={ALL_COUNTRIES.map((c) => ({ label: c.name, value: c.name }))}
                 placeholder="Search & select country..."
@@ -618,7 +618,7 @@ export const OnboardingWizard: React.FC = () => {
               />
 
               <SearchableSelect
-                label="State / Province"
+                label="STATE / PROVINCE"
                 required
                 disabled={!formData.nationality}
                 disabledMessage="Select Nationality First"
@@ -638,7 +638,7 @@ export const OnboardingWizard: React.FC = () => {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <SearchableSelect
-                label="City"
+                label="CITY"
                 required
                 disabled={!formData.state}
                 disabledMessage="Select State First"
@@ -654,7 +654,7 @@ export const OnboardingWizard: React.FC = () => {
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                  Religion
+                  RELIGION / BELIEF
                 </label>
                 <select
                   value={formData.religion}
@@ -674,7 +674,7 @@ export const OnboardingWizard: React.FC = () => {
             {/* Languages Spoken (Can select multiple) */}
             <div>
               <MultiSearchableSelect
-                label="Languages Spoken (Can select multiple)"
+                label="LANGUAGES SPOKEN (CAN SELECT MULTIPLE)"
                 values={formData.languagesSpoken}
                 options={LANGUAGE_OPTIONS}
                 placeholder="Search & select languages..."
@@ -702,7 +702,7 @@ export const OnboardingWizard: React.FC = () => {
             {/* Gender Identity */}
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-                Gender Identity <span className="text-rose-500">*</span>
+                GENDER IDENTITY <span className="text-rose-500">*</span>
               </label>
               <div className="flex flex-wrap gap-2">
                 {GENDER_OPTIONS.map((g) => {
@@ -728,7 +728,7 @@ export const OnboardingWizard: React.FC = () => {
             {/* Sexual Orientation */}
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-                Sexual Orientation <span className="text-rose-500">*</span>
+                SEXUAL ORIENTATION <span className="text-rose-500">*</span>
               </label>
               <div className="flex flex-wrap gap-2">
                 {ORIENTATION_OPTIONS.map((o) => {
@@ -754,7 +754,7 @@ export const OnboardingWizard: React.FC = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                  Pronouns
+                  PRONOUNS
                 </label>
                 <input
                   type="text"
@@ -767,7 +767,7 @@ export const OnboardingWizard: React.FC = () => {
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-                  Outness Status <span className="text-rose-500">*</span>
+                  OUTNESS STATUS <span className="text-rose-500">*</span>
                 </label>
                 <div className="flex flex-wrap gap-2">
                   {OUTNESS_OPTIONS.map((out) => {
@@ -891,7 +891,7 @@ export const OnboardingWizard: React.FC = () => {
                     <div className="space-y-3">
                       <div>
                         <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">
-                          Qualification Level <span className="text-rose-500">*</span>
+                          QUALIFICATION LEVEL <span className="text-rose-500">*</span>
                         </label>
                         <div className="flex flex-wrap gap-1.5">
                           {QUALIFICATION_OPTIONS.map((q) => {
@@ -917,7 +917,7 @@ export const OnboardingWizard: React.FC = () => {
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div className={edu.degree === "High School" ? "sm:col-span-2" : ""}>
                           <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">
-                            Institution / School <span className="text-rose-500">*</span>
+                            INSTITUTION / SCHOOL <span className="text-rose-500">*</span>
                           </label>
                           <input
                             type="text"
@@ -931,7 +931,7 @@ export const OnboardingWizard: React.FC = () => {
                         {edu.degree !== "High School" && (
                           <div>
                             <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">
-                              Degree <span className="text-rose-500">*</span>
+                              DEGREE NAME <span className="text-rose-500">*</span>
                             </label>
                             <input
                               type="text"
@@ -946,7 +946,7 @@ export const OnboardingWizard: React.FC = () => {
                         {edu.degree !== "High School" && (
                           <div className="sm:col-span-2">
                             <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">
-                              Major / Field of Study (Optional)
+                              MAJOR / FIELD OF STUDY (OPTIONAL)
                             </label>
                             <input
                               type="text"
@@ -982,7 +982,7 @@ export const OnboardingWizard: React.FC = () => {
             <div className="space-y-4">
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-                  Sector of Work
+                  SECTOR OF WORK
                 </label>
                 <div className="flex flex-wrap gap-2">
                   {SECTOR_OPTIONS.map((sec) => {
@@ -1007,7 +1007,7 @@ export const OnboardingWizard: React.FC = () => {
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                  Job Title
+                  JOB TITLE / PROFESSION
                 </label>
                 <input
                   type="text"
@@ -1282,7 +1282,7 @@ export const OnboardingWizard: React.FC = () => {
 
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                About Yourself & Life Goals
+                ABOUT ME
               </label>
               <textarea
                 rows={6}
@@ -1314,7 +1314,7 @@ export const OnboardingWizard: React.FC = () => {
             {/* Dietary Preferences */}
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-                Dietary Preference
+                DIETARY PREFERENCE
               </label>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                 {["Vegetarian", "Vegan", "Eggetarian", "Non-Vegetarian"].map((dietOption) => (
@@ -1336,7 +1336,7 @@ export const OnboardingWizard: React.FC = () => {
             {/* Drinking Habits (Separately) */}
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-                Drinking
+                DRINKING
               </label>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                 {[
@@ -1362,7 +1362,7 @@ export const OnboardingWizard: React.FC = () => {
             {/* Smoking Habits (Separately) */}
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-                Smoking
+                SMOKING
               </label>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                 {[
@@ -1391,7 +1391,7 @@ export const OnboardingWizard: React.FC = () => {
               <div className="flex items-center justify-between mb-2.5">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                    Hobbies & Interests
+                    HOBBIES & INTERESTS
                   </label>
                   <p className="text-[11px] text-slate-500">
                     Select your favorite activities, passions, and lifestyle interests.

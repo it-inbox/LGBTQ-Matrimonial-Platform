@@ -520,7 +520,7 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
             {/* I'm looking for a (Genders) */}
             <View className="mt-2">
               <Text className="text-slate-700 text-xs font-bold uppercase tracking-wider mb-2">
-                I'm looking for a <Text className="text-rose-500">*</Text>
+                I'M LOOKING FOR A <Text className="text-rose-500">*</Text>
               </Text>
               <View className="flex-row flex-wrap gap-2">
                 {GENDER_OPTIONS.map((g) => {
@@ -549,7 +549,7 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
             {/* Orientation */}
             <View className="mt-3">
               <Text className="text-slate-700 text-xs font-bold uppercase tracking-wider mb-2">
-                Orientation <Text className="text-rose-500">*</Text>
+                ORIENTATION <Text className="text-rose-500">*</Text>
               </Text>
               <View className="flex-row flex-wrap gap-2">
                 {ORIENTATION_OPTIONS.map((o) => {
@@ -578,11 +578,11 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
             {/* Aged (Min Age & Max Age) */}
             <View className="mt-3">
               <Text className="text-slate-700 text-xs font-bold uppercase tracking-wider mb-2">
-                Aged
+                AGED
               </Text>
               <View className="flex-row items-center gap-3">
                 <View className="flex-1">
-                  <Text className="text-slate-400 text-[10px] mb-1 font-semibold">Minimum Age</Text>
+                  <Text className="text-slate-500 text-[10px] mb-1 font-bold uppercase tracking-wider">MINIMUM AGE</Text>
                   <TextInput
                     value={String(formData.minAge)}
                     onChangeText={(val) => handleChange("minAge", parseInt(val, 10) || 18)}
@@ -596,7 +596,7 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
                 <Text className="text-slate-400 font-bold mt-4">to</Text>
 
                 <View className="flex-1">
-                  <Text className="text-slate-400 text-[10px] mb-1 font-semibold">Maximum Age</Text>
+                  <Text className="text-slate-500 text-[10px] mb-1 font-bold uppercase tracking-wider">MAXIMUM AGE</Text>
                   <TextInput
                     value={String(formData.maxAge)}
                     onChangeText={(val) => handleChange("maxAge", parseInt(val, 10) || 40)}
@@ -625,8 +625,8 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
             </View>
 
             <View className="mt-2">
-              <Text className="text-slate-700 text-xs font-semibold mb-1">
-                Display Name <Text className="text-rose-500">*</Text>
+              <Text className="text-slate-700 text-xs font-bold uppercase tracking-wider mb-1.5">
+                NAME <Text className="text-rose-500">*</Text>
               </Text>
               <TextInput
                 value={formData.displayName}
@@ -643,8 +643,8 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
             {/* Date of Birth */}
             <View className="flex-row gap-3 mt-3">
               <View className="flex-1">
-                <Text className="text-slate-700 text-xs font-semibold mb-1">
-                  Date of Birth <Text className="text-rose-500">*</Text>
+                <Text className="text-slate-700 text-xs font-bold uppercase tracking-wider mb-1.5">
+                  DATE OF BIRTH <Text className="text-rose-500">*</Text>
                 </Text>
                 {Platform.OS === "web" ? (
                   // @ts-ignore
@@ -674,7 +674,7 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
                 )}
               </View>
               <View className="flex-1">
-                <Text className="text-slate-700 text-xs font-semibold mb-1">Height (cm)</Text>
+                <Text className="text-slate-700 text-xs font-bold uppercase tracking-wider mb-1.5">HEIGHT (CM)</Text>
                 <TextInput
                   value={String(formData.heightCm || 170)}
                   onChangeText={(val) => handleChange("heightCm", parseInt(val, 10) || 170)}
@@ -689,8 +689,8 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
             {/* 2x2 Layout: Nationality & State, City & Religion */}
             <View className="flex-row gap-3 mt-3">
               <View className="flex-1">
-                <Text className="text-slate-700 text-xs font-semibold mb-1">
-                  Nationality <Text className="text-rose-500">*</Text>
+                <Text className="text-slate-700 text-xs font-bold uppercase tracking-wider mb-1.5">
+                  NATIONALITY <Text className="text-rose-500">*</Text>
                 </Text>
                 <TouchableOpacity
                   onPress={() => {
@@ -707,8 +707,8 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
               </View>
 
               <View className="flex-1">
-                <Text className="text-slate-700 text-xs font-semibold mb-1">
-                  State / Province <Text className="text-rose-500">*</Text>
+                <Text className="text-slate-700 text-xs font-bold uppercase tracking-wider mb-1.5">
+                  STATE / PROVINCE <Text className="text-rose-500">*</Text>
                 </Text>
                 <TouchableOpacity
                   onPress={() => {
@@ -731,8 +731,8 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
 
             <View className="flex-row gap-3 mt-3">
               <View className="flex-1">
-                <Text className="text-slate-700 text-xs font-semibold mb-1">
-                  City <Text className="text-rose-500">*</Text>
+                <Text className="text-slate-700 text-xs font-bold uppercase tracking-wider mb-1.5">
+                  CITY <Text className="text-rose-500">*</Text>
                 </Text>
                 <TouchableOpacity
                   onPress={() => {
@@ -753,8 +753,8 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
               </View>
 
               <View className="flex-1">
-                <Text className="text-slate-700 text-xs font-semibold mb-1">
-                  Religion / Belief
+                <Text className="text-slate-700 text-xs font-bold uppercase tracking-wider mb-1.5">
+                  RELIGION / BELIEF
                 </Text>
                 <TouchableOpacity
                   onPress={() => {
@@ -774,8 +774,8 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
             {/* Languages Spoken (Can select multiple) Dropdown */}
             <View className="mt-4">
               <View className="flex-row items-center justify-between mb-1.5">
-                <Text className="text-slate-700 text-xs font-semibold">
-                  Languages Spoken (Can select multiple)
+                <Text className="text-slate-700 text-xs font-bold uppercase tracking-wider">
+                  LANGUAGES SPOKEN (CAN SELECT MULTIPLE)
                 </Text>
                 {formData.languagesSpoken.length > 0 && (
                   <Text className="text-rose-600 text-[10px] font-bold">
@@ -831,8 +831,8 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
 
             {/* Gender Identity */}
             <View className="mt-2">
-              <Text className="text-slate-700 text-xs font-semibold mb-2">
-                Gender Identity <Text className="text-rose-500">*</Text>
+              <Text className="text-slate-700 text-xs font-bold uppercase tracking-wider mb-2">
+                GENDER IDENTITY <Text className="text-rose-500">*</Text>
               </Text>
               <View className="flex-row flex-wrap gap-2">
                 {GENDER_OPTIONS.map((g) => {
@@ -856,8 +856,8 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
 
             {/* Sexual Orientation */}
             <View className="mt-4">
-              <Text className="text-slate-700 text-xs font-semibold mb-2">
-                Sexual / Romantic Orientation <Text className="text-rose-500">*</Text>
+              <Text className="text-slate-700 text-xs font-bold uppercase tracking-wider mb-2">
+                SEXUAL ORIENTATION <Text className="text-rose-500">*</Text>
               </Text>
               <View className="flex-row flex-wrap gap-2">
                 {ORIENTATION_OPTIONS.map((o) => {
@@ -881,7 +881,7 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
 
             {/* Pronouns */}
             <View className="mt-4">
-              <Text className="text-slate-700 text-xs font-semibold mb-1">Pronouns</Text>
+              <Text className="text-slate-700 text-xs font-bold uppercase tracking-wider mb-1.5">PRONOUNS</Text>
               <TextInput
                 value={formData.pronouns}
                 onChangeText={(val) => handleChange("pronouns", val)}
@@ -893,8 +893,8 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
 
             {/* Outness Status */}
             <View className="mt-4">
-              <Text className="text-slate-700 text-xs font-semibold mb-2">
-                Outness Status <Text className="text-rose-500">*</Text>
+              <Text className="text-slate-700 text-xs font-bold uppercase tracking-wider mb-2">
+                OUTNESS STATUS <Text className="text-rose-500">*</Text>
               </Text>
               <View className="space-y-2">
                 {OUTNESS_OPTIONS.map((out) => {
@@ -982,7 +982,9 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
                 </View>
 
                 {/* Qualification Level */}
-                <Text className="text-slate-600 text-xs font-semibold mb-1">Qualification Level</Text>
+                <Text className="text-slate-700 text-xs font-bold uppercase tracking-wider mb-1.5">
+                  QUALIFICATION LEVEL <Text className="text-rose-500">*</Text>
+                </Text>
                 <View className="flex-row flex-wrap gap-1.5 mb-3">
                   {QUALIFICATION_OPTIONS.map((q) => {
                     const sel = edu.degree === q;
@@ -1004,7 +1006,9 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
 
                 {edu.degree !== "High School" && (
                   <>
-                    <Text className="text-slate-600 text-xs font-semibold mb-1">Degree Name</Text>
+                    <Text className="text-slate-700 text-xs font-bold uppercase tracking-wider mb-1.5">
+                      DEGREE NAME <Text className="text-rose-500">*</Text>
+                    </Text>
                     <TextInput
                       value={edu.degreeName || ""}
                       onChangeText={(val) => handleUpdateEducation(idx, "degreeName", val)}
@@ -1013,7 +1017,9 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
                       placeholderTextColor="#94a3b8"
                     />
 
-                    <Text className="text-slate-600 text-xs font-semibold mb-1">Major / Field</Text>
+                    <Text className="text-slate-700 text-xs font-bold uppercase tracking-wider mb-1.5">
+                      MAJOR / FIELD OF STUDY (OPTIONAL)
+                    </Text>
                     <TextInput
                       value={edu.major || ""}
                       onChangeText={(val) => handleUpdateEducation(idx, "major", val)}
@@ -1024,8 +1030,8 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
                   </>
                 )}
 
-                <Text className="text-slate-600 text-xs font-semibold mb-1">
-                  Institution / School <Text className="text-rose-500">*</Text>
+                <Text className="text-slate-700 text-xs font-bold uppercase tracking-wider mb-1.5">
+                  INSTITUTION / SCHOOL <Text className="text-rose-500">*</Text>
                 </Text>
                 <TextInput
                   value={edu.institution}
@@ -1061,7 +1067,9 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
             </View>
 
             <View className="mt-2">
-              <Text className="text-slate-700 text-xs font-semibold mb-1.5">Sector</Text>
+              <Text className="text-slate-700 text-xs font-bold uppercase tracking-wider mb-1.5">
+                SECTOR OF WORK
+              </Text>
               <View className="flex-row flex-wrap gap-1.5">
                 {SECTOR_OPTIONS.map((sec) => {
                   const sel = formData.sector === sec;
@@ -1083,7 +1091,9 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
             </View>
 
             <View className="mt-4">
-              <Text className="text-slate-700 text-xs font-semibold mb-1">Job Title / Profession</Text>
+              <Text className="text-slate-700 text-xs font-bold uppercase tracking-wider mb-1.5">
+                JOB TITLE / PROFESSION
+              </Text>
               <TextInput
                 value={formData.profession}
                 onChangeText={(val) => handleChange("profession", val)}
@@ -1198,7 +1208,7 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
             </View>
 
             <View className="mt-2">
-              <Text className="text-slate-700 text-xs font-semibold mb-1">About Yourself & Life Goals</Text>
+              <Text className="text-slate-700 text-xs font-bold uppercase tracking-wider mb-1.5">ABOUT ME</Text>
               <TextInput
                 value={formData.bio}
                 onChangeText={(val) => handleChange("bio", val)}
@@ -1230,7 +1240,9 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
 
             {/* Diet */}
             <View className="mt-2">
-              <Text className="text-slate-700 text-xs font-semibold mb-2">Dietary Preference</Text>
+              <Text className="text-slate-700 text-xs font-bold uppercase tracking-wider mb-2">
+                DIETARY PREFERENCE
+              </Text>
               <View className="flex-row flex-wrap gap-2">
                 {DIET_OPTIONS.map((d) => {
                   const sel = formData.diet === d;
@@ -1254,7 +1266,9 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
             {/* Drinking & Smoking */}
             <View className="flex-row gap-3 mt-4">
               <View className="flex-1">
-                <Text className="text-slate-700 text-xs font-semibold mb-1">Drinking</Text>
+                <Text className="text-slate-700 text-xs font-bold uppercase tracking-wider mb-1.5">
+                  DRINKING
+                </Text>
                 <View className="space-y-1.5">
                   {DRINKING_OPTIONS.map((dr) => {
                     const sel = formData.drinking === dr.id;
@@ -1276,7 +1290,9 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
               </View>
 
               <View className="flex-1">
-                <Text className="text-slate-700 text-xs font-semibold mb-1">Smoking</Text>
+                <Text className="text-slate-700 text-xs font-bold uppercase tracking-wider mb-1.5">
+                  SMOKING
+                </Text>
                 <View className="space-y-1.5">
                   {SMOKING_OPTIONS.map((sm) => {
                     const sel = formData.smoking === sm.id;
@@ -1301,7 +1317,9 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
             {/* Hobbies (Scrollable Container with No Clipping) */}
             <View className="mt-4">
               <View className="flex-row items-center justify-between mb-2">
-                <Text className="text-slate-700 text-xs font-semibold">Hobbies & Interests</Text>
+                <Text className="text-slate-700 text-xs font-bold uppercase tracking-wider">
+                  HOBBIES & INTERESTS
+                </Text>
                 <Text className="text-rose-600 text-[10px] font-bold">
                   {formData.hobbies.length} selected
                 </Text>
