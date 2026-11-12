@@ -476,11 +476,10 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ onOpenOnboarding }) => {
               <TouchableOpacity
                 key={opt.id}
                 onPress={() => setPhotoPrivacy(opt.id as any)}
-                className={`p-3.5 rounded-xl border mb-2 ${
-                  photoPrivacy === opt.id
+                className={`p-3.5 rounded-xl border mb-2 ${photoPrivacy === opt.id
                     ? "border-rose-500 bg-rose-50/40"
                     : "border-slate-200 bg-white"
-                }`}
+                  }`}
               >
                 <Text className="font-bold text-slate-800 text-sm">{opt.title}</Text>
                 <Text className="text-xs text-slate-500 mt-1">{opt.desc}</Text>

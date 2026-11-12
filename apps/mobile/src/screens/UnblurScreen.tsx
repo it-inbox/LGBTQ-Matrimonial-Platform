@@ -123,22 +123,20 @@ export const UnblurScreen: React.FC = () => {
                 {partner.displayName || partner.name || "Member"}
               </Text>
               <View
-                className={`px-2 py-0.5 rounded-full ${
-                  isAccepted
+                className={`px-2 py-0.5 rounded-full ${isAccepted
                     ? "bg-emerald-50"
                     : isDeclined
-                    ? "bg-rose-50"
-                    : "bg-amber-50"
-                }`}
+                      ? "bg-rose-50"
+                      : "bg-amber-50"
+                  }`}
               >
                 <Text
-                  className={`text-[11px] font-bold ${
-                    isAccepted
+                  className={`text-[11px] font-bold ${isAccepted
                       ? "text-emerald-700"
                       : isDeclined
-                      ? "text-rose-600"
-                      : "text-amber-700"
-                  }`}
+                        ? "text-rose-600"
+                        : "text-amber-700"
+                    }`}
                 >
                   {item.status || "PENDING"}
                 </Text>
@@ -192,28 +190,24 @@ export const UnblurScreen: React.FC = () => {
         <View className="flex-row bg-slate-100 rounded-xl p-1 mt-3">
           <TouchableOpacity
             onPress={() => setActiveTab("received")}
-            className={`flex-1 py-1.5 rounded-lg items-center ${
-              activeTab === "received" ? "bg-white shadow-xs" : ""
-            }`}
+            className={`flex-1 py-1.5 rounded-lg items-center ${activeTab === "received" ? "bg-white shadow-xs" : ""
+              }`}
           >
             <Text
-              className={`text-xs font-bold ${
-                activeTab === "received" ? "text-rose-600" : "text-slate-600"
-              }`}
+              className={`text-xs font-bold ${activeTab === "received" ? "text-rose-600" : "text-slate-600"
+                }`}
             >
               Received
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => setActiveTab("sent")}
-            className={`flex-1 py-1.5 rounded-lg items-center ${
-              activeTab === "sent" ? "bg-white shadow-xs" : ""
-            }`}
+            className={`flex-1 py-1.5 rounded-lg items-center ${activeTab === "sent" ? "bg-white shadow-xs" : ""
+              }`}
           >
             <Text
-              className={`text-xs font-bold ${
-                activeTab === "sent" ? "text-rose-600" : "text-slate-600"
-              }`}
+              className={`text-xs font-bold ${activeTab === "sent" ? "text-rose-600" : "text-slate-600"
+                }`}
             >
               Sent
             </Text>
