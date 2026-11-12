@@ -65,7 +65,7 @@ function MainContent() {
   // If user is authenticated but has no profile, show onboarding wizard
   if (!profile || showOnboarding) {
     return (
-      <SafeAreaView className="flex-1 bg-slate-950">
+      <SafeAreaView className="flex-1 bg-slate-50">
         <OnboardingScreen
           onSuccess={() => {
             setShowOnboarding(false);
