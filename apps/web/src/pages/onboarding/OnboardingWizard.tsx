@@ -751,43 +751,44 @@ export const OnboardingWizard: React.FC = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                  PRONOUNS
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. they/them, she/her, he/him"
-                  value={formData.pronouns}
-                  onChange={(e) => handleChange("pronouns", e.target.value)}
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-500"
-                />
-              </div>
+            {/* Pronouns */}
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                PRONOUNS
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. he/him, she/her, they/them"
+                value={formData.pronouns}
+                onChange={(e) => handleChange("pronouns", e.target.value)}
+                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-500"
+              />
+            </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-                  OUTNESS STATUS <span className="text-rose-500">*</span>
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {OUTNESS_OPTIONS.map((out) => {
-                    const selected = formData.outnessStatus === out.id;
-                    return (
-                      <button
-                        type="button"
-                        key={out.id}
-                        onClick={() => handleChange("outnessStatus", out.id)}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
-                          selected
-                            ? "bg-brand-600 text-white border-brand-600 shadow-xs"
-                            : "bg-white text-slate-700 border-slate-200 hover:border-slate-300"
-                        }`}
-                      >
-                        {out.label}
-                      </button>
-                    );
-                  })}
-                </div>
+            {/* Outness Status */}
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                OUTNESS STATUS <span className="text-rose-500">*</span>
+              </label>
+              <div className="space-y-2">
+                {OUTNESS_OPTIONS.map((out) => {
+                  const selected = formData.outnessStatus === out.id;
+                  return (
+                    <button
+                      type="button"
+                      key={out.id}
+                      onClick={() => handleChange("outnessStatus", out.id)}
+                      className={`w-full p-3 rounded-xl border text-left flex items-center justify-between transition-all cursor-pointer ${
+                        selected
+                          ? "bg-rose-50/70 border-rose-500 text-rose-700 font-bold"
+                          : "bg-slate-50 border-slate-200 text-slate-700 hover:border-slate-300 font-medium"
+                      }`}
+                    >
+                      <span className="text-xs">{out.label}</span>
+                      {selected && <Check className="w-4 h-4 text-rose-600 shrink-0" />}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>
