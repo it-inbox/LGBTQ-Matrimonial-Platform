@@ -252,8 +252,8 @@ export const DiscoverScreen: React.FC<{ onOpenOnboarding?: () => void }> = ({
               >
                 {item.heightCm
                   ? `${Math.floor(item.heightCm / 30.48)}ft ${Math.round(
-                      (item.heightCm % 30.48) / 2.54
-                    )}in • `
+                    (item.heightCm % 30.48) / 2.54
+                  )}in • `
                   : ""}
                 {[item.city, item.state].filter(Boolean).join(", ") || "India"}
                 {item.religion ? ` • ${item.religion}` : ""}
@@ -434,16 +434,14 @@ export const DiscoverScreen: React.FC<{ onOpenOnboarding?: () => void }> = ({
               <TouchableOpacity
                 key={pill}
                 onPress={() => setActiveQuickFilter(pill)}
-                className={`px-3.5 py-1.5 rounded-full mr-2 ${
-                  isSelected
+                className={`px-3.5 py-1.5 rounded-full mr-2 ${isSelected
                     ? "bg-slate-900"
                     : "bg-slate-100 border border-slate-200"
-                }`}
+                  }`}
               >
                 <Text
-                  className={`text-xs font-semibold ${
-                    isSelected ? "text-white" : "text-slate-600"
-                  }`}
+                  className={`text-xs font-semibold ${isSelected ? "text-white" : "text-slate-600"
+                    }`}
                 >
                   {pill}
                 </Text>

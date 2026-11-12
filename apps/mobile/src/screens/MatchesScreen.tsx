@@ -109,43 +109,65 @@ export const MatchesScreen: React.FC<{ onNavigateToChat?: (partnerId: string) =>
 
   const renderReceivedItem = ({ item }: { item: any }) => {
     const senderProfile = item.sender?.profile || item.profile || {};
-    const photo = senderProfile.photos?.[0]?.url || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80";
+    const photo =
+      senderProfile.photos?.[0]?.url ||
+      "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80";
 
     return (
-      <View className="bg-slate-900 border border-slate-800 rounded-2xl p-4 mb-3 flex-row items-center justify-between">
+      <View className="bg-white border border-slate-200/90 rounded-2xl p-4 mb-3 shadow-sm flex-row items-center justify-between">
         <View className="flex-row items-center flex-1 mr-3">
           <Image
             source={{ uri: photo }}
-            className="w-14 h-14 rounded-full border border-brand-500/40"
+            className="w-14 h-14 rounded-full border border-rose-200"
             contentFit="cover"
           />
           <View className="ml-3 flex-1">
-            <Text className="text-white font-bold text-base">
-              {senderProfile.displayName || "Member"}, {senderProfile.age || "28"}
+            <View className="flex-row items-center">
+              <Text className="text-slate-900 font-bold text-base">
+                {senderProfile.displayName || "Member"}
+              </Text>
+              {item.sender?.isVerified && (
+                <Shield size={13} color="#10b981" style={{ marginLeft: 4 }} />
+              )}
+            </View>
+            <Text className="text-slate-500 text-xs mt-0.5">
+              {[senderProfile.city, senderProfile.state].filter(Boolean).join(", ") || "India"} •{" "}
+              {senderProfile.occupation || senderProfile.profession || "Member"}
             </Text>
-            <Text className="text-slate-400 text-xs mt-0.5">
-              {senderProfile.city || "Mumbai"} • {senderProfile.occupation || "Professional"}
-            </Text>
-            {item.message ? (
-              <Text numberOfLines={1} className="text-pink-300 text-xs mt-1 italic">
+            {item.message && (
+              <Text numberOfLines={1} className="text-slate-600 text-xs italic mt-1 bg-slate-50 p-1.5 rounded-lg border border-slate-100">
                 "{item.message}"
               </Text>
-            ) : null}
+            )}
           </View>
         </View>
 
-        <View className="flex-row gap-2">
+        {/* Accept / Decline actions */}
+        <View className="flex-row items-center gap-2">
           <TouchableOpacity
-            onPress={() => respondMutation.mutate({ interestId: item.id, action: "DECLINE" })}
-            className="w-10 h-10 rounded-full bg-slate-800 items-center justify-center border border-slate-700"
+            onPress={() =>
+              respondMutation.mutate({
+                interestId: item.id,
+                action: "DECLINE",
+              })
+            }
+            disabled={respondMutation.isPending}
+            className="w-9 h-9 rounded-full bg-slate-100 border border-slate-200 items-center justify-center active:bg-slate-200"
           >
-            <X size={18} color="#94a3b8" />
+            <X size={16} color="#64748b" />
           </TouchableOpacity>
+
           <TouchableOpacity
-            onPress={() => respondMutation.mutate({ interestId: item.id, action: "ACCEPT" })}
-            className="w-10 h-10 rounded-full bg-brand-600 items-center justify-center shadow-md shadow-brand-500/30"
+            onPress={() =>
+              respondMutation.mutate({
+                interestId: item.id,
+                action: "ACCEPT",
+              })
+            }
+            disabled={respondMutation.isPending}
+            className="w-9 h-9 rounded-full bg-rose-600 items-center justify-center active:bg-rose-700 shadow-xs"
           >
-            <Check size={18} color="#ffffff" />
+            <Check size={16} color="#ffffff" />
           </TouchableOpacity>
         </View>
       </View>
@@ -153,40 +175,43 @@ export const MatchesScreen: React.FC<{ onNavigateToChat?: (partnerId: string) =>
   };
 
   const renderAcceptedItem = ({ item }: { item: any }) => {
-    const partner = item.user?.profile || item.profile || item;
-    const photo = partner.photos?.[0]?.url || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80";
-    const partnerUserId = item.user?.id || item.userId || partner.userId;
+    const partner = item.user1 || item.user2 || item.partner || {};
+    const partnerProfile = partner.profile || item.profile || {};
+    const photo =
+      partnerProfile.photos?.[0]?.url ||
+      "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80";
 
     return (
-      <View className="bg-slate-900 border border-slate-800 rounded-2xl p-4 mb-3 flex-row items-center justify-between">
+      <View className="bg-white border border-slate-200/90 rounded-2xl p-4 mb-3 shadow-sm flex-row items-center justify-between">
         <View className="flex-row items-center flex-1 mr-3">
           <Image
             source={{ uri: photo }}
-            className="w-14 h-14 rounded-full border border-emerald-500"
+            className="w-14 h-14 rounded-full border border-rose-200"
             contentFit="cover"
           />
           <View className="ml-3 flex-1">
             <View className="flex-row items-center">
-              <Text className="text-white font-bold text-base">
-                {partner.displayName || "Partner"}
+              <Text className="text-slate-900 font-bold text-base">
+                {partnerProfile.displayName || "Member"}
               </Text>
-              <View className="bg-emerald-500/20 px-2 py-0.5 rounded-full ml-2">
-                <Text className="text-emerald-400 text-[10px] font-bold">MATCH</Text>
-              </View>
+              {partner.isVerified && (
+                <Shield size={13} color="#10b981" style={{ marginLeft: 4 }} />
+              )}
             </View>
-            <Text className="text-slate-400 text-xs mt-0.5">
-              {partner.city || "India"} • Mutual connection
+            <Text className="text-slate-500 text-xs mt-0.5">
+              {[partnerProfile.city, partnerProfile.state].filter(Boolean).join(", ") || "India"} •{" "}
+              {partnerProfile.occupation || partnerProfile.profession || "Member"}
             </Text>
           </View>
         </View>
 
-        {onNavigateToChat && partnerUserId && (
+        {onNavigateToChat && (
           <TouchableOpacity
-            onPress={() => onNavigateToChat(partnerUserId)}
-            className="px-4 py-2 bg-brand-600 rounded-xl flex-row items-center shadow-sm"
+            onPress={() => onNavigateToChat(partner.id || partner.userId)}
+            className="bg-rose-600 px-3.5 py-2 rounded-xl flex-row items-center active:bg-rose-700 shadow-xs"
           >
-            <MessageCircle size={15} color="#ffffff" />
-            <Text className="text-white font-semibold text-xs ml-1.5">Chat</Text>
+            <MessageCircle size={14} color="#ffffff" />
+            <Text className="text-white text-xs font-bold ml-1.5">Chat</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -195,29 +220,32 @@ export const MatchesScreen: React.FC<{ onNavigateToChat?: (partnerId: string) =>
 
   const renderSentItem = ({ item }: { item: any }) => {
     const receiverProfile = item.receiver?.profile || item.profile || {};
-    const photo = receiverProfile.photos?.[0]?.url || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80";
+    const photo =
+      receiverProfile.photos?.[0]?.url ||
+      "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80";
 
     return (
-      <View className="bg-slate-900 border border-slate-800 rounded-2xl p-4 mb-3 flex-row items-center justify-between">
+      <View className="bg-white border border-slate-200/90 rounded-2xl p-4 mb-3 shadow-sm flex-row items-center justify-between">
         <View className="flex-row items-center flex-1 mr-3">
           <Image
             source={{ uri: photo }}
-            className="w-14 h-14 rounded-full border border-slate-700"
+            className="w-14 h-14 rounded-full border border-slate-200"
             contentFit="cover"
           />
           <View className="ml-3 flex-1">
-            <Text className="text-white font-bold text-base">
+            <Text className="text-slate-900 font-bold text-base">
               {receiverProfile.displayName || "Member"}
             </Text>
-            <Text className="text-slate-400 text-xs mt-0.5">
-              {receiverProfile.city || "India"} • {receiverProfile.occupation || "Member"}
+            <Text className="text-slate-500 text-xs mt-0.5">
+              {[receiverProfile.city, receiverProfile.state].filter(Boolean).join(", ") || "India"} •{" "}
+              {receiverProfile.occupation || receiverProfile.profession || "Member"}
             </Text>
           </View>
         </View>
 
-        <View className="bg-slate-800 px-3 py-1.5 rounded-full flex-row items-center border border-slate-700">
-          <Clock size={12} color="#f59e0b" />
-          <Text className="text-amber-400 text-xs font-semibold ml-1">
+        <View className="bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-full flex-row items-center">
+          <Clock size={12} color="#d97706" />
+          <Text className="text-amber-700 text-xs font-semibold ml-1">
             {item.status || "PENDING"}
           </Text>
         </View>
@@ -226,18 +254,18 @@ export const MatchesScreen: React.FC<{ onNavigateToChat?: (partnerId: string) =>
   };
 
   return (
-    <View className="flex-1 bg-slate-950 p-4">
-      {/* Header Tabs */}
-      <View className="flex-row bg-slate-900 rounded-2xl p-1 mb-4 border border-slate-800">
+    <View className="flex-1 bg-slate-50 p-4">
+      {/* Header Segmented Tabs matching Web */}
+      <View className="flex-row bg-slate-100 rounded-2xl p-1 mb-4 border border-slate-200">
         <TouchableOpacity
           onPress={() => setActiveTab("received")}
           className={`flex-1 py-2.5 rounded-xl items-center ${
-            activeTab === "received" ? "bg-brand-600" : ""
+            activeTab === "received" ? "bg-rose-600 shadow-xs" : ""
           }`}
         >
           <Text
-            className={`text-xs font-semibold ${
-              activeTab === "received" ? "text-white" : "text-slate-400"
+            className={`text-xs font-bold ${
+              activeTab === "received" ? "text-white" : "text-slate-600"
             }`}
           >
             Received
@@ -247,12 +275,12 @@ export const MatchesScreen: React.FC<{ onNavigateToChat?: (partnerId: string) =>
         <TouchableOpacity
           onPress={() => setActiveTab("accepted")}
           className={`flex-1 py-2.5 rounded-xl items-center ${
-            activeTab === "accepted" ? "bg-brand-600" : ""
+            activeTab === "accepted" ? "bg-rose-600 shadow-xs" : ""
           }`}
         >
           <Text
-            className={`text-xs font-semibold ${
-              activeTab === "accepted" ? "text-white" : "text-slate-400"
+            className={`text-xs font-bold ${
+              activeTab === "accepted" ? "text-white" : "text-slate-600"
             }`}
           >
             Matches
@@ -262,12 +290,12 @@ export const MatchesScreen: React.FC<{ onNavigateToChat?: (partnerId: string) =>
         <TouchableOpacity
           onPress={() => setActiveTab("sent")}
           className={`flex-1 py-2.5 rounded-xl items-center ${
-            activeTab === "sent" ? "bg-brand-600" : ""
+            activeTab === "sent" ? "bg-rose-600 shadow-xs" : ""
           }`}
         >
           <Text
-            className={`text-xs font-semibold ${
-              activeTab === "sent" ? "text-white" : "text-slate-400"
+            className={`text-xs font-bold ${
+              activeTab === "sent" ? "text-white" : "text-slate-600"
             }`}
           >
             Sent
@@ -278,7 +306,7 @@ export const MatchesScreen: React.FC<{ onNavigateToChat?: (partnerId: string) =>
       {/* Content List */}
       {isLoading ? (
         <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color="#f43f5e" />
+          <ActivityIndicator size="large" color="#e11d48" />
         </View>
       ) : (
         <FlatList
@@ -297,24 +325,28 @@ export const MatchesScreen: React.FC<{ onNavigateToChat?: (partnerId: string) =>
               ? renderAcceptedItem
               : renderSentItem
           }
+          showsVerticalScrollIndicator={true}
+          indicatorStyle="black"
+          contentContainerStyle={{ paddingBottom: 24 }}
           refreshControl={
             <RefreshControl
               refreshing={isRefetching}
               onRefresh={handleRefresh}
-              tintColor="#f43f5e"
+              tintColor="#e11d48"
+              colors={["#e11d48"]}
             />
           }
           ListEmptyComponent={
             <View className="flex-1 items-center justify-center py-20 px-4">
-              <Sparkles size={40} color="#64748b" />
-              <Text className="text-white text-base font-bold mt-4 text-center">
+              <Sparkles size={44} color="#cbd5e1" />
+              <Text className="text-slate-800 text-base font-bold mt-4 text-center">
                 {activeTab === "received"
                   ? "No received interests yet"
                   : activeTab === "accepted"
                   ? "No mutual matches yet"
                   : "No sent interests yet"}
               </Text>
-              <Text className="text-slate-400 text-xs text-center mt-1">
+              <Text className="text-slate-500 text-xs text-center mt-1 max-w-xs leading-4">
                 {activeTab === "received"
                   ? "When members express interest in your profile, they will appear here!"
                   : activeTab === "accepted"
@@ -328,4 +360,3 @@ export const MatchesScreen: React.FC<{ onNavigateToChat?: (partnerId: string) =>
     </View>
   );
 };
-

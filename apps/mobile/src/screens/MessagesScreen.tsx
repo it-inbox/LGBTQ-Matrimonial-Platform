@@ -39,7 +39,7 @@ export const MessagesScreen: React.FC<{ initialPartnerUserId?: string | null }> 
       const res = await api.get("/chat/conversations");
       return res.data;
     },
-    refetchInterval: 5000, // Poll every 5s for mobile web simplicity
+    refetchInterval: 5000,
   });
 
   // 2. Fetch messages for active conversation
@@ -58,7 +58,11 @@ export const MessagesScreen: React.FC<{ initialPartnerUserId?: string | null }> 
   useEffect(() => {
     if (initialPartnerUserId && conversations.length > 0) {
       const match = conversations.find(
-        (c: any) => c.partner?.userId === initialPartnerUserId || c.partner?.id === initialPartnerUserId
+        (c: any) =>
+          c.partner?.userId === initialPartnerUserId ||
+          c.partner?.id === initialPartnerUserId ||
+          c.user1Id === initialPartnerUserId ||
+          c.user2Id === initialPartnerUserId
       );
       if (match) setSelectedConversation(match);
     }
@@ -80,119 +84,97 @@ export const MessagesScreen: React.FC<{ initialPartnerUserId?: string | null }> 
     },
   });
 
-  const handleSend = () => {
-    const trimmed = messageText.trim();
-    if (!trimmed || sendMutation.isPending) return;
-    sendMutation.mutate(trimmed);
+  const handleSendMessage = () => {
+    if (!messageText.trim() || !selectedConversation?.id) return;
+    sendMutation.mutate(messageText.trim());
   };
 
-  // Render individual chat conversation in list
-  const renderConversationItem = ({ item }: { item: any }) => {
-    const partner = item.partner || {};
-    const photo = partner.photos?.[0]?.url || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80";
-    const lastMsg = item.lastMessage?.content || "Say hello to your match!";
-
-    return (
-      <TouchableOpacity
-        onPress={() => setSelectedConversation(item)}
-        className="bg-slate-900 border border-slate-800 rounded-2xl p-4 mb-3 flex-row items-center"
-      >
-        <Image
-          source={{ uri: photo }}
-          className="w-13 h-13 rounded-full border border-slate-700"
-          style={{ width: 52, height: 52, borderRadius: 26 }}
-          contentFit="cover"
-        />
-        <View className="ml-3 flex-1">
-          <View className="flex-row items-center justify-between">
-            <Text className="text-white font-bold text-base">
-              {partner.displayName || "Match"}
-            </Text>
-            {item.lastMessage?.createdAt && (
-              <Text className="text-slate-500 text-[10px]">
-                {new Date(item.lastMessage.createdAt).toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-              </Text>
-            )}
-          </View>
-          <Text numberOfLines={1} className="text-slate-400 text-xs mt-1">
-            {lastMsg}
-          </Text>
-        </View>
-
-        {item.unreadCount > 0 && (
-          <View className="bg-brand-600 rounded-full w-5 h-5 items-center justify-center ml-2">
-            <Text className="text-white text-[10px] font-bold">{item.unreadCount}</Text>
-          </View>
-        )}
-      </TouchableOpacity>
-    );
-  };
-
-  // If conversation is open, render Chat View
+  // If in an active conversation detail view
   if (selectedConversation) {
-    const partner = selectedConversation.partner || {};
-    const photo = partner.photos?.[0]?.url || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80";
+    const partner =
+      selectedConversation.partner ||
+      (selectedConversation.user1Id === user?.id
+        ? selectedConversation.user2
+        : selectedConversation.user1) ||
+      {};
+    const partnerProfile = partner.profile || partner;
+    const photo =
+      partnerProfile.photos?.[0]?.url ||
+      "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80";
 
     return (
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
-        className="flex-1 bg-slate-950"
+        className="flex-1 bg-slate-50"
       >
-        {/* Chat Header */}
-        <View className="flex-row items-center justify-between p-4 bg-slate-900 border-b border-slate-800">
+        {/* Header Bar */}
+        <View className="flex-row items-center px-4 py-3 bg-white border-b border-slate-200/90 shadow-xs">
           <TouchableOpacity
             onPress={() => setSelectedConversation(null)}
-            className="p-2 -ml-2"
+            className="p-1.5 -ml-1.5 mr-2 rounded-full active:bg-slate-100"
           >
-            <ArrowLeft size={20} color="#ffffff" />
+            <ArrowLeft size={20} color="#334155" />
           </TouchableOpacity>
 
-          <View className="flex-row items-center flex-1 ml-2">
-            <Image
-              source={{ uri: photo }}
-              style={{ width: 36, height: 36, borderRadius: 18 }}
-              contentFit="cover"
-            />
-            <View className="ml-2.5">
-              <Text className="text-white font-bold text-sm">
-                {partner.displayName || "Partner"}
+          <Image
+            source={{ uri: photo }}
+            className="w-10 h-10 rounded-full border border-rose-200"
+            contentFit="cover"
+          />
+
+          <View className="ml-3 flex-1">
+            <View className="flex-row items-center">
+              <Text className="text-slate-900 font-bold text-base">
+                {partnerProfile.displayName || "Member"}
               </Text>
-              <Text className="text-emerald-400 text-[10px] font-medium">Online</Text>
+              {partner.isVerified && (
+                <Shield size={13} color="#10b981" style={{ marginLeft: 4 }} />
+              )}
             </View>
+            <Text className="text-slate-500 text-xs">
+              {[partnerProfile.city, partnerProfile.state].filter(Boolean).join(", ") || "India"}
+            </Text>
           </View>
         </View>
 
-        {/* Messages List */}
+        {/* Message Thread List */}
         {loadingMessages ? (
           <View className="flex-1 items-center justify-center">
-            <ActivityIndicator size="small" color="#f43f5e" />
+            <ActivityIndicator size="small" color="#e11d48" />
           </View>
         ) : (
           <FlatList
             ref={flatListRef}
             data={messages}
-            keyExtractor={(msg) => msg.id || String(Math.random())}
-            contentContainerStyle={{ padding: 16, flexGrow: 1 }}
+            keyExtractor={(item) => item.id || String(Math.random())}
+            showsVerticalScrollIndicator={true}
+            indicatorStyle="black"
+            contentContainerStyle={{ padding: 16 }}
             onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
             renderItem={({ item }) => {
               const isMine = item.senderId === user?.id;
               return (
                 <View
-                  className={`mb-3 max-w-[80%] rounded-2xl px-4 py-2.5 ${
-                    isMine
-                      ? "self-end bg-brand-600 rounded-br-xs"
-                      : "self-start bg-slate-800 rounded-bl-xs"
+                  className={`mb-3 max-w-[80%] ${
+                    isMine ? "self-end items-end" : "self-start items-start"
                   }`}
                 >
-                  <Text className="text-white text-sm">{item.content}</Text>
-                  <Text
-                    className={`text-[9px] mt-1 self-end ${
-                      isMine ? "text-pink-200" : "text-slate-400"
+                  <View
+                    className={`px-4 py-2.5 rounded-2xl ${
+                      isMine
+                        ? "bg-rose-600 rounded-tr-none shadow-xs"
+                        : "bg-white border border-slate-200 rounded-tl-none shadow-xs"
                     }`}
                   >
+                    <Text
+                      className={`text-sm leading-5 ${
+                        isMine ? "text-white" : "text-slate-800"
+                      }`}
+                    >
+                      {item.content}
+                    </Text>
+                  </View>
+                  <Text className="text-[10px] text-slate-400 mt-1 px-1">
                     {item.createdAt
                       ? new Date(item.createdAt).toLocaleTimeString([], {
                           hour: "2-digit",
@@ -204,63 +186,112 @@ export const MessagesScreen: React.FC<{ initialPartnerUserId?: string | null }> 
               );
             }}
             ListEmptyComponent={
-              <View className="flex-1 items-center justify-center py-20">
-                <Text className="text-slate-400 text-xs">
-                  This conversation is end-to-end private. Send a greeting! 👋
+              <View className="flex-1 items-center justify-center py-24">
+                <MessageSquare size={36} color="#cbd5e1" />
+                <Text className="text-slate-700 font-bold text-sm mt-3">
+                  Say hello to {partnerProfile.displayName}!
+                </Text>
+                <Text className="text-slate-400 text-xs mt-1 text-center max-w-xs">
+                  Your chat is end-to-end encrypted and completely private.
                 </Text>
               </View>
             }
           />
         )}
 
-        {/* Input Bar */}
-        <View className="flex-row items-center p-3 bg-slate-900 border-t border-slate-800">
+        {/* Chat Input Bar */}
+        <View className="flex-row items-center p-3 bg-white border-t border-slate-200/90">
           <TextInput
+            placeholder="Type a message..."
+            placeholderTextColor="#94a3b8"
             value={messageText}
             onChangeText={setMessageText}
-            placeholder="Type your message..."
-            placeholderTextColor="#64748b"
-            className="flex-1 bg-slate-800 text-white rounded-full px-4 py-2.5 text-sm mr-2"
+            onSubmitEditing={handleSendMessage}
+            className="flex-1 bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-slate-800 text-sm max-h-24"
           />
           <TouchableOpacity
-            onPress={handleSend}
+            onPress={handleSendMessage}
             disabled={!messageText.trim() || sendMutation.isPending}
-            className={`w-10 h-10 rounded-full items-center justify-center ${
-              messageText.trim() ? "bg-brand-600" : "bg-slate-800"
+            className={`ml-2 w-10 h-10 rounded-full items-center justify-center ${
+              messageText.trim() ? "bg-rose-600 active:bg-rose-700" : "bg-slate-200"
             }`}
           >
-            {sendMutation.isPending ? (
-              <ActivityIndicator size="small" color="#ffffff" />
-            ) : (
-              <Send size={16} color="#ffffff" />
-            )}
+            <Send
+              size={18}
+              color={messageText.trim() ? "#ffffff" : "#94a3b8"}
+            />
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
     );
   }
 
-  // Otherwise render conversation list
+  // Conversations List View
   return (
-    <View className="flex-1 bg-slate-950 p-4">
-      <Text className="text-white text-xl font-bold mb-4">Messages</Text>
+    <View className="flex-1 bg-slate-50">
+      {/* Title Header */}
+      <View className="px-5 py-4 bg-white border-b border-slate-200/90">
+        <Text className="text-xl font-bold text-slate-900">Messages</Text>
+      </View>
 
       {loadingConversations ? (
         <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color="#f43f5e" />
+          <ActivityIndicator size="large" color="#e11d48" />
         </View>
       ) : (
         <FlatList
           data={conversations}
           keyExtractor={(item) => item.id || String(Math.random())}
-          renderItem={renderConversationItem}
+          showsVerticalScrollIndicator={true}
+          indicatorStyle="black"
+          renderItem={({ item }) => {
+            const partner =
+              item.partner ||
+              (item.user1Id === user?.id ? item.user2 : item.user1) ||
+              {};
+            const partnerProfile = partner.profile || partner;
+            const photo =
+              partnerProfile.photos?.[0]?.url ||
+              "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80";
+
+            return (
+              <TouchableOpacity
+                onPress={() => setSelectedConversation(item)}
+                className="flex-row items-center p-4 bg-white border-b border-slate-100 active:bg-slate-50"
+              >
+                <Image
+                  source={{ uri: photo }}
+                  className="w-14 h-14 rounded-full border border-rose-200"
+                  contentFit="cover"
+                />
+                <View className="ml-3.5 flex-1">
+                  <View className="flex-row items-center justify-between">
+                    <Text className="text-slate-900 font-bold text-base">
+                      {partnerProfile.displayName || "Member"}
+                    </Text>
+                    {item.lastMessageAt && (
+                      <Text className="text-[11px] text-slate-400">
+                        {new Date(item.lastMessageAt).toLocaleDateString([], {
+                          month: "short",
+                          day: "numeric",
+                        })}
+                      </Text>
+                    )}
+                  </View>
+                  <Text numberOfLines={1} className="text-slate-500 text-xs mt-1">
+                    {item.lastMessageContent || "Start a new conversation..."}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            );
+          }}
           ListEmptyComponent={
             <View className="flex-1 items-center justify-center py-24 px-6">
-              <MessageSquare size={44} color="#64748b" />
-              <Text className="text-white text-base font-bold mt-4 text-center">
+              <MessageSquare size={48} color="#cbd5e1" />
+              <Text className="text-slate-800 text-base font-bold mt-4 text-center">
                 No active conversations
               </Text>
-              <Text className="text-slate-400 text-xs text-center mt-1">
+              <Text className="text-slate-500 text-xs text-center mt-1.5 max-w-xs leading-4">
                 When you connect with mutual matches, direct messaging threads will appear here!
               </Text>
             </View>
@@ -270,4 +301,3 @@ export const MessagesScreen: React.FC<{ initialPartnerUserId?: string | null }> 
     </View>
   );
 };
-

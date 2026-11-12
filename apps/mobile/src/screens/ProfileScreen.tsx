@@ -19,7 +19,6 @@ import {
   LogOut,
   Shield,
   Crown,
-  Heart,
   Settings,
   EyeOff,
   User as UserIcon,
@@ -58,22 +57,14 @@ export const ProfileScreen: React.FC = () => {
     profile?.partnerPreference?.preferredOrientations || ["GAY"]
   );
 
-  const handleLogout = async () => {
-    setLoggingOut(true);
-    await logout();
-    setLoggingOut(false);
-  };
-
   // Toggle Ghost Mode
-  const handleToggleGhostMode = async (value: boolean) => {
+  const handleToggleGhostMode = async (val: boolean) => {
     try {
-      const res = await api.patch("/profiles/me/privacy", {
-        ghostModeEnabled: value,
-      });
-      setProfile({ ...profile!, ghostModeEnabled: value });
+      await api.patch("/profiles/me/ghost-mode", { enabled: val });
+      setProfile({ ...profile!, ghostModeEnabled: val });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.myProfile });
     } catch (err: any) {
-      alert("Failed to update Ghost Mode: " + (err.response?.data?.message || err.message));
+      Alert.alert("Error", "Failed to update Ghost Mode: " + (err.response?.data?.message || err.message));
     }
   };
 
@@ -84,13 +75,11 @@ export const ProfileScreen: React.FC = () => {
         ? "MUTUAL_MATCHES_ONLY"
         : "ALL_MEMBERS";
     try {
-      await api.patch("/profiles/me/privacy", {
-        photoVisibility: nextVis,
-      });
+      await api.patch("/profiles/me/photo-visibility", { visibility: nextVis });
       setProfile({ ...profile!, photoVisibility: nextVis });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.myProfile });
     } catch (err: any) {
-      alert("Failed to update Photo Privacy: " + (err.response?.data?.message || err.message));
+      Alert.alert("Error", "Failed to update Photo Privacy: " + (err.response?.data?.message || err.message));
     }
   };
 
@@ -158,40 +147,50 @@ export const ProfileScreen: React.FC = () => {
     primaryPhoto?.originalUrl ||
     "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80";
 
+  const handleLogout = async () => {
+    setLoggingOut(true);
+    try {
+      await logout();
+    } finally {
+      setLoggingOut(false);
+    }
+  };
+
   return (
-    <ScrollView className="flex-1 bg-slate-950 p-4">
-      {/* Profile Header Card */}
-      <View className="bg-slate-900 border border-slate-800 rounded-3xl p-5 items-center mt-4">
+    <ScrollView className="flex-1 bg-slate-50 p-4">
+      {/* Profile Header Card matching Web */}
+      <View className="bg-white border border-slate-200/90 rounded-3xl p-5 items-center mt-2 shadow-sm">
         <View className="relative">
           <Image
             source={{ uri: photoUrl }}
-            className="w-24 h-24 rounded-full border-2 border-brand-500"
+            className="w-24 h-24 rounded-full border-2 border-rose-500"
             contentFit="cover"
           />
           {user?.isVerified && (
-            <View className="absolute bottom-0 right-0 bg-emerald-500 p-1.5 rounded-full border-2 border-slate-900">
+            <View className="absolute bottom-0 right-0 bg-emerald-500 p-1.5 rounded-full border-2 border-white">
               <Shield size={14} color="#ffffff" />
             </View>
           )}
         </View>
 
-        <Text className="text-white text-xl font-bold mt-3">
+        <Text className="text-slate-900 text-xl font-bold mt-3">
           {profile?.displayName || "Member"}
         </Text>
-        <Text className="text-slate-400 text-xs mt-0.5">
-          {profile?.city || "Location not set"}, {profile?.state || ""} • {profile?.orientation || "LGBTQ+"}
+        <Text className="text-slate-500 text-xs mt-0.5">
+          {[profile?.city, profile?.state].filter(Boolean).join(", ") || "Location not set"} •{" "}
+          {profile?.orientation || "LGBTQ+"}
         </Text>
 
         {profile?.bio && (
-          <Text className="text-slate-300 text-xs text-center mt-2 px-4 italic leading-4">
+          <Text className="text-slate-600 text-xs text-center mt-2.5 px-4 italic leading-4 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
             "{profile.bio}"
           </Text>
         )}
 
         {/* Membership Badge */}
-        <View className="flex-row items-center bg-brand-500/10 border border-brand-500/30 px-3 py-1.5 rounded-full mt-3">
-          <Crown size={14} color="#f43f5e" />
-          <Text className="text-brand-400 text-xs font-semibold ml-1.5">
+        <View className="flex-row items-center bg-rose-50 border border-rose-200 px-3 py-1.5 rounded-full mt-3">
+          <Crown size={14} color="#e11d48" />
+          <Text className="text-rose-700 text-xs font-semibold ml-1.5">
             {membership?.planName || "Free Plan"}
           </Text>
         </View>
@@ -200,53 +199,53 @@ export const ProfileScreen: React.FC = () => {
         <View className="flex-row gap-3 mt-4 w-full">
           <TouchableOpacity
             onPress={() => setEditProfileOpen(true)}
-            className="flex-1 bg-slate-800 border border-slate-700 py-2.5 rounded-xl flex-row items-center justify-center"
+            className="flex-1 bg-white border border-slate-200 py-2.5 rounded-xl flex-row items-center justify-center active:bg-slate-50 shadow-xs"
           >
-            <Edit3 size={15} color="#cbd5e1" />
-            <Text className="text-slate-200 text-xs font-semibold ml-2">Edit Profile</Text>
+            <Edit3 size={15} color="#475569" />
+            <Text className="text-slate-700 text-xs font-semibold ml-2">Edit Profile</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             onPress={() => setPreferencesOpen(true)}
-            className="flex-1 bg-brand-600/20 border border-brand-500/40 py-2.5 rounded-xl flex-row items-center justify-center"
+            className="flex-1 bg-rose-50 border border-rose-200 py-2.5 rounded-xl flex-row items-center justify-center active:bg-rose-100 shadow-xs"
           >
-            <Sliders size={15} color="#f43f5e" />
-            <Text className="text-brand-300 text-xs font-semibold ml-2">Preferences</Text>
+            <Sliders size={15} color="#e11d48" />
+            <Text className="text-rose-700 text-xs font-semibold ml-2">Preferences</Text>
           </TouchableOpacity>
         </View>
       </View>
 
       {/* Membership / Stats Bar */}
-      <View className="flex-row gap-3 mt-4">
-        <View className="flex-1 bg-slate-900 border border-slate-800 rounded-2xl p-4 items-center">
-          <Text className="text-slate-400 text-xs font-medium">Super Interests</Text>
-          <Text className="text-white text-xl font-bold mt-1">
+      <View className="flex-row gap-3 mt-3">
+        <View className="flex-1 bg-white border border-slate-200/90 rounded-2xl p-4 items-center shadow-sm">
+          <Text className="text-slate-500 text-xs font-medium">Super Interests</Text>
+          <Text className="text-slate-900 text-2xl font-bold mt-1">
             {membership?.superInterestsRemaining ?? 0}
           </Text>
         </View>
-        <View className="flex-1 bg-slate-900 border border-slate-800 rounded-2xl p-4 items-center">
-          <Text className="text-slate-400 text-xs font-medium">Spotlights</Text>
-          <Text className="text-white text-xl font-bold mt-1">
+        <View className="flex-1 bg-white border border-slate-200/90 rounded-2xl p-4 items-center shadow-sm">
+          <Text className="text-slate-500 text-xs font-medium">Spotlights</Text>
+          <Text className="text-slate-900 text-2xl font-bold mt-1">
             {membership?.spotlightsRemaining ?? 0}
           </Text>
         </View>
       </View>
 
       {/* Account & Privacy Settings List */}
-      <View className="bg-slate-900 border border-slate-800 rounded-2xl mt-4 divide-y divide-slate-800 overflow-hidden">
+      <View className="bg-white border border-slate-200/90 rounded-2xl mt-3 divide-y divide-slate-100 overflow-hidden shadow-sm mb-6">
         {/* Ghost Mode Toggle */}
         <View className="flex-row items-center justify-between p-4">
           <View className="flex-row items-center flex-1 pr-3">
-            <EyeOff size={18} color="#94a3b8" />
+            <EyeOff size={18} color="#64748b" />
             <View className="ml-3">
-              <Text className="text-slate-200 text-sm font-medium">Ghost Mode</Text>
+              <Text className="text-slate-900 text-sm font-medium">Ghost Mode</Text>
               <Text className="text-slate-500 text-xs">Browse profiles completely invisibly</Text>
             </View>
           </View>
           <Switch
             value={!!profile?.ghostModeEnabled}
             onValueChange={handleToggleGhostMode}
-            trackColor={{ false: "#334155", true: "#f43f5e" }}
+            trackColor={{ false: "#e2e8f0", true: "#e11d48" }}
             thumbColor="#ffffff"
           />
         </View>
@@ -254,12 +253,12 @@ export const ProfileScreen: React.FC = () => {
         {/* Photo Privacy Toggle */}
         <TouchableOpacity
           onPress={handleTogglePhotoVisibility}
-          className="flex-row items-center justify-between p-4"
+          className="flex-row items-center justify-between p-4 active:bg-slate-50"
         >
           <View className="flex-row items-center flex-1 pr-3">
-            <Shield size={18} color="#94a3b8" />
+            <Shield size={18} color="#64748b" />
             <View className="ml-3">
-              <Text className="text-slate-200 text-sm font-medium">Photo Privacy</Text>
+              <Text className="text-slate-900 text-sm font-medium">Photo Privacy</Text>
               <Text className="text-slate-500 text-xs">
                 {profile?.photoVisibility === "ALL_MEMBERS"
                   ? "Visible to all verified members"
@@ -267,8 +266,8 @@ export const ProfileScreen: React.FC = () => {
               </Text>
             </View>
           </View>
-          <View className="bg-slate-800 px-2.5 py-1 rounded-lg border border-slate-700">
-            <Text className="text-brand-400 text-xs font-semibold">
+          <View className="bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200">
+            <Text className="text-rose-600 text-xs font-semibold">
               {profile?.photoVisibility === "ALL_MEMBERS" ? "Public" : "Blurred"}
             </Text>
           </View>
@@ -278,14 +277,14 @@ export const ProfileScreen: React.FC = () => {
         <TouchableOpacity
           onPress={handleLogout}
           disabled={loggingOut}
-          className="flex-row items-center p-4"
+          className="flex-row items-center p-4 active:bg-slate-50"
         >
           {loggingOut ? (
-            <ActivityIndicator size="small" color="#f43f5e" />
+            <ActivityIndicator size="small" color="#e11d48" />
           ) : (
             <>
-              <LogOut size={18} color="#f43f5e" />
-              <Text className="text-red-400 text-sm font-semibold ml-3">
+              <LogOut size={18} color="#e11d48" />
+              <Text className="text-rose-600 text-sm font-semibold ml-3">
                 Log Out
               </Text>
             </>
@@ -295,100 +294,83 @@ export const ProfileScreen: React.FC = () => {
 
       {/* Edit Profile Modal */}
       <Modal visible={editProfileOpen} transparent animationType="slide">
-        <View className="flex-1 bg-black/80 justify-end">
-          <View className="bg-slate-900 border-t border-slate-800 rounded-t-3xl p-6 max-h-[85%]">
-            <View className="flex-row items-center justify-between pb-4 border-b border-slate-800">
-              <Text className="text-white text-lg font-bold">Edit Profile</Text>
+        <View className="flex-1 bg-black/60 justify-end">
+          <View className="bg-white border-t border-slate-200 rounded-t-3xl p-6 max-h-[85%]">
+            <View className="flex-row items-center justify-between pb-4 border-b border-slate-100">
+              <Text className="text-slate-900 text-lg font-bold">Edit Profile</Text>
               <TouchableOpacity onPress={() => setEditProfileOpen(false)}>
-                <X size={20} color="#94a3b8" />
+                <X size={20} color="#64748b" />
               </TouchableOpacity>
             </View>
 
-            <ScrollView className="mt-4 space-y-4">
-              <View>
-                <Text className="text-slate-300 text-xs font-medium mb-1">Display Name</Text>
-                <TextInput
-                  value={displayName}
-                  onChangeText={setDisplayName}
-                  className="bg-slate-800 text-white p-3 rounded-xl border border-slate-700 text-sm"
-                  placeholder="Your Name"
-                  placeholderTextColor="#64748b"
-                />
-              </View>
+            <ScrollView className="mt-4" showsVerticalScrollIndicator={false}>
+              {saveMessage && (
+                <View className="bg-emerald-50 border border-emerald-200 p-3 rounded-xl mb-3">
+                  <Text className="text-emerald-800 text-xs font-semibold">{saveMessage}</Text>
+                </View>
+              )}
 
-              <View className="mt-3">
-                <Text className="text-slate-300 text-xs font-medium mb-1">Bio / About Me</Text>
-                <TextInput
-                  value={bio}
-                  onChangeText={setBio}
-                  multiline
-                  numberOfLines={3}
-                  className="bg-slate-800 text-white p-3 rounded-xl border border-slate-700 text-sm h-20"
-                  placeholder="Share a bit about yourself..."
-                  placeholderTextColor="#64748b"
-                />
-              </View>
+              <Text className="text-slate-700 text-xs font-semibold mb-1">Display Name</Text>
+              <TextInput
+                value={displayName}
+                onChangeText={setDisplayName}
+                className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-800 text-sm mb-3"
+              />
 
-              <View className="flex-row gap-3 mt-3">
+              <Text className="text-slate-700 text-xs font-semibold mb-1">Bio / About Me</Text>
+              <TextInput
+                value={bio}
+                onChangeText={setBio}
+                multiline
+                numberOfLines={3}
+                placeholder="Share a bit about yourself..."
+                placeholderTextColor="#94a3b8"
+                className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-800 text-sm mb-3 min-h-[70px]"
+                textAlignVertical="top"
+              />
+
+              <View className="flex-row gap-3 mb-3">
                 <View className="flex-1">
-                  <Text className="text-slate-300 text-xs font-medium mb-1">City</Text>
+                  <Text className="text-slate-700 text-xs font-semibold mb-1">City</Text>
                   <TextInput
                     value={city}
                     onChangeText={setCity}
-                    className="bg-slate-800 text-white p-3 rounded-xl border border-slate-700 text-sm"
-                    placeholder="e.g. Mumbai"
-                    placeholderTextColor="#64748b"
+                    className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-800 text-sm"
                   />
                 </View>
                 <View className="flex-1">
-                  <Text className="text-slate-300 text-xs font-medium mb-1">State</Text>
+                  <Text className="text-slate-700 text-xs font-semibold mb-1">State</Text>
                   <TextInput
                     value={stateName}
                     onChangeText={setStateName}
-                    className="bg-slate-800 text-white p-3 rounded-xl border border-slate-700 text-sm"
-                    placeholder="e.g. Maharashtra"
-                    placeholderTextColor="#64748b"
+                    className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-800 text-sm"
                   />
                 </View>
               </View>
 
-              <View className="mt-3">
-                <Text className="text-slate-300 text-xs font-medium mb-1">Profession</Text>
-                <TextInput
-                  value={profession}
-                  onChangeText={setProfession}
-                  className="bg-slate-800 text-white p-3 rounded-xl border border-slate-700 text-sm"
-                  placeholder="e.g. Architect, Software Engineer"
-                  placeholderTextColor="#64748b"
-                />
-              </View>
+              <Text className="text-slate-700 text-xs font-semibold mb-1">Profession</Text>
+              <TextInput
+                value={profession}
+                onChangeText={setProfession}
+                className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-800 text-sm mb-3"
+              />
 
-              <View className="mt-3">
-                <Text className="text-slate-300 text-xs font-medium mb-1">Diet</Text>
-                <TextInput
-                  value={diet}
-                  onChangeText={setDiet}
-                  className="bg-slate-800 text-white p-3 rounded-xl border border-slate-700 text-sm"
-                  placeholder="e.g. Vegetarian, Non-Vegetarian, Vegan"
-                  placeholderTextColor="#64748b"
-                />
-              </View>
-
-              {saveMessage && (
-                <Text className="text-brand-400 text-xs text-center mt-3 font-medium">
-                  {saveMessage}
-                </Text>
-              )}
+              <Text className="text-slate-700 text-xs font-semibold mb-1">Diet</Text>
+              <TextInput
+                value={diet}
+                onChangeText={setDiet}
+                className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-800 text-sm mb-4"
+              />
 
               <TouchableOpacity
                 onPress={handleSaveProfile}
                 disabled={updating}
-                className="bg-brand-600 p-4 rounded-xl items-center mt-5 mb-4"
+                className="bg-rose-600 py-3.5 rounded-xl items-center active:bg-rose-700 shadow-xs mb-4"
               >
                 {updating ? (
                   <ActivityIndicator size="small" color="#ffffff" />
                 ) : (
-                  <Text className="text-white font-bold">Save Changes</Text>
+                  <Text className="text-white font-bold text-sm">Save Changes</Text>
                 )}
               </TouchableOpacity>
             </ScrollView>
@@ -396,143 +378,54 @@ export const ProfileScreen: React.FC = () => {
         </View>
       </Modal>
 
-      {/* Partner Preferences Modal */}
+      {/* Preferences Modal */}
       <Modal visible={preferencesOpen} transparent animationType="slide">
-        <View className="flex-1 bg-black/80 justify-end">
-          <View className="bg-slate-900 border-t border-slate-800 rounded-t-3xl p-6 max-h-[85%]">
-            <View className="flex-row items-center justify-between pb-4 border-b border-slate-800">
-              <Text className="text-white text-lg font-bold">Partner Preferences</Text>
+        <View className="flex-1 bg-black/60 justify-end">
+          <View className="bg-white border-t border-slate-200 rounded-t-3xl p-6 max-h-[85%]">
+            <View className="flex-row items-center justify-between pb-4 border-b border-slate-100">
+              <Text className="text-slate-900 text-lg font-bold">Partner Preferences</Text>
               <TouchableOpacity onPress={() => setPreferencesOpen(false)}>
-                <X size={20} color="#94a3b8" />
+                <X size={20} color="#64748b" />
               </TouchableOpacity>
             </View>
 
-            <ScrollView className="mt-4 space-y-4">
-              <Text className="text-slate-400 text-xs">
-                Matches feed will automatically adjust based on your age and identity preferences.
-              </Text>
-
-              {/* Age Range */}
-              <View className="mt-3">
-                <Text className="text-slate-300 text-xs font-medium mb-2">Age Range</Text>
-                <View className="flex-row items-center gap-3">
-                  <View className="flex-1">
-                    <Text className="text-slate-400 text-[10px] mb-1">Min Age</Text>
-                    <TextInput
-                      value={prefMinAge}
-                      onChangeText={setPrefMinAge}
-                      keyboardType="numeric"
-                      className="bg-slate-800 text-white p-3 rounded-xl border border-slate-700 text-center font-bold"
-                    />
-                  </View>
-                  <Text className="text-slate-400 font-bold mt-4">to</Text>
-                  <View className="flex-1">
-                    <Text className="text-slate-400 text-[10px] mb-1">Max Age</Text>
-                    <TextInput
-                      value={prefMaxAge}
-                      onChangeText={setPrefMaxAge}
-                      keyboardType="numeric"
-                      className="bg-slate-800 text-white p-3 rounded-xl border border-slate-700 text-center font-bold"
-                    />
-                  </View>
-                </View>
-              </View>
-
-              {/* Preferred Genders */}
-              <View className="mt-4">
-                <Text className="text-slate-300 text-xs font-medium mb-2">Interested In Genders</Text>
-                <View className="flex-row flex-wrap gap-2">
-                  {[
-                    { label: "Men", value: "MAN" },
-                    { label: "Women", value: "WOMAN" },
-                    { label: "Non-Binary", value: "NON_BINARY" },
-                    { label: "Trans Men", value: "TRANSGENDER_MAN" },
-                    { label: "Trans Women", value: "TRANSGENDER_WOMAN" },
-                  ].map((item) => {
-                    const isSelected = prefGenders.includes(item.value);
-                    return (
-                      <TouchableOpacity
-                        key={item.value}
-                        onPress={() => {
-                          if (isSelected) {
-                            if (prefGenders.length > 1) {
-                              setPrefGenders(prefGenders.filter((g) => g !== item.value));
-                            }
-                          } else {
-                            setPrefGenders([...prefGenders, item.value]);
-                          }
-                        }}
-                        className={`px-3 py-2 rounded-xl border text-xs ${
-                          isSelected
-                            ? "bg-brand-600/30 border-brand-500"
-                            : "bg-slate-800 border-slate-700"
-                        }`}
-                      >
-                        <Text
-                          className={`text-xs font-medium ${
-                            isSelected ? "text-brand-300 font-bold" : "text-slate-300"
-                          }`}
-                        >
-                          {item.label}
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
-              </View>
-
-              {/* Preferred Orientations */}
-              <View className="mt-4">
-                <Text className="text-slate-300 text-xs font-medium mb-2">Orientations</Text>
-                <View className="flex-row flex-wrap gap-2">
-                  {["GAY", "LESBIAN", "BISEXUAL", "PANSEXUAL", "QUEER"].map((orient) => {
-                    const isSelected = prefOrientations.includes(orient);
-                    return (
-                      <TouchableOpacity
-                        key={orient}
-                        onPress={() => {
-                          if (isSelected) {
-                            if (prefOrientations.length > 1) {
-                              setPrefOrientations(prefOrientations.filter((o) => o !== orient));
-                            }
-                          } else {
-                            setPrefOrientations([...prefOrientations, orient]);
-                          }
-                        }}
-                        className={`px-3 py-2 rounded-xl border text-xs ${
-                          isSelected
-                            ? "bg-brand-600/30 border-brand-500"
-                            : "bg-slate-800 border-slate-700"
-                        }`}
-                      >
-                        <Text
-                          className={`text-xs font-medium ${
-                            isSelected ? "text-brand-300 font-bold" : "text-slate-300"
-                          }`}
-                        >
-                          {orient}
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
-              </View>
-
+            <ScrollView className="mt-4" showsVerticalScrollIndicator={false}>
               {saveMessage && (
-                <Text className="text-brand-400 text-xs text-center mt-3 font-medium">
-                  {saveMessage}
-                </Text>
+                <View className="bg-emerald-50 border border-emerald-200 p-3 rounded-xl mb-3">
+                  <Text className="text-emerald-800 text-xs font-semibold">{saveMessage}</Text>
+                </View>
               )}
+
+              <Text className="text-slate-700 text-xs font-semibold mb-1">Age Range</Text>
+              <View className="flex-row items-center gap-3 mb-4">
+                <TextInput
+                  value={prefMinAge}
+                  onChangeText={setPrefMinAge}
+                  keyboardType="numeric"
+                  placeholder="Min"
+                  placeholderTextColor="#94a3b8"
+                  className="flex-1 bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-800 text-sm text-center"
+                />
+                <Text className="text-slate-400 font-bold">to</Text>
+                <TextInput
+                  value={prefMaxAge}
+                  onChangeText={setPrefMaxAge}
+                  keyboardType="numeric"
+                  placeholder="Max"
+                  placeholderTextColor="#94a3b8"
+                  className="flex-1 bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-800 text-sm text-center"
+                />
+              </View>
 
               <TouchableOpacity
                 onPress={handleSavePreferences}
                 disabled={updating}
-                className="bg-brand-600 p-4 rounded-xl items-center mt-5 mb-4"
+                className="bg-rose-600 py-3.5 rounded-xl items-center active:bg-rose-700 shadow-xs mb-4"
               >
                 {updating ? (
                   <ActivityIndicator size="small" color="#ffffff" />
                 ) : (
-                  <Text className="text-white font-bold">Apply Preferences</Text>
+                  <Text className="text-white font-bold text-sm">Update Preferences</Text>
                 )}
               </TouchableOpacity>
             </ScrollView>
