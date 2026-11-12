@@ -128,16 +128,16 @@ export const AuthScreen: React.FC = () => {
         className="bg-black/25"
       />
 
-      {/* Main Content Area: Logo + Let's Begin Button */}
-      <View className="flex-1 justify-end px-6 pb-12">
-        {/* Brand Logo & Name directly above the button */}
-        <View className="items-center mb-6">
-          <View className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-rose-600 via-pink-500 to-amber-400 p-0.5 shadow-xl shadow-rose-950/50 mb-3">
+      {/* Main Content Area: Centered Logo + Brand Name & Let's Begin Button */}
+      <View className="flex-1 items-center justify-center px-6">
+        {/* Brand Logo & Name side by side */}
+        <View className="flex-row items-center justify-center gap-3 mb-8">
+          <View className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-rose-600 via-pink-500 to-amber-400 p-0.5 shadow-xl shadow-rose-950/50">
             <View className="w-full h-full bg-white rounded-[14px] items-center justify-center">
-              <Heart size={32} color="#e11d48" fill="#e11d48" />
+              <Heart size={24} color="#e11d48" fill="#e11d48" />
             </View>
           </View>
-          <Text className="text-3xl font-extrabold tracking-tight text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]">
+          <Text className="text-4xl font-extrabold tracking-tight text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]">
             Ever<Text className="text-rose-500">Pride</Text>
           </Text>
         </View>
@@ -145,7 +145,7 @@ export const AuthScreen: React.FC = () => {
         {/* Let's Begin Action Button */}
         <TouchableOpacity
           onPress={openAuthModal}
-          className="w-full py-4 rounded-2xl bg-rose-600 active:bg-rose-700 shadow-xl shadow-rose-950/40 flex-row items-center justify-center gap-2"
+          className="w-full max-w-xs py-4 rounded-2xl bg-rose-600 active:bg-rose-700 shadow-xl shadow-rose-950/40 flex-row items-center justify-center gap-2"
         >
           <Text className="text-white font-bold text-base">Let's Begin</Text>
           <ArrowRight size={18} color="#ffffff" />
