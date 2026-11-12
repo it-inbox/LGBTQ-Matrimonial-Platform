@@ -24,6 +24,7 @@ import {
   Lock,
   Search,
   Send,
+  ChevronRight,
 } from "lucide-react-native";
 
 export const DiscoverScreen: React.FC<{ onOpenOnboarding?: () => void }> = ({
@@ -211,14 +212,14 @@ export const DiscoverScreen: React.FC<{ onOpenOnboarding?: () => void }> = ({
           </View>
 
           {/* Right Details Container */}
-          <View className="flex-1 p-3.5 justify-between">
+          <View className="p-3.5 flex-1 min-w-0 justify-between">
             <View>
               {/* Active Today status */}
               <Text className="text-slate-500 text-[11px] font-semibold mb-1">
                 Active Today
               </Text>
 
-              {/* Name & Age */}
+              {/* Name & Age with Web Typography */}
               <Text
                 numberOfLines={1}
                 className="text-base font-bold text-slate-900 tracking-tight"
@@ -337,7 +338,7 @@ export const DiscoverScreen: React.FC<{ onOpenOnboarding?: () => void }> = ({
   if (isLoading) {
     return (
       <View className="flex-1 items-center justify-center bg-slate-50">
-        <ActivityIndicator size="large" color="#f43f5e" />
+        <ActivityIndicator size="large" color="#e11d48" />
         <Text className="text-slate-500 mt-4 font-medium text-sm">
           Loading EverPride matches...
         </Text>
@@ -354,7 +355,7 @@ export const DiscoverScreen: React.FC<{ onOpenOnboarding?: () => void }> = ({
     return (
       <View className="flex-1 items-center justify-center bg-slate-50 px-6">
         <View className="w-16 h-16 rounded-full bg-rose-100 items-center justify-center mb-4 border border-rose-200">
-          <AlertCircle size={32} color="#f43f5e" />
+          <AlertCircle size={32} color="#e11d48" />
         </View>
         <Text className="text-slate-900 text-xl font-bold text-center">
           {isProfileIncomplete
@@ -397,10 +398,10 @@ export const DiscoverScreen: React.FC<{ onOpenOnboarding?: () => void }> = ({
       {/* Header Search & Quick Filter Bar */}
       <View className="bg-white border-b border-slate-200/90 px-4 pt-3 pb-3">
         {/* Search input with button */}
-        <View className="flex-row items-center bg-slate-100 rounded-xl px-3 py-2 border border-slate-200">
+        <View className="flex-row items-center bg-slate-50 rounded-xl px-3 py-2 border border-slate-200">
           <Search size={15} color="#94a3b8" />
           <TextInput
-            placeholder="Search by Name, City, State, Religion..."
+            placeholder="Search by Name, City, State, Country, Nationality, Religi"
             placeholderTextColor="#94a3b8"
             value={searchInput}
             onChangeText={setSearchInput}
@@ -452,12 +453,14 @@ export const DiscoverScreen: React.FC<{ onOpenOnboarding?: () => void }> = ({
         </ScrollView>
       </View>
 
-      {/* Scrollable Profiles Feed */}
+      {/* Scrollable Profiles Feed with Web Parity Scrollbar */}
       <FlatList
         data={matches}
         keyExtractor={(item) => String(item.id || item.userId)}
         renderItem={renderProfileCard}
         className="flex-1"
+        showsVerticalScrollIndicator={true}
+        indicatorStyle="black"
         contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
         refreshControl={
           <RefreshControl
@@ -465,8 +468,8 @@ export const DiscoverScreen: React.FC<{ onOpenOnboarding?: () => void }> = ({
             onRefresh={() => {
               refetch();
             }}
-            tintColor="#f43f5e"
-            colors={["#f43f5e"]}
+            tintColor="#e11d48"
+            colors={["#e11d48"]}
           />
         }
         ListEmptyComponent={

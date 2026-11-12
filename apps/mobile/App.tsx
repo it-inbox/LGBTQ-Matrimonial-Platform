@@ -49,9 +49,9 @@ function MainContent() {
 
   if (isLoading) {
     return (
-      <View className="flex-1 items-center justify-center bg-slate-950">
-        <ActivityIndicator size="large" color="#f43f5e" />
-        <Text className="text-slate-400 mt-4 text-sm font-medium">
+      <View className="flex-1 items-center justify-center bg-slate-50">
+        <ActivityIndicator size="large" color="#e11d48" />
+        <Text className="text-slate-500 mt-4 text-sm font-medium">
           Loading EverPride...
         </Text>
       </View>
@@ -77,7 +77,7 @@ function MainContent() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-slate-950">
+    <SafeAreaView className="flex-1 bg-slate-50">
       {/* Screen view based on active tab */}
       <View className="flex-1">
         {activeTab === "discover" && (
@@ -92,21 +92,21 @@ function MainContent() {
         {activeTab === "profile" && <ProfileScreen />}
       </View>
 
-      {/* Bottom Navigation Bar */}
-      <View className="flex-row items-center justify-around py-3 bg-slate-900 border-t border-slate-800">
+      {/* Bottom Navigation Bar with Web Parity Styling */}
+      <View className="flex-row items-center justify-around py-3 bg-white border-t border-slate-200/90 shadow-sm">
         <TouchableOpacity
           onPress={() => setActiveTab("discover")}
           className="items-center"
         >
           <Sparkles
             size={22}
-            color={activeTab === "discover" ? "#f43f5e" : "#64748b"}
+            color={activeTab === "discover" ? "#e11d48" : "#94a3b8"}
           />
           <Text
-            className={`text-xs mt-1 ${
+            className={`text-xs mt-1 font-medium ${
               activeTab === "discover"
-                ? "text-brand-500 font-bold"
-                : "text-slate-400"
+                ? "text-rose-600 font-bold"
+                : "text-slate-500"
             }`}
           >
             Discover
@@ -119,13 +119,13 @@ function MainContent() {
         >
           <Heart
             size={22}
-            color={activeTab === "matches" ? "#f43f5e" : "#64748b"}
+            color={activeTab === "matches" ? "#e11d48" : "#94a3b8"}
           />
           <Text
-            className={`text-xs mt-1 ${
+            className={`text-xs mt-1 font-medium ${
               activeTab === "matches"
-                ? "text-brand-500 font-bold"
-                : "text-slate-400"
+                ? "text-rose-600 font-bold"
+                : "text-slate-500"
             }`}
           >
             Matches
@@ -138,13 +138,13 @@ function MainContent() {
         >
           <MessageSquare
             size={22}
-            color={activeTab === "messages" ? "#f43f5e" : "#64748b"}
+            color={activeTab === "messages" ? "#e11d48" : "#94a3b8"}
           />
           <Text
-            className={`text-xs mt-1 ${
+            className={`text-xs mt-1 font-medium ${
               activeTab === "messages"
-                ? "text-brand-500 font-bold"
-                : "text-slate-400"
+                ? "text-rose-600 font-bold"
+                : "text-slate-500"
             }`}
           >
             Messages
@@ -157,13 +157,13 @@ function MainContent() {
         >
           <User
             size={22}
-            color={activeTab === "profile" ? "#f43f5e" : "#64748b"}
+            color={activeTab === "profile" ? "#e11d48" : "#94a3b8"}
           />
           <Text
-            className={`text-xs mt-1 ${
+            className={`text-xs mt-1 font-medium ${
               activeTab === "profile"
-                ? "text-brand-500 font-bold"
-                : "text-slate-400"
+                ? "text-rose-600 font-bold"
+                : "text-slate-500"
             }`}
           >
             Profile
