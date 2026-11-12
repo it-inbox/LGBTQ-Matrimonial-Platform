@@ -53,3 +53,4 @@ export const getOutnessBadgeConfig = (status?: string | null) => {
       return THEME_COLORS.badges.openlyOut;
   }
 };
+

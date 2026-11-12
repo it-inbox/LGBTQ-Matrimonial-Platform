@@ -259,14 +259,12 @@ export const MatchesScreen: React.FC<{ onNavigateToChat?: (partnerId: string) =>
       <View className="flex-row bg-slate-100 rounded-2xl p-1 mb-4 border border-slate-200">
         <TouchableOpacity
           onPress={() => setActiveTab("received")}
-          className={`flex-1 py-2.5 rounded-xl items-center ${
-            activeTab === "received" ? "bg-rose-600 shadow-xs" : ""
-          }`}
+          className={`flex-1 py-2.5 rounded-xl items-center ${activeTab === "received" ? "bg-rose-600 shadow-xs" : ""
+            }`}
         >
           <Text
-            className={`text-xs font-bold ${
-              activeTab === "received" ? "text-white" : "text-slate-600"
-            }`}
+            className={`text-xs font-bold ${activeTab === "received" ? "text-white" : "text-slate-600"
+              }`}
           >
             Received
           </Text>
@@ -274,14 +272,12 @@ export const MatchesScreen: React.FC<{ onNavigateToChat?: (partnerId: string) =>
 
         <TouchableOpacity
           onPress={() => setActiveTab("accepted")}
-          className={`flex-1 py-2.5 rounded-xl items-center ${
-            activeTab === "accepted" ? "bg-rose-600 shadow-xs" : ""
-          }`}
+          className={`flex-1 py-2.5 rounded-xl items-center ${activeTab === "accepted" ? "bg-rose-600 shadow-xs" : ""
+            }`}
         >
           <Text
-            className={`text-xs font-bold ${
-              activeTab === "accepted" ? "text-white" : "text-slate-600"
-            }`}
+            className={`text-xs font-bold ${activeTab === "accepted" ? "text-white" : "text-slate-600"
+              }`}
           >
             Matches
           </Text>
@@ -289,14 +285,12 @@ export const MatchesScreen: React.FC<{ onNavigateToChat?: (partnerId: string) =>
 
         <TouchableOpacity
           onPress={() => setActiveTab("sent")}
-          className={`flex-1 py-2.5 rounded-xl items-center ${
-            activeTab === "sent" ? "bg-rose-600 shadow-xs" : ""
-          }`}
+          className={`flex-1 py-2.5 rounded-xl items-center ${activeTab === "sent" ? "bg-rose-600 shadow-xs" : ""
+            }`}
         >
           <Text
-            className={`text-xs font-bold ${
-              activeTab === "sent" ? "text-white" : "text-slate-600"
-            }`}
+            className={`text-xs font-bold ${activeTab === "sent" ? "text-white" : "text-slate-600"
+              }`}
           >
             Sent
           </Text>
@@ -314,16 +308,16 @@ export const MatchesScreen: React.FC<{ onNavigateToChat?: (partnerId: string) =>
             activeTab === "received"
               ? receivedInterests
               : activeTab === "accepted"
-              ? acceptedMatches
-              : sentInterests
+                ? acceptedMatches
+                : sentInterests
           }
           keyExtractor={(item) => item.id || String(Math.random())}
           renderItem={
             activeTab === "received"
               ? renderReceivedItem
               : activeTab === "accepted"
-              ? renderAcceptedItem
-              : renderSentItem
+                ? renderAcceptedItem
+                : renderSentItem
           }
           showsVerticalScrollIndicator={true}
           indicatorStyle="black"
@@ -343,15 +337,15 @@ export const MatchesScreen: React.FC<{ onNavigateToChat?: (partnerId: string) =>
                 {activeTab === "received"
                   ? "No received interests yet"
                   : activeTab === "accepted"
-                  ? "No mutual matches yet"
-                  : "No sent interests yet"}
+                    ? "No mutual matches yet"
+                    : "No sent interests yet"}
               </Text>
               <Text className="text-slate-500 text-xs text-center mt-1 max-w-xs leading-4">
                 {activeTab === "received"
                   ? "When members express interest in your profile, they will appear here!"
                   : activeTab === "accepted"
-                  ? "When both members send interest, conversations unlock here!"
-                  : "Explore the Discover tab and send interests to connect."}
+                    ? "When both members send interest, conversations unlock here!"
+                    : "Explore the Discover tab and send interests to connect."}
               </Text>
             </View>
           }
