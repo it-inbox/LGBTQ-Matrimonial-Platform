@@ -268,7 +268,7 @@ export const LoginModal: React.FC = () => {
                   onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ""))}
                   placeholder="Enter 6-digit code"
                   autoFocus
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-center text-lg font-mono tracking-widest text-slate-900 focus:outline-none focus:border-brand-600"
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-center text-sm font-medium text-slate-900 placeholder:text-slate-400 placeholder:font-normal focus:outline-none focus:border-brand-600 focus:ring-1 focus:ring-brand-600/30"
                 />
               </div>
 
