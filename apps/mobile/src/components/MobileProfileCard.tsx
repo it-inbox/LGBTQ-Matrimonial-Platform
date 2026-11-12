@@ -12,26 +12,36 @@ import {
   CheckCircle2,
   XCircle,
   RotateCcw,
+  MessageCircle,
+  Sparkles,
 } from "lucide-react-native";
 
 export interface MobileProfileCardProps {
   item: any;
-  isReceived: boolean;
+  isReceived?: boolean;
   onAccept?: () => void;
   onDecline?: () => void;
   onUnsend?: () => void;
+  onChat?: () => void;
   isResponding?: boolean;
 }
 
 export const MobileProfileCard: React.FC<MobileProfileCardProps> = ({
   item,
-  isReceived,
+  isReceived = false,
   onAccept,
   onDecline,
   onUnsend,
+  onChat,
   isResponding = false,
 }) => {
-  const partnerUser = (isReceived ? item.sender : item.receiver) || {};
+  // Resolve partnerUser from either accepted matches format or interest format
+  const partnerUser =
+    item.user ||
+    item.targetUser ||
+    (isReceived ? item.sender : item.receiver) ||
+    item.partner ||
+    {};
   const profile = partnerUser.profile || partnerUser || {};
 
   const calculateAge = (dobString?: string | Date | null) => {
@@ -52,11 +62,12 @@ export const MobileProfileCard: React.FC<MobileProfileCardProps> = ({
   const isBlurred = primaryPhoto?.isBlurred ?? false;
 
   const isPending = item.status === "PENDING";
-  const isAccepted = item.status === "ACCEPTED";
+  const isAccepted = item.status === "ACCEPTED" || !!onChat;
   const isDeclined = item.status === "DECLINED";
 
-  const formattedDate = item.createdAt
-    ? new Date(item.createdAt).toLocaleDateString("en-GB")
+  const rawDate = item.matchedAt || item.createdAt || item.updatedAt;
+  const formattedDate = rawDate
+    ? new Date(rawDate).toLocaleDateString("en-GB")
     : null;
 
   // Format height into ft in
@@ -121,19 +132,25 @@ export const MobileProfileCard: React.FC<MobileProfileCardProps> = ({
             {/* Header: Date + Status Badge */}
             <View className="flex-row items-center justify-between mb-1 gap-1">
               <Text className="text-[11px] font-medium text-slate-500 flex-1" numberOfLines={1}>
-                {isReceived ? "Received on " : "Sent on "}
+                {onChat
+                  ? "Connected on "
+                  : isReceived
+                  ? "Received on "
+                  : "Sent on "}
                 {formattedDate}
               </Text>
               <View
                 className={`px-2 py-0.5 rounded-full flex-row items-center gap-1 ${
-                  isAccepted
+                  onChat || isAccepted
                     ? "bg-emerald-50 border border-emerald-200"
                     : isDeclined
                     ? "bg-rose-50 border border-rose-200"
                     : "bg-amber-50 border border-amber-200"
                 }`}
               >
-                {isAccepted ? (
+                {onChat ? (
+                  <Sparkles size={10} color="#059669" />
+                ) : isAccepted ? (
                   <CheckCircle2 size={10} color="#059669" />
                 ) : isDeclined ? (
                   <XCircle size={10} color="#e11d48" />
@@ -142,14 +159,16 @@ export const MobileProfileCard: React.FC<MobileProfileCardProps> = ({
                 )}
                 <Text
                   className={`text-[10px] font-bold ${
-                    isAccepted
+                    onChat
+                      ? "text-emerald-700"
+                      : isAccepted
                       ? "text-emerald-700"
                       : isDeclined
                       ? "text-rose-600"
                       : "text-amber-700"
                   }`}
                 >
-                  {isAccepted ? "Accepted" : isDeclined ? "Declined" : "Pending"}
+                  {onChat ? "Matched" : isAccepted ? "Accepted" : isDeclined ? "Declined" : "Pending"}
                 </Text>
               </View>
             </View>
@@ -234,7 +253,7 @@ export const MobileProfileCard: React.FC<MobileProfileCardProps> = ({
       )}
 
       {/* Bottom Actions for Sent items */}
-      {!isReceived && (
+      {!isReceived && !onChat && (
         <View className="border-t border-slate-100 px-4 py-2.5 bg-slate-50/50 flex-row items-center justify-between">
           <Text className="text-xs text-slate-500 font-medium flex-1 mr-2" numberOfLines={1}>
             {isAccepted
@@ -254,6 +273,23 @@ export const MobileProfileCard: React.FC<MobileProfileCardProps> = ({
               <Text className="text-xs font-bold text-rose-600">Unsend</Text>
             </TouchableOpacity>
           )}
+        </View>
+      )}
+
+      {/* Bottom Actions for Mutual Matches (Chat Now) */}
+      {onChat && (
+        <View className="border-t border-rose-100 px-4 py-2 bg-rose-50/30 flex-row items-center justify-between">
+          <Text className="text-xs text-slate-600 font-semibold flex-1 mr-2" numberOfLines={1}>
+            Mutual Match • Connected
+          </Text>
+          <TouchableOpacity
+            onPress={onChat}
+            className="px-3.5 py-1.5 rounded-xl bg-rose-600 flex-row items-center gap-1.5 shadow-xs"
+            activeOpacity={0.7}
+          >
+            <MessageCircle size={14} color="#ffffff" />
+            <Text className="text-xs font-bold text-white">Chat Now</Text>
+          </TouchableOpacity>
         </View>
       )}
     </View>
