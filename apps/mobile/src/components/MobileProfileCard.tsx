@@ -11,6 +11,7 @@ import {
   Clock,
   CheckCircle2,
   XCircle,
+  RotateCcw,
 } from "lucide-react-native";
 
 export interface MobileProfileCardProps {
@@ -18,6 +19,7 @@ export interface MobileProfileCardProps {
   isReceived: boolean;
   onAccept?: () => void;
   onDecline?: () => void;
+  onUnsend?: () => void;
   isResponding?: boolean;
 }
 
@@ -26,6 +28,7 @@ export const MobileProfileCard: React.FC<MobileProfileCardProps> = ({
   isReceived,
   onAccept,
   onDecline,
+  onUnsend,
   isResponding = false,
 }) => {
   const partnerUser = (isReceived ? item.sender : item.receiver) || {};
@@ -229,6 +232,31 @@ export const MobileProfileCard: React.FC<MobileProfileCardProps> = ({
           </TouchableOpacity>
         </View>
       )}
+
+      {/* Bottom Actions for Sent items */}
+      {!isReceived && (
+        <View className="border-t border-slate-100 px-4 py-2.5 bg-slate-50/50 flex-row items-center justify-between">
+          <Text className="text-xs text-slate-500 font-medium flex-1 mr-2" numberOfLines={1}>
+            {isAccepted
+              ? "Member accepted your interest! Connected."
+              : isDeclined
+              ? "Member declined this match interest."
+              : "Waiting for member to respond."}
+          </Text>
+          {isPending && onUnsend && (
+            <TouchableOpacity
+              onPress={onUnsend}
+              disabled={isResponding}
+              className="px-3 py-1 rounded-lg border border-rose-200 bg-white flex-row items-center gap-1"
+              activeOpacity={0.7}
+            >
+              <RotateCcw size={12} color="#e11d48" />
+              <Text className="text-xs font-bold text-rose-600">Unsend</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
     </View>
   );
 };
+

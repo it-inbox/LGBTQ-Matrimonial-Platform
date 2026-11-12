@@ -55,16 +55,36 @@ export const InterestsScreen: React.FC<{ onNavigateToChat?: (partnerId: string) 
   const respondMutation = useMutation({
     mutationFn: async ({
       interestId,
-      action,
+      status,
     }: {
       interestId: string;
-      action: "ACCEPT" | "DECLINE";
+      status: "ACCEPTED" | "DECLINED";
     }) => {
-      return api.post(`/matches/interests/${interestId}/respond`, { action });
+      return api.post(`/matches/interest/${interestId}/respond`, { status });
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
+      queryClient.setQueryData(QUERY_KEYS.receivedInterests, (old: any[]) => {
+        if (!Array.isArray(old)) return old;
+        return old.map((item) =>
+          item.id === variables.interestId ? { ...item, status: variables.status } : item
+        );
+      });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.receivedInterests });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.matchesRecent });
+    },
+  });
+
+  // Unsend interest
+  const unsendMutation = useMutation({
+    mutationFn: async (interestId: string) => {
+      return api.post(`/matches/interest/${interestId}/unsend`);
+    },
+    onSuccess: (_, unsentId) => {
+      queryClient.setQueryData(QUERY_KEYS.sentInterests, (old: any[]) => {
+        if (!Array.isArray(old)) return old;
+        return old.filter((item) => item.id !== unsentId);
+      });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.sentInterests });
     },
   });
 
@@ -196,12 +216,13 @@ export const InterestsScreen: React.FC<{ onNavigateToChat?: (partnerId: string) 
               item={item}
               isReceived={activeTab === "received"}
               onAccept={() =>
-                respondMutation.mutate({ interestId: item.id, action: "ACCEPT" })
+                respondMutation.mutate({ interestId: item.id, status: "ACCEPTED" })
               }
               onDecline={() =>
-                respondMutation.mutate({ interestId: item.id, action: "DECLINE" })
+                respondMutation.mutate({ interestId: item.id, status: "DECLINED" })
               }
-              isResponding={respondMutation.isPending}
+              onUnsend={() => unsendMutation.mutate(item.id)}
+              isResponding={respondMutation.isPending || unsendMutation.isPending}
             />
           )}
           ListEmptyComponent={renderEmptyState}
