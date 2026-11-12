@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -26,6 +26,15 @@ export const AuthScreen: React.FC = () => {
   const [busy, setBusy] = useState(false);
   const [countryModalVisible, setCountryModalVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Clear inputs when component mounts / user lands on AuthScreen after signout
+  useEffect(() => {
+    setPhoneNumber("");
+    setOtp("");
+    setOtpSent(false);
+    setErrorMsg(null);
+    setBusy(false);
+  }, []);
 
   const filteredCountries = searchQuery.trim()
     ? ALL_COUNTRIES.filter(

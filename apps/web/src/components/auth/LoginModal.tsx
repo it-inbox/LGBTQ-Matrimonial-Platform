@@ -38,6 +38,18 @@ export const LoginModal: React.FC = () => {
       )
     : ALL_COUNTRIES;
 
+  // Whenever modal opens or is opened again, reset inputs if not currently active
+  useEffect(() => {
+    if (isLoginModalOpen) {
+      setPhoneNumber("");
+      setOtpCode("");
+      setOtpSent(false);
+      setCooldown(0);
+      setError(null);
+      setLoading(false);
+    }
+  }, [isLoginModalOpen]);
+
   // Cooldown countdown timer
   React.useEffect(() => {
     if (cooldown <= 0) return;
