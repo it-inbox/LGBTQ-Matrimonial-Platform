@@ -117,6 +117,13 @@ export const MessagesScreen: React.FC<{ initialPartnerUserId?: string | null }> 
 
     const isOnline = !!partner.isOnline;
     const initial = (displayName || "?")[0]?.toUpperCase();
+    const initials = (displayName || "Member")
+      .trim()
+      .split(/\s+/)
+      .map((w: string) => w[0])
+      .slice(0, 2)
+      .join("")
+      .toUpperCase();
 
     return {
       partner,
@@ -125,6 +132,7 @@ export const MessagesScreen: React.FC<{ initialPartnerUserId?: string | null }> 
       photoUrl,
       isOnline,
       initial,
+      initials,
     };
   };
 
@@ -169,16 +177,22 @@ export const MessagesScreen: React.FC<{ initialPartnerUserId?: string | null }> 
             <ArrowLeft size={20} color="#334155" />
           </TouchableOpacity>
 
-          <View className="relative">
+          <View style={{ width: 44, height: 44 }} className="relative shrink-0">
             {photoUrl ? (
               <Image
                 source={{ uri: photoUrl }}
-                className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200"
+                style={{ width: 44, height: 44, borderRadius: 22 }}
+                className="bg-slate-100 border border-slate-200"
                 contentFit="cover"
               />
             ) : (
-              <View className="w-10 h-10 rounded-full bg-rose-100 items-center justify-center border border-rose-200">
-                <Text className="text-rose-600 font-extrabold text-sm">{initial}</Text>
+              <View
+                style={{ width: 44, height: 44, borderRadius: 22 }}
+                className="bg-white border-2 border-rose-500 items-center justify-center shadow-xs"
+              >
+                <Text className="text-rose-600 font-bold text-xs tracking-wider">
+                  {selectedConversation ? getPartnerInfo(selectedConversation).initials : initial}
+                </Text>
               </View>
             )}
             {isOnline && (
@@ -384,7 +398,7 @@ export const MessagesScreen: React.FC<{ initialPartnerUserId?: string | null }> 
           showsVerticalScrollIndicator={true}
           indicatorStyle="black"
           renderItem={({ item }) => {
-            const { displayName, photoUrl, isOnline, initial } = getPartnerInfo(item);
+            const { displayName, photoUrl, isOnline, initials } = getPartnerInfo(item);
             const lastMsg = item.lastMessage;
             const hasUnread =
               (item.unreadCount || 0) > 0 || (lastMsg && !lastMsg.isRead && !lastMsg.isOwn);
@@ -395,17 +409,23 @@ export const MessagesScreen: React.FC<{ initialPartnerUserId?: string | null }> 
                 className="flex-row items-center p-4 bg-white border-b border-slate-100 active:bg-slate-50"
                 activeOpacity={0.7}
               >
-                {/* Real User Picture with Fallback Initial */}
-                <View className="relative">
+                {/* Real User Picture with Fallback Circle Initial */}
+                <View style={{ width: 48, height: 48 }} className="relative shrink-0">
                   {photoUrl ? (
                     <Image
                       source={{ uri: photoUrl }}
-                      className="w-13 h-13 rounded-full bg-slate-100 border border-slate-200"
+                      style={{ width: 48, height: 48, borderRadius: 24 }}
+                      className="bg-slate-100 border border-slate-200"
                       contentFit="cover"
                     />
                   ) : (
-                    <View className="w-13 h-13 rounded-full bg-rose-100 items-center justify-center border border-rose-200">
-                      <Text className="text-rose-600 font-extrabold text-base">{initial}</Text>
+                    <View
+                      style={{ width: 48, height: 48, borderRadius: 24 }}
+                      className="bg-white border-2 border-rose-500 items-center justify-center shadow-xs"
+                    >
+                      <Text className="text-rose-600 font-bold text-sm tracking-wider">
+                        {initials}
+                      </Text>
                     </View>
                   )}
                   {isOnline && (
