@@ -280,12 +280,32 @@ export const MessagesScreen: React.FC<{
                       {item.content}
                     </Text>
                   </View>
-                  <Text className="text-[10px] text-slate-400 mt-1 px-1">
-                    {new Date(item.createdAt).toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </Text>
+                  <View
+                    className={`flex-row items-center gap-1 mt-1 px-1 ${
+                      isMine ? "justify-end" : "justify-start"
+                    }`}
+                  >
+                    {item.isEdited && (
+                      <Text className="text-[10px] text-slate-400 italic">
+                        (edited)
+                      </Text>
+                    )}
+                    <Text className="text-[10px] text-slate-400">
+                      {new Date(item.createdAt).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </Text>
+                    {isMine && !item.isDeleted && (
+                      <View className="ml-0.5">
+                        {item.isRead ? (
+                          <CheckCheck size={14} color="#e11d48" />
+                        ) : (
+                          <Check size={14} color="#94a3b8" />
+                        )}
+                      </View>
+                    )}
+                  </View>
                 </View>
               );
             }}
