@@ -1263,54 +1263,61 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
               </View>
             </View>
 
-            {/* Drinking & Smoking */}
-            <View className="flex-row gap-3 mt-4">
-              <View className="flex-1">
-                <Text className="text-slate-700 text-xs font-bold uppercase tracking-wider mb-1.5">
-                  DRINKING
-                </Text>
-                <View className="space-y-1.5">
-                  {DRINKING_OPTIONS.map((dr) => {
-                    const sel = formData.drinking === dr.id;
-                    return (
-                      <TouchableOpacity
-                        key={dr.id}
-                        onPress={() => handleChange("drinking", dr.id)}
-                        className={`p-2 rounded-lg border ${
-                          sel ? "bg-rose-600 border-rose-600" : "bg-slate-50 border-slate-200"
+            {/* Drinking Habits */}
+            <View className="mt-4">
+              <Text className="text-slate-700 text-xs font-bold uppercase tracking-wider mb-2">
+                DRINKING
+              </Text>
+              <View className="flex-row flex-wrap gap-2">
+                {DRINKING_OPTIONS.map((dr) => {
+                  const sel = formData.drinking === dr.id;
+                  return (
+                    <TouchableOpacity
+                      key={dr.id}
+                      onPress={() => handleChange("drinking", dr.id)}
+                      className={`px-3.5 py-2 rounded-xl border ${
+                        sel ? "bg-rose-600 border-rose-600" : "bg-slate-50 border-slate-200"
+                      }`}
+                    >
+                      <Text
+                        className={`text-xs ${
+                          sel ? "text-white font-bold" : "text-slate-700 font-medium"
                         }`}
                       >
-                        <Text className={`text-[11px] ${sel ? "text-white font-bold" : "text-slate-700"}`}>
-                          {dr.label}
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
+                        {dr.label}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
+            </View>
 
-              <View className="flex-1">
-                <Text className="text-slate-700 text-xs font-bold uppercase tracking-wider mb-1.5">
-                  SMOKING
-                </Text>
-                <View className="space-y-1.5">
-                  {SMOKING_OPTIONS.map((sm) => {
-                    const sel = formData.smoking === sm.id;
-                    return (
-                      <TouchableOpacity
-                        key={sm.id}
-                        onPress={() => handleChange("smoking", sm.id)}
-                        className={`p-2 rounded-lg border ${
-                          sel ? "bg-rose-600 border-rose-600" : "bg-slate-50 border-slate-200"
+            {/* Smoking Habits */}
+            <View className="mt-4">
+              <Text className="text-slate-700 text-xs font-bold uppercase tracking-wider mb-2">
+                SMOKING
+              </Text>
+              <View className="flex-row flex-wrap gap-2">
+                {SMOKING_OPTIONS.map((sm) => {
+                  const sel = formData.smoking === sm.id;
+                  return (
+                    <TouchableOpacity
+                      key={sm.id}
+                      onPress={() => handleChange("smoking", sm.id)}
+                      className={`px-3.5 py-2 rounded-xl border ${
+                        sel ? "bg-rose-600 border-rose-600" : "bg-slate-50 border-slate-200"
+                      }`}
+                    >
+                      <Text
+                        className={`text-xs ${
+                          sel ? "text-white font-bold" : "text-slate-700 font-medium"
                         }`}
                       >
-                        <Text className={`text-[11px] ${sel ? "text-white font-bold" : "text-slate-700"}`}>
-                          {sm.label}
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
+                        {sm.label}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
             </View>
 
