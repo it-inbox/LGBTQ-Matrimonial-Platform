@@ -128,28 +128,32 @@ export const AuthScreen: React.FC = () => {
         className="bg-black/25"
       />
 
-      {/* Main Content Area: Centered Logo + Brand Name & Let's Begin Button */}
-      <View className="flex-1 items-center justify-center px-6">
-        {/* Brand Logo & Name side by side */}
-        <View className="flex-row items-center justify-center gap-3 mb-8">
-          <View className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-rose-600 via-pink-500 to-amber-400 p-0.5 shadow-xl shadow-rose-950/50">
-            <View className="w-full h-full bg-white rounded-[14px] items-center justify-center">
-              <Heart size={24} color="#e11d48" fill="#e11d48" />
+      {/* Main Content Area */}
+      <View className="flex-1 px-6">
+        {/* Top 2/3 Area with Logo & Brand Name Centered */}
+        <View style={{ flex: 2 }} className="items-center justify-center">
+          <View className="flex-row items-center justify-center gap-3">
+            <View className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-rose-600 via-pink-500 to-amber-400 p-0.5 shadow-xl shadow-rose-950/50">
+              <View className="w-full h-full bg-white rounded-[14px] items-center justify-center">
+                <Heart size={24} color="#e11d48" fill="#e11d48" />
+              </View>
             </View>
+            <Text className="text-4xl font-extrabold tracking-tight text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]">
+              Ever<Text className="text-rose-500">Pride</Text>
+            </Text>
           </View>
-          <Text className="text-4xl font-extrabold tracking-tight text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]">
-            Ever<Text className="text-rose-500">Pride</Text>
-          </Text>
         </View>
 
-        {/* Let's Begin Action Button */}
-        <TouchableOpacity
-          onPress={openAuthModal}
-          className="w-full max-w-xs py-4 rounded-2xl bg-rose-600 active:bg-rose-700 shadow-xl shadow-rose-950/40 flex-row items-center justify-center gap-2"
-        >
-          <Text className="text-white font-bold text-base">Let's Begin</Text>
-          <ArrowRight size={18} color="#ffffff" />
-        </TouchableOpacity>
+        {/* Lower 1/3 Area with "Let's Begin" Button positioned at 2/3 line */}
+        <View style={{ flex: 1 }} className="items-center justify-start pt-4">
+          <TouchableOpacity
+            onPress={openAuthModal}
+            className="w-full max-w-xs py-4 rounded-2xl bg-rose-600 active:bg-rose-700 shadow-xl shadow-rose-950/40 flex-row items-center justify-center gap-2"
+          >
+            <Text className="text-white font-bold text-base">Let's Begin</Text>
+            <ArrowRight size={18} color="#ffffff" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* ─────────────────────────────────────────────────────────────
