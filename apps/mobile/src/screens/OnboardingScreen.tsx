@@ -156,7 +156,7 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   // Searchable modal pickers
-  const [activeModal, setActiveModal] = useState<"nationality" | "state" | "city" | "religion" | null>(null);
+  const [activeModal, setActiveModal] = useState<"nationality" | "state" | "city" | "religion" | "language" | null>(null);
   const [searchFilter, setSearchFilter] = useState("");
 
   const stepTitles = [
@@ -369,11 +369,12 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
       }
     }
 
-    // Step 5: Education
+    // Step 5: Education (optional / skippable - only validate non-empty rows)
     if (step === 5) {
       for (let i = 0; i < formData.educations.length; i++) {
-        if (!formData.educations[i].institution.trim()) {
-          setErrorMsg(`Please enter the institution for qualification #${i + 1}`);
+        const edu = formData.educations[i];
+        if (formData.educations.length > 1 && !edu.institution.trim()) {
+          setErrorMsg(`Please enter the institution for qualification #${i + 1} or remove it.`);
           return false;
         }
       }
@@ -770,42 +771,47 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
               </View>
             </View>
 
-            {/* Languages Spoken (Tag/chip selection matching web without nested scrollbar) */}
+            {/* Languages Spoken (Can select multiple) Dropdown */}
             <View className="mt-4">
-              <View className="flex-row items-center justify-between mb-2">
-                <Text className="text-slate-700 text-xs font-bold uppercase tracking-wider">
-                  Languages Spoken
+              <View className="flex-row items-center justify-between mb-1.5">
+                <Text className="text-slate-700 text-xs font-semibold">
+                  Languages Spoken (Can select multiple)
                 </Text>
-                <Text className="text-rose-600 text-[10px] font-bold">
-                  {formData.languagesSpoken.length} selected
-                </Text>
+                {formData.languagesSpoken.length > 0 && (
+                  <Text className="text-rose-600 text-[10px] font-bold">
+                    {formData.languagesSpoken.length} selected
+                  </Text>
+                )}
               </View>
-              <View className="bg-slate-50/80 p-3 rounded-2xl border border-slate-200">
-                <View className="flex-row flex-wrap gap-2">
-                  {LANGUAGE_OPTIONS.map((lang) => {
-                    const sel = formData.languagesSpoken.includes(lang);
-                    return (
-                      <TouchableOpacity
-                        key={lang}
-                        onPress={() => toggleArrayItem("languagesSpoken", lang)}
-                        className={`px-3 py-1.5 rounded-full border ${
-                          sel
-                            ? "bg-rose-600 border-rose-600 shadow-xs"
-                            : "bg-white border-slate-200"
-                        }`}
-                      >
-                        <Text
-                          className={`text-xs ${
-                            sel ? "text-white font-bold" : "text-slate-700 font-medium"
-                          }`}
-                        >
-                          {lang}
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  })}
+              <TouchableOpacity
+                onPress={() => {
+                  setSearchFilter("");
+                  setActiveModal("language");
+                }}
+                className="bg-slate-50 p-3 rounded-xl border border-slate-200 flex-row items-center justify-between"
+              >
+                <Text className="text-slate-900 text-xs font-medium truncate flex-1 pr-1">
+                  {formData.languagesSpoken.length > 0
+                    ? formData.languagesSpoken.join(", ")
+                    : "Select languages"}
+                </Text>
+                <ChevronDown size={14} color="#64748b" />
+              </TouchableOpacity>
+              {/* Selected Pills under the dropdown for quick removal without scrolling */}
+              {formData.languagesSpoken.length > 0 && (
+                <View className="flex-row flex-wrap gap-1.5 mt-2">
+                  {formData.languagesSpoken.map((lang) => (
+                    <TouchableOpacity
+                      key={lang}
+                      onPress={() => toggleArrayItem("languagesSpoken", lang)}
+                      className="bg-rose-50 border border-rose-200 px-2.5 py-1 rounded-full flex-row items-center"
+                    >
+                      <Text className="text-rose-700 text-[11px] font-semibold mr-1">{lang}</Text>
+                      <X size={12} color="#e11d48" />
+                    </TouchableOpacity>
+                  ))}
                 </View>
-              </View>
+              )}
             </View>
           </View>
         )}
@@ -996,26 +1002,30 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
                   })}
                 </View>
 
-                <Text className="text-slate-600 text-xs font-semibold mb-1">Degree Name</Text>
-                <TextInput
-                  value={edu.degreeName || ""}
-                  onChangeText={(val) => handleUpdateEducation(idx, "degreeName", val)}
-                  className="bg-white text-slate-900 p-2.5 rounded-lg border border-slate-200 text-xs mb-2.5"
-                  placeholder="e.g. B.Tech, MBA, MBBS"
-                  placeholderTextColor="#94a3b8"
-                />
+                {edu.degree !== "High School" && (
+                  <>
+                    <Text className="text-slate-600 text-xs font-semibold mb-1">Degree Name</Text>
+                    <TextInput
+                      value={edu.degreeName || ""}
+                      onChangeText={(val) => handleUpdateEducation(idx, "degreeName", val)}
+                      className="bg-white text-slate-900 p-2.5 rounded-lg border border-slate-200 text-xs mb-2.5"
+                      placeholder="e.g. B.Tech, MBA, MBBS"
+                      placeholderTextColor="#94a3b8"
+                    />
 
-                <Text className="text-slate-600 text-xs font-semibold mb-1">Major / Field</Text>
-                <TextInput
-                  value={edu.major || ""}
-                  onChangeText={(val) => handleUpdateEducation(idx, "major", val)}
-                  className="bg-white text-slate-900 p-2.5 rounded-lg border border-slate-200 text-xs mb-2.5"
-                  placeholder="e.g. Computer Science, Finance"
-                  placeholderTextColor="#94a3b8"
-                />
+                    <Text className="text-slate-600 text-xs font-semibold mb-1">Major / Field</Text>
+                    <TextInput
+                      value={edu.major || ""}
+                      onChangeText={(val) => handleUpdateEducation(idx, "major", val)}
+                      className="bg-white text-slate-900 p-2.5 rounded-lg border border-slate-200 text-xs mb-2.5"
+                      placeholder="e.g. Computer Science, Finance"
+                      placeholderTextColor="#94a3b8"
+                    />
+                  </>
+                )}
 
                 <Text className="text-slate-600 text-xs font-semibold mb-1">
-                  Institution / University <Text className="text-rose-500">*</Text>
+                  Institution / School <Text className="text-rose-500">*</Text>
                 </Text>
                 <TextInput
                   value={edu.institution}
@@ -1477,6 +1487,31 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
                       {formData.religion === r && <Check size={16} color="#e11d48" />}
                     </TouchableOpacity>
                   ))}
+
+              {activeModal === "language" &&
+                LANGUAGE_OPTIONS
+                  .filter((l) => l.toLowerCase().includes(searchFilter.toLowerCase()))
+                  .map((l) => {
+                    const sel = formData.languagesSpoken.includes(l);
+                    return (
+                      <TouchableOpacity
+                        key={l}
+                        onPress={() => toggleArrayItem("languagesSpoken", l)}
+                        className={`p-3 rounded-xl flex-row items-center justify-between ${
+                          sel ? "bg-rose-50 border border-rose-200" : "active:bg-slate-50"
+                        }`}
+                      >
+                        <Text
+                          className={`text-xs ${
+                            sel ? "text-rose-700 font-bold" : "text-slate-800 font-medium"
+                          }`}
+                        >
+                          {l}
+                        </Text>
+                        {sel && <Check size={16} color="#e11d48" />}
+                      </TouchableOpacity>
+                    );
+                  })}
             </ScrollView>
           </View>
         </View>

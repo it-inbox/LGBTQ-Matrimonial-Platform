@@ -44,6 +44,7 @@ import {
   PHOTO_VISIBILITY_OPTIONS,
 } from "@everpride/shared";
 import { SearchableSelect } from "../../components/common/SearchableSelect";
+import { MultiSearchableSelect } from "../../components/common/MultiSearchableSelect";
 import { getStatesForCountry, getCitiesForState } from "../../data/locations";
 
 export interface EducationEntry {
@@ -670,34 +671,15 @@ export const OnboardingWizard: React.FC = () => {
               </div>
             </div>
 
-            {/* Languages Spoken: Top 50 most spoken languages in alphabetical order */}
+            {/* Languages Spoken (Can select multiple) */}
             <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                  Languages Spoken
-                </label>
-                <span className="text-[11px] text-slate-400">
-                  {formData.languagesSpoken.length} selected
-                </span>
-              </div>
-              <div className="flex flex-wrap gap-2 p-1.5 border border-slate-100 rounded-2xl bg-slate-50/50">
-                {LANGUAGE_OPTIONS.map((lang) => {
-                  const selected = formData.languagesSpoken.includes(lang);
-                  return (
-                    <button
-                      type="button"
-                      key={lang}
-                      onClick={() => toggleArrayItem("languagesSpoken", lang)}
-                      className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all cursor-pointer ${selected
-                        ? "bg-brand-600 text-white border-brand-600 shadow-sm"
-                        : "bg-white text-slate-700 border-slate-200 hover:border-slate-300"
-                        }`}
-                    >
-                      {lang}
-                    </button>
-                  );
-                })}
-              </div>
+              <MultiSearchableSelect
+                label="Languages Spoken (Can select multiple)"
+                values={formData.languagesSpoken}
+                options={LANGUAGE_OPTIONS}
+                placeholder="Search & select languages..."
+                onChange={(newLangs) => handleChange("languagesSpoken", newLangs)}
+              />
             </div>
           </div>
         )}
@@ -717,41 +699,55 @@ export const OnboardingWizard: React.FC = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                  Gender Identity <span className="text-rose-500">*</span>
-                </label>
-                <select
-                  value={formData.gender}
-                  onChange={(e) => handleChange("gender", e.target.value)}
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-500"
-                >
-                  <option value="">Select</option>
-                  {GENDER_OPTIONS.map((g) => (
-                    <option key={g.value} value={g.value}>
+            {/* Gender Identity */}
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                Gender Identity <span className="text-rose-500">*</span>
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {GENDER_OPTIONS.map((g) => {
+                  const selected = formData.gender === g.value;
+                  return (
+                    <button
+                      type="button"
+                      key={g.value}
+                      onClick={() => handleChange("gender", g.value)}
+                      className={`px-3.5 py-2 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
+                        selected
+                          ? "bg-brand-600 text-white border-brand-600 shadow-xs"
+                          : "bg-white text-slate-700 border-slate-200 hover:border-slate-300"
+                      }`}
+                    >
                       {g.label}
-                    </option>
-                  ))}
-                </select>
+                    </button>
+                  );
+                })}
               </div>
+            </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                  Sexual Orientation <span className="text-rose-500">*</span>
-                </label>
-                <select
-                  value={formData.orientation}
-                  onChange={(e) => handleChange("orientation", e.target.value)}
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-500"
-                >
-                  <option value="">Select</option>
-                  {ORIENTATION_OPTIONS.map((o) => (
-                    <option key={o.value} value={o.value}>
+            {/* Sexual Orientation */}
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                Sexual Orientation <span className="text-rose-500">*</span>
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {ORIENTATION_OPTIONS.map((o) => {
+                  const selected = formData.orientation === o.value;
+                  return (
+                    <button
+                      type="button"
+                      key={o.value}
+                      onClick={() => handleChange("orientation", o.value)}
+                      className={`px-3.5 py-2 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
+                        selected
+                          ? "bg-brand-600 text-white border-brand-600 shadow-xs"
+                          : "bg-white text-slate-700 border-slate-200 hover:border-slate-300"
+                      }`}
+                    >
                       {o.label}
-                    </option>
-                  ))}
-                </select>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
@@ -770,19 +766,28 @@ export const OnboardingWizard: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
                   Outness Status <span className="text-rose-500">*</span>
                 </label>
-                <select
-                  value={formData.outnessStatus}
-                  onChange={(e) => handleChange("outnessStatus", e.target.value)}
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-500"
-                >
-                  <option value="">Select</option>
-                  <option value="DISCREET_NOT_OUT">Discreet / Not out</option>
-                  <option value="OUT_TO_SELECT_FEW">Out to select few friends</option>
-                  <option value="OUT_TO_ALL">Openly out</option>
-                </select>
+                <div className="flex flex-wrap gap-2">
+                  {OUTNESS_OPTIONS.map((out) => {
+                    const selected = formData.outnessStatus === out.id;
+                    return (
+                      <button
+                        type="button"
+                        key={out.id}
+                        onClick={() => handleChange("outnessStatus", out.id)}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
+                          selected
+                            ? "bg-brand-600 text-white border-brand-600 shadow-xs"
+                            : "bg-white text-slate-700 border-slate-200 hover:border-slate-300"
+                        }`}
+                      >
+                        {out.label}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           </div>
@@ -883,64 +888,75 @@ export const OnboardingWizard: React.FC = () => {
                       )}
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="space-y-3">
                       <div>
-                        <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">
-                          Qualification <span className="text-rose-500">*</span>
+                        <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">
+                          Qualification Level <span className="text-rose-500">*</span>
                         </label>
-                        <select
-                          value={edu.degree}
-                          onChange={(e) => handleUpdateEducation(idx, "degree", e.target.value)}
-                          className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:border-brand-500 font-medium"
-                        >
-                          <option value="Doctorate / Ph.D">Doctorate / Ph.D</option>
-                          <option value="Master's Degree">Master's Degree</option>
-                          <option value="Bachelor's Degree">Bachelor's Degree</option>
-                          <option value="Diploma">Diploma</option>
-                          <option value="High School">High School</option>
-                          <option value="Other">Other</option>
-                        </select>
+                        <div className="flex flex-wrap gap-1.5">
+                          {QUALIFICATION_OPTIONS.map((q) => {
+                            const isSelected = edu.degree === q;
+                            return (
+                              <button
+                                key={q}
+                                type="button"
+                                onClick={() => handleUpdateEducation(idx, "degree", q)}
+                                className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
+                                  isSelected
+                                    ? "bg-brand-600 text-white border-brand-600 shadow-xs"
+                                    : "bg-white text-slate-700 border-slate-200 hover:border-slate-300"
+                                }`}
+                              >
+                                {q}
+                              </button>
+                            );
+                          })}
+                        </div>
                       </div>
 
-                      <div>
-                        <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">
-                          Institute <span className="text-rose-500">*</span>
-                        </label>
-                        <input
-                          type="text"
-                          placeholder="e.g. Stanford University, IIT Delhi"
-                          value={edu.institution}
-                          onChange={(e) => handleUpdateEducation(idx, "institution", e.target.value)}
-                          className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:border-brand-500"
-                        />
-                      </div>
-
-                      {edu.degree !== "High School" && (
-                        <div className="sm:col-span-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className={edu.degree === "High School" ? "sm:col-span-2" : ""}>
                           <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">
-                            Degree <span className="text-rose-500">*</span>
+                            Institution / School <span className="text-rose-500">*</span>
                           </label>
                           <input
                             type="text"
-                            placeholder="e.g. B.Tech, B.Sc, B.Com, MBA, M.Tech, MBBS, Ph.D"
-                            value={edu.degreeName || ""}
-                            onChange={(e) => handleUpdateEducation(idx, "degreeName", e.target.value)}
+                            placeholder="e.g. Stanford University, DPS, St. Xavier's"
+                            value={edu.institution}
+                            onChange={(e) => handleUpdateEducation(idx, "institution", e.target.value)}
                             className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:border-brand-500"
                           />
                         </div>
-                      )}
 
-                      <div className="sm:col-span-2">
-                        <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">
-                          Major / Field of Study (Optional)
-                        </label>
-                        <input
-                          type="text"
-                          placeholder="e.g. Computer Science, Economics, Graphic Design"
-                          value={edu.major || ""}
-                          onChange={(e) => handleUpdateEducation(idx, "major", e.target.value)}
-                          className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:border-brand-500"
-                        />
+                        {edu.degree !== "High School" && (
+                          <div>
+                            <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">
+                              Degree <span className="text-rose-500">*</span>
+                            </label>
+                            <input
+                              type="text"
+                              placeholder="e.g. B.Tech, B.Sc, MBA, MBBS"
+                              value={edu.degreeName || ""}
+                              onChange={(e) => handleUpdateEducation(idx, "degreeName", e.target.value)}
+                              className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:border-brand-500"
+                            />
+                          </div>
+                        )}
+
+                        {edu.degree !== "High School" && (
+                          <div className="sm:col-span-2">
+                            <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">
+                              Major / Field of Study (Optional)
+                            </label>
+                            <input
+                              type="text"
+                              placeholder="e.g. Computer Science, Economics, Graphic Design"
+                              value={edu.major || ""}
+                              onChange={(e) => handleUpdateEducation(idx, "major", e.target.value)}
+                              className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:border-brand-500"
+                            />
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -963,23 +979,30 @@ export const OnboardingWizard: React.FC = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
                   Sector of Work
                 </label>
-                <select
-                  value={formData.sector}
-                  onChange={(e) => handleChange("sector", e.target.value)}
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-500"
-                >
-                  <option value="">Select</option>
-                  {SECTOR_OPTIONS.map((sec) => (
-                    <option key={sec} value={sec}>
-                      {sec}
-                    </option>
-                  ))}
-                </select>
+                <div className="flex flex-wrap gap-2">
+                  {SECTOR_OPTIONS.map((sec) => {
+                    const selected = formData.sector === sec;
+                    return (
+                      <button
+                        type="button"
+                        key={sec}
+                        onClick={() => handleChange("sector", sec)}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
+                          selected
+                            ? "bg-brand-600 text-white border-brand-600 shadow-xs"
+                            : "bg-white text-slate-700 border-slate-200 hover:border-slate-300"
+                        }`}
+                      >
+                        {sec}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
               <div>
@@ -1023,11 +1046,10 @@ export const OnboardingWizard: React.FC = () => {
                   <img
                     src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80"
                     alt="Privacy Demo"
-                    className={`w-full h-full object-cover transition-all duration-500 ease-in-out ${
-                      formData.photoVisibility === "ALL_MEMBERS"
+                    className={`w-full h-full object-cover transition-all duration-500 ease-in-out ${formData.photoVisibility === "ALL_MEMBERS"
                         ? "blur-0 scale-100"
                         : "blur-lg scale-110 brightness-75"
-                    }`}
+                      }`}
                   />
 
                   {formData.photoVisibility !== "ALL_MEMBERS" && (
@@ -1115,20 +1137,18 @@ export const OnboardingWizard: React.FC = () => {
                   <label
                     key={tier.id}
                     onClick={() => handleChange("photoVisibility", tier.id)}
-                    className={`block p-3.5 rounded-2xl border cursor-pointer transition-all ${
-                      isSelected
+                    className={`block p-3.5 rounded-2xl border cursor-pointer transition-all ${isSelected
                         ? "border-brand-600 bg-brand-50/40 shadow-sm"
                         : "border-slate-200 hover:border-slate-300 bg-white"
-                    }`}
+                      }`}
                   >
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-3 min-w-0">
                         <div
-                          className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
-                            isSelected
+                          className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${isSelected
                               ? "bg-brand-600 text-white"
                               : "bg-slate-100 text-slate-600"
-                          }`}
+                            }`}
                         >
                           <IconComponent className="w-4 h-4" />
                         </div>
@@ -1146,11 +1166,10 @@ export const OnboardingWizard: React.FC = () => {
                       </div>
 
                       <div
-                        className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${
-                          isSelected
+                        className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${isSelected
                             ? "border-brand-600 bg-brand-600 text-white"
                             : "border-slate-300 bg-white"
-                        }`}
+                          }`}
                       >
                         {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
                       </div>
@@ -1404,37 +1423,37 @@ export const OnboardingWizard: React.FC = () => {
             </div>
           </div>
         )}
+      </div>
 
-        {/* NAVIGATION CONTROLS */}
-        <div className="flex items-center justify-between gap-3 pt-6 border-t border-slate-100 mt-8">
-          {step > 1 ? (
-            <button
-              type="button"
-              onClick={handleBack}
-              className="py-2.5 px-5 rounded-xl font-bold text-xs text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors flex items-center gap-1.5 cursor-pointer"
-            >
-              <ArrowLeft className="w-4 h-4" /> Back
-            </button>
-          ) : (
-            <div />
-          )}
-
+      {/* NAVIGATION CONTROLS (OUTSIDE CARD) */}
+      <div className="flex items-center justify-between gap-3 mt-6">
+        {step > 1 ? (
           <button
             type="button"
-            disabled={loading}
-            onClick={handleNext}
-            className="py-2.5 px-6 rounded-xl font-bold text-xs text-white bg-gradient-to-r from-brand-600 to-pink-600 hover:from-brand-700 hover:to-pink-700 shadow-md shadow-brand-500/25 flex items-center gap-2 cursor-pointer transition-all ml-auto"
+            onClick={handleBack}
+            className="py-2.5 px-5 rounded-xl font-bold text-xs text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
           >
-            {step === totalSteps ? (
-              loading ? "Creating Profile..." : "Complete Profile & Discover Matches"
-            ) : (
-              <>
-                Next Step <ArrowRight className="w-4 h-4" />
-              </>
-            )}
-            {step === totalSteps && !loading && <UserCheck className="w-4 h-4" />}
+            <ArrowLeft className="w-4 h-4" /> Back
           </button>
-        </div>
+        ) : (
+          <div />
+        )}
+
+        <button
+          type="button"
+          disabled={loading}
+          onClick={handleNext}
+          className="py-2.5 px-6 rounded-xl font-bold text-xs text-white bg-gradient-to-r from-brand-600 to-pink-600 hover:from-brand-700 hover:to-pink-700 shadow-md shadow-brand-500/25 flex items-center gap-2 cursor-pointer transition-all ml-auto"
+        >
+          {step === totalSteps ? (
+            loading ? "Creating Profile..." : "Complete Profile & Discover Matches"
+          ) : (
+            <>
+              Next Step <ArrowRight className="w-4 h-4" />
+            </>
+          )}
+          {step === totalSteps && !loading && <UserCheck className="w-4 h-4" />}
+        </button>
       </div>
     </div>
   );
