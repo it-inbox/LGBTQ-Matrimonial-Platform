@@ -54,7 +54,7 @@ const stories: Story[] = [
     photoUrl: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=800&q=80",
     quote: "Finding someone who shared our values around queer marriage in India felt impossible until we joined EverPride.",
     fullStory:
-      "Priya and Neha both value family integration and progressive values. Neha's profile was on Ghost Mode because she was only out to close friends. After Priya sent a Super Interest with a heartfelt note on their shared love for classical art, they talked for three months and are now happily engaged.",
+      "Priya and Neha both value family integration and progressive values. Neha's profile was discreet because she was only out to close friends. After Priya sent a Super Interest with a heartfelt note on their shared love for classical art, they talked for three months and are now happily engaged.",
     tag: "Lesbian",
   },
   {

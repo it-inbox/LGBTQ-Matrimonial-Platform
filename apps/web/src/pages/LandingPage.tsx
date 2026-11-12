@@ -79,8 +79,8 @@ export const LandingPage: React.FC = () => {
       a: "Never. You choose your own display name and pronouns for your dating and matrimonial profile. Legal verification data (KYC) is strictly encrypted and stored separately to protect your privacy and discretion.",
     },
     {
-      q: "What is Ghost Mode and how does it protect me?",
-      a: "Ghost Mode allows you to browse prospective partner profiles completely anonymously without leaving visitor footprints. If you ever need to close the app quickly, our one-click Quick Exit instantly redirects to a neutral search engine.",
+      q: "How does private browsing protect me?",
+      a: "EverPride allows you to browse prospective partner profiles with robust privacy safeguards. If you ever need to close the app quickly, our one-click Quick Exit instantly redirects to a neutral search engine.",
     },
     {
       q: "How does mutual matching work?",
@@ -315,10 +315,10 @@ export const LandingPage: React.FC = () => {
                   </div>
                   <div>
                     <h3 className="text-lg font-bold text-slate-900 group-hover:text-purple-600 transition-colors">
-                      Stealth Ghost Mode & Quick Exit
+                      Discreet Browsing & Quick Exit
                     </h3>
                     <p className="text-xs sm:text-sm text-slate-600 mt-1 leading-relaxed">
-                      Explore prospects without leaving footprints on their profile visitor feeds. Need immediate privacy? Quick Exit is always accessible in one tap.
+                      Explore prospects with complete privacy safeguards built in. Need immediate privacy? Quick Exit is always accessible in one tap.
                     </p>
                   </div>
                 </div>
@@ -527,7 +527,7 @@ export const LandingPage: React.FC = () => {
 
             <div className="p-8 rounded-3xl bg-slate-800/60 border border-slate-700/70 backdrop-blur-md flex flex-col justify-between hover:border-slate-500 transition-colors">
               <p className="text-sm text-slate-300 leading-relaxed italic">
-                "As a trans woman, safety was non-negotiable. Knowing that every member is phone verified and that ghost mode keeps unwanted curiosity away made all the difference."
+                "As a trans woman, safety was non-negotiable. Knowing that every member is phone verified and that photo privacy keeps unwanted curiosity away made all the difference."
               </p>
               <div className="mt-6 pt-4 border-t border-slate-700/60 flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center font-bold text-sm text-white">

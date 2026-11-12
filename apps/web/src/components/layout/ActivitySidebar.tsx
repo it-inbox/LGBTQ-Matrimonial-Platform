@@ -219,7 +219,7 @@ export const ActivitySidebar: React.FC<ActivitySidebarProps> = ({ activeTab }) =
             </div>
             <div>
               <p className="text-xs font-bold text-slate-800">Privacy shields</p>
-              <p className="text-[11px] text-slate-400">Discreet ghost mode & unblur controls</p>
+              <p className="text-[11px] text-slate-400">Photo privacy & unblur controls</p>
             </div>
           </div>
         </div>

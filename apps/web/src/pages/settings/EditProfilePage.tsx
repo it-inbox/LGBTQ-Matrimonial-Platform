@@ -198,7 +198,7 @@ const SECTION_TABS: SectionTab[] = [
     id: "privacy",
     label: "Privacy & Visibility",
     icon: Shield,
-    description: "Photo shields & ghost mode",
+    description: "Photo privacy & visibility controls",
   },
 ];
 
@@ -1505,26 +1505,6 @@ export const EditProfilePage: React.FC = () => {
                       </label>
                     ))}
                   </div>
-                </div>
-
-                <div className="pt-2">
-                  <label
-                    onClick={() => handleChange("ghostModeEnabled", !formData.ghostModeEnabled)}
-                    className="flex items-start gap-3 p-3.5 rounded-xl bg-slate-50 border border-slate-200 cursor-pointer"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={formData.ghostModeEnabled}
-                      onChange={() => { }}
-                      className="mt-1 h-4 w-4 rounded text-brand-600 focus:ring-brand-500"
-                    />
-                    <div>
-                      <span className="text-sm font-bold text-slate-900">Enable Ghost Mode</span>
-                      <p className="text-xs text-slate-500 mt-0.5">
-                        Browse profiles without leaving a trace in their recent visitors list.
-                      </p>
-                    </div>
-                  </label>
                 </div>
               </div>
             </div>

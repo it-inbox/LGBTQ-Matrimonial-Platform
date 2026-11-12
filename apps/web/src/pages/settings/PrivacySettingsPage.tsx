@@ -146,29 +146,6 @@ export const PrivacySettingsPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="pt-4 border-t border-slate-100">
-          <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-3">
-            Browsing Discretion
-          </h2>
-          <label
-            onClick={() => setGhostModeEnabled(!ghostModeEnabled)}
-            className="flex items-start gap-3 p-4 rounded-xl bg-slate-50 border border-slate-200 cursor-pointer"
-          >
-            <input
-              type="checkbox"
-              checked={ghostModeEnabled}
-              onChange={() => {}}
-              className="mt-1 h-4 w-4 rounded text-brand-600 focus:ring-brand-500"
-            />
-            <div>
-              <span className="text-sm font-bold text-slate-900">Ghost Mode (Incognito Browsing)</span>
-              <p className="text-xs text-slate-500 mt-0.5">
-                When active, other members will not be notified that you viewed their profile or appeared in their visitor logs.
-              </p>
-            </div>
-          </label>
-        </div>
-
         <div className="pt-4 flex justify-end">
           <button
             onClick={handleSave}

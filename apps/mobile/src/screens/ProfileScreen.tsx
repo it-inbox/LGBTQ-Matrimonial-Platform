@@ -20,7 +20,6 @@ import {
   Shield,
   Crown,
   Settings,
-  EyeOff,
   User as UserIcon,
   Edit3,
   Sliders,
@@ -56,17 +55,6 @@ export const ProfileScreen: React.FC = () => {
   const [prefOrientations, setPrefOrientations] = useState<string[]>(
     profile?.partnerPreference?.preferredOrientations || ["GAY"]
   );
-
-  // Toggle Ghost Mode
-  const handleToggleGhostMode = async (val: boolean) => {
-    try {
-      await api.patch("/profiles/me/ghost-mode", { enabled: val });
-      setProfile({ ...profile!, ghostModeEnabled: val });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.myProfile });
-    } catch (err: any) {
-      Alert.alert("Error", "Failed to update Ghost Mode: " + (err.response?.data?.message || err.message));
-    }
-  };
 
   // Toggle Photo Visibility
   const handleTogglePhotoVisibility = async () => {
@@ -233,23 +221,6 @@ export const ProfileScreen: React.FC = () => {
 
       {/* Account & Privacy Settings List */}
       <View className="bg-white border border-slate-200/90 rounded-2xl mt-3 divide-y divide-slate-100 overflow-hidden shadow-sm mb-6">
-        {/* Ghost Mode Toggle */}
-        <View className="flex-row items-center justify-between p-4">
-          <View className="flex-row items-center flex-1 pr-3">
-            <EyeOff size={18} color="#64748b" />
-            <View className="ml-3">
-              <Text className="text-slate-900 text-sm font-medium">Ghost Mode</Text>
-              <Text className="text-slate-500 text-xs">Browse profiles completely invisibly</Text>
-            </View>
-          </View>
-          <Switch
-            value={!!profile?.ghostModeEnabled}
-            onValueChange={handleToggleGhostMode}
-            trackColor={{ false: "#e2e8f0", true: "#e11d48" }}
-            thumbColor="#ffffff"
-          />
-        </View>
-
         {/* Photo Privacy Toggle */}
         <TouchableOpacity
           onPress={handleTogglePhotoVisibility}

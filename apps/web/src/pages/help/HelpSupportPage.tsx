@@ -36,7 +36,7 @@ const faqs: FAQItem[] = [
     category: "privacy",
     question: "How does EverPride protect my privacy if I am not out to everyone?",
     answer:
-      "EverPride was built from the ground up for discreet usage. By default, your photos are blurred to all visitors until you explicitly grant unblur access or accept a mutual interest. You can also enable Ghost Mode to browse profiles without leaving visitor traces, and use a preferred display name / alias instead of your legal identity.",
+      "EverPride was built from the ground up for discreet usage. By default, your photos are blurred to all visitors until you explicitly grant unblur access or accept a mutual interest, and you can use a preferred display name / alias instead of your legal identity.",
   },
   {
     id: "faq-2",
@@ -161,7 +161,7 @@ export const HelpSupportPage: React.FC = () => {
                     <Search className="w-5 h-5 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
                     <input
                       type="text"
-                      placeholder="Search questions (e.g. photos, phone number, refund, ghost mode)..."
+                      placeholder="Search questions (e.g. photos, phone number, refund)..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       className="w-full pl-12 pr-4 py-3.5 bg-white text-slate-900 placeholder:text-slate-400 rounded-2xl text-sm font-medium shadow-md focus:outline-none focus:ring-2 focus:ring-white"
