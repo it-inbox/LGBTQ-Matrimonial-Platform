@@ -45,6 +45,7 @@ function MainContent() {
   const [activeTab, setActiveTab] = React.useState<TabType>("discover");
   const [chatPartnerUserId, setChatPartnerUserId] = React.useState<string | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [isInsideChatThread, setIsInsideChatThread] = useState(false);
 
   const handleOpenChatWithPartner = (partnerUserId: string) => {
     setChatPartnerUserId(partnerUserId);
@@ -98,7 +99,10 @@ function MainContent() {
           <MatchesScreen onNavigateToChat={handleOpenChatWithPartner} />
         )}
         {activeTab === "connect" && (
-          <MessagesScreen initialPartnerUserId={chatPartnerUserId} />
+          <MessagesScreen
+            initialPartnerUserId={chatPartnerUserId}
+            onActiveConversationChange={setIsInsideChatThread}
+          />
         )}
         {activeTab === "interests" && (
           <InterestsScreen onNavigateToChat={handleOpenChatWithPartner} />
@@ -106,128 +110,130 @@ function MainContent() {
         {activeTab === "unblur" && <UnblurScreen />}
       </View>
 
-      {/* Bottom Sticky Navigation Bar matching Web parity */}
-      <View className="flex-row items-center justify-around py-1.5 px-2 bg-white border-t border-slate-200/90 shadow-lg">
-        {/* Discover */}
-        <TouchableOpacity
-          onPress={() => setActiveTab("discover")}
-          className={`flex-1 items-center justify-center py-1.5 rounded-xl ${
-            activeTab === "discover" ? "bg-rose-50/80" : ""
-          }`}
-          activeOpacity={0.7}
-        >
-          <Compass
-            size={20}
-            color={activeTab === "discover" ? "#e11d48" : "#64748b"}
-            strokeWidth={activeTab === "discover" ? 2.5 : 1.75}
-          />
-          <Text
-            className={`text-[11px] mt-0.5 ${
-              activeTab === "discover"
-                ? "text-rose-600 font-bold"
-                : "text-slate-600 font-medium"
+      {/* Bottom Sticky Navigation Bar matching Web parity (Hidden when user is inside an active chat thread) */}
+      {!(activeTab === "connect" && isInsideChatThread) && (
+        <View className="flex-row items-center justify-around py-1.5 px-2 bg-white border-t border-slate-200/90 shadow-lg">
+          {/* Discover */}
+          <TouchableOpacity
+            onPress={() => setActiveTab("discover")}
+            className={`flex-1 items-center justify-center py-1.5 rounded-xl ${
+              activeTab === "discover" ? "bg-rose-50/80" : ""
             }`}
+            activeOpacity={0.7}
           >
-            Discover
-          </Text>
-        </TouchableOpacity>
+            <Compass
+              size={20}
+              color={activeTab === "discover" ? "#e11d48" : "#64748b"}
+              strokeWidth={activeTab === "discover" ? 2.5 : 1.75}
+            />
+            <Text
+              className={`text-[11px] mt-0.5 ${
+                activeTab === "discover"
+                  ? "text-rose-600 font-bold"
+                  : "text-slate-600 font-medium"
+              }`}
+            >
+              Discover
+            </Text>
+          </TouchableOpacity>
 
-        {/* Matches */}
-        <TouchableOpacity
-          onPress={() => setActiveTab("matches")}
-          className={`flex-1 items-center justify-center py-1.5 rounded-xl ${
-            activeTab === "matches" ? "bg-rose-50/80" : ""
-          }`}
-          activeOpacity={0.7}
-        >
-          <Sparkles
-            size={20}
-            color={activeTab === "matches" ? "#e11d48" : "#64748b"}
-            strokeWidth={activeTab === "matches" ? 2.5 : 1.75}
-          />
-          <Text
-            className={`text-[11px] mt-0.5 ${
-              activeTab === "matches"
-                ? "text-rose-600 font-bold"
-                : "text-slate-600 font-medium"
+          {/* Matches */}
+          <TouchableOpacity
+            onPress={() => setActiveTab("matches")}
+            className={`flex-1 items-center justify-center py-1.5 rounded-xl ${
+              activeTab === "matches" ? "bg-rose-50/80" : ""
             }`}
+            activeOpacity={0.7}
           >
-            Matches
-          </Text>
-        </TouchableOpacity>
+            <Sparkles
+              size={20}
+              color={activeTab === "matches" ? "#e11d48" : "#64748b"}
+              strokeWidth={activeTab === "matches" ? 2.5 : 1.75}
+            />
+            <Text
+              className={`text-[11px] mt-0.5 ${
+                activeTab === "matches"
+                  ? "text-rose-600 font-bold"
+                  : "text-slate-600 font-medium"
+              }`}
+            >
+              Matches
+            </Text>
+          </TouchableOpacity>
 
-        {/* Connect (Messages) */}
-        <TouchableOpacity
-          onPress={() => setActiveTab("connect")}
-          className={`flex-1 items-center justify-center py-1.5 rounded-xl ${
-            activeTab === "connect" ? "bg-rose-50/80" : ""
-          }`}
-          activeOpacity={0.7}
-        >
-          <MessageSquare
-            size={20}
-            color={activeTab === "connect" ? "#e11d48" : "#64748b"}
-            strokeWidth={activeTab === "connect" ? 2.5 : 1.75}
-          />
-          <Text
-            className={`text-[11px] mt-0.5 ${
-              activeTab === "connect"
-                ? "text-rose-600 font-bold"
-                : "text-slate-600 font-medium"
+          {/* Connect (Messages) */}
+          <TouchableOpacity
+            onPress={() => setActiveTab("connect")}
+            className={`flex-1 items-center justify-center py-1.5 rounded-xl ${
+              activeTab === "connect" ? "bg-rose-50/80" : ""
             }`}
+            activeOpacity={0.7}
           >
-            Connect
-          </Text>
-        </TouchableOpacity>
+            <MessageSquare
+              size={20}
+              color={activeTab === "connect" ? "#e11d48" : "#64748b"}
+              strokeWidth={activeTab === "connect" ? 2.5 : 1.75}
+            />
+            <Text
+              className={`text-[11px] mt-0.5 ${
+                activeTab === "connect"
+                  ? "text-rose-600 font-bold"
+                  : "text-slate-600 font-medium"
+              }`}
+            >
+              Connect
+            </Text>
+          </TouchableOpacity>
 
-        {/* Interests */}
-        <TouchableOpacity
-          onPress={() => setActiveTab("interests")}
-          className={`flex-1 items-center justify-center py-1.5 rounded-xl ${
-            activeTab === "interests" ? "bg-rose-50/80" : ""
-          }`}
-          activeOpacity={0.7}
-        >
-          <Send
-            size={20}
-            color={activeTab === "interests" ? "#e11d48" : "#64748b"}
-            strokeWidth={activeTab === "interests" ? 2.5 : 1.75}
-          />
-          <Text
-            className={`text-[11px] mt-0.5 ${
-              activeTab === "interests"
-                ? "text-rose-600 font-bold"
-                : "text-slate-600 font-medium"
+          {/* Interests */}
+          <TouchableOpacity
+            onPress={() => setActiveTab("interests")}
+            className={`flex-1 items-center justify-center py-1.5 rounded-xl ${
+              activeTab === "interests" ? "bg-rose-50/80" : ""
             }`}
+            activeOpacity={0.7}
           >
-            Interests
-          </Text>
-        </TouchableOpacity>
+            <Send
+              size={20}
+              color={activeTab === "interests" ? "#e11d48" : "#64748b"}
+              strokeWidth={activeTab === "interests" ? 2.5 : 1.75}
+            />
+            <Text
+              className={`text-[11px] mt-0.5 ${
+                activeTab === "interests"
+                  ? "text-rose-600 font-bold"
+                  : "text-slate-600 font-medium"
+              }`}
+            >
+              Interests
+            </Text>
+          </TouchableOpacity>
 
-        {/* Unblur */}
-        <TouchableOpacity
-          onPress={() => setActiveTab("unblur")}
-          className={`flex-1 items-center justify-center py-1.5 rounded-xl ${
-            activeTab === "unblur" ? "bg-rose-50/80" : ""
-          }`}
-          activeOpacity={0.7}
-        >
-          <Eye
-            size={20}
-            color={activeTab === "unblur" ? "#e11d48" : "#64748b"}
-            strokeWidth={activeTab === "unblur" ? 2.5 : 1.75}
-          />
-          <Text
-            className={`text-[11px] mt-0.5 ${
-              activeTab === "unblur"
-                ? "text-rose-600 font-bold"
-                : "text-slate-600 font-medium"
+          {/* Unblur */}
+          <TouchableOpacity
+            onPress={() => setActiveTab("unblur")}
+            className={`flex-1 items-center justify-center py-1.5 rounded-xl ${
+              activeTab === "unblur" ? "bg-rose-50/80" : ""
             }`}
+            activeOpacity={0.7}
           >
-            Unblur
-          </Text>
-        </TouchableOpacity>
-      </View>
+            <Eye
+              size={20}
+              color={activeTab === "unblur" ? "#e11d48" : "#64748b"}
+              strokeWidth={activeTab === "unblur" ? 2.5 : 1.75}
+            />
+            <Text
+              className={`text-[11px] mt-0.5 ${
+                activeTab === "unblur"
+                  ? "text-rose-600 font-bold"
+                  : "text-slate-600 font-medium"
+              }`}
+            >
+              Unblur
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </SafeAreaView>
   );
 }

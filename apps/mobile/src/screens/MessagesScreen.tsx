@@ -27,9 +27,10 @@ import {
 type ConnectTab = "messages" | "calls";
 type ChatFilter = "ALL" | "UNREAD" | "ONLINE";
 
-export const MessagesScreen: React.FC<{ initialPartnerUserId?: string | null }> = ({
-  initialPartnerUserId,
-}) => {
+export const MessagesScreen: React.FC<{
+  initialPartnerUserId?: string | null;
+  onActiveConversationChange?: (isActive: boolean) => void;
+}> = ({ initialPartnerUserId, onActiveConversationChange }) => {
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
   const [selectedConversation, setSelectedConversation] = useState<any | null>(null);
@@ -37,6 +38,11 @@ export const MessagesScreen: React.FC<{ initialPartnerUserId?: string | null }> 
   const [activeTab, setActiveTab] = useState<ConnectTab>("messages");
   const [chatFilter, setChatFilter] = useState<ChatFilter>("ALL");
   const flatListRef = useRef<FlatList>(null);
+
+  // Notify parent whether user is inside an active chat thread
+  useEffect(() => {
+    onActiveConversationChange?.(!!selectedConversation);
+  }, [selectedConversation, onActiveConversationChange]);
 
   // 1. Fetch conversations list
   const { data: conversations = [], isLoading: loadingConversations } = useQuery({
