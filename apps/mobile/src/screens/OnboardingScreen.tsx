@@ -1323,7 +1323,7 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
 
             {/* Hobbies & Interests */}
             <View className="mt-4">
-              <View className="flex-row items-center justify-between mb-2">
+              <View className="flex-row items-center justify-between mb-1">
                 <Text className="text-slate-700 text-xs font-bold uppercase tracking-wider">
                   HOBBIES & INTERESTS
                 </Text>
@@ -1331,29 +1331,30 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
                   {formData.hobbies.length} selected
                 </Text>
               </View>
-              <View className="bg-slate-50/80 p-3 rounded-2xl border border-slate-200">
-                <View className="flex-row flex-wrap gap-2">
-                  {HOBBY_OPTIONS.map((hobby) => {
-                    const sel = formData.hobbies.includes(hobby);
-                    return (
-                      <TouchableOpacity
-                        key={hobby}
-                        onPress={() => toggleArrayItem("hobbies", hobby)}
-                        className={`px-3 py-1.5 rounded-full border ${
-                          sel ? "bg-rose-600 border-rose-600 shadow-xs" : "bg-white border-slate-200"
+              <Text className="text-[11px] text-slate-500 mb-2.5">
+                Select your favorite activities, passions, and lifestyle interests.
+              </Text>
+              <View className="flex-row flex-wrap gap-2">
+                {HOBBY_OPTIONS.map((hobby) => {
+                  const sel = formData.hobbies.includes(hobby);
+                  return (
+                    <TouchableOpacity
+                      key={hobby}
+                      onPress={() => toggleArrayItem("hobbies", hobby)}
+                      className={`px-3 py-1.5 rounded-full border ${
+                        sel ? "bg-rose-600 border-rose-600 shadow-xs" : "bg-white border-slate-200"
+                      }`}
+                    >
+                      <Text
+                        className={`text-xs ${
+                          sel ? "text-white font-bold" : "text-slate-700 font-medium"
                         }`}
                       >
-                        <Text
-                          className={`text-xs ${
-                            sel ? "text-white font-bold" : "text-slate-700 font-medium"
-                          }`}
-                        >
-                          {hobby}
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
+                        {hobby}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
             </View>
           </View>
