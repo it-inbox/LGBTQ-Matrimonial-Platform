@@ -3,6 +3,8 @@ export const QUERY_KEYS = {
   matchesRecent: ["matches", "recent"],
   sentInterests: ["interests", "sent"],
   receivedInterests: ["interests", "received"],
+  sentUnblur: ["unblur", "sent"],
+  receivedUnblur: ["unblur", "received"],
   conversations: ["chat", "conversations"],
   messages: (convId: string) => ["chat", "messages", convId],
   myProfile: ["profile", "me"],

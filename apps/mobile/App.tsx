@@ -7,11 +7,19 @@ import { View, Text, TouchableOpacity, ActivityIndicator } from "react-native";
 import { useAuthStore } from "./src/stores/auth.store";
 import { DiscoverScreen } from "./src/screens/DiscoverScreen";
 import { AuthScreen } from "./src/screens/AuthScreen";
-import { ProfileScreen } from "./src/screens/ProfileScreen";
 import { MatchesScreen } from "./src/screens/MatchesScreen";
 import { MessagesScreen } from "./src/screens/MessagesScreen";
+import { InterestsScreen } from "./src/screens/InterestsScreen";
+import { UnblurScreen } from "./src/screens/UnblurScreen";
 import { OnboardingScreen } from "./src/screens/OnboardingScreen";
-import { Sparkles, Heart, MessageSquare, User } from "lucide-react-native";
+import { AppHeader } from "./src/components/AppHeader";
+import {
+  Compass,
+  Sparkles,
+  MessageSquare,
+  Send,
+  Eye,
+} from "lucide-react-native";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -30,7 +38,7 @@ const queryClient = new QueryClient({
   },
 });
 
-type TabType = "discover" | "matches" | "messages" | "profile";
+type TabType = "discover" | "matches" | "connect" | "interests" | "unblur";
 
 function MainContent() {
   const { isAuthenticated, isLoading, profile, fetchProfile, checkAuth } = useAuthStore();
@@ -40,7 +48,7 @@ function MainContent() {
 
   const handleOpenChatWithPartner = (partnerUserId: string) => {
     setChatPartnerUserId(partnerUserId);
-    setActiveTab("messages");
+    setActiveTab("connect");
   };
 
   useEffect(() => {
@@ -77,7 +85,10 @@ function MainContent() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-slate-50">
+    <SafeAreaView className="flex-1 bg-slate-50" edges={["top", "bottom"]}>
+      {/* Top Navigation Bar with Logo and Hamburger */}
+      <AppHeader onOpenOnboarding={() => setShowOnboarding(true)} />
+
       {/* Screen view based on active tab */}
       <View className="flex-1">
         {activeTab === "discover" && (
@@ -86,87 +97,134 @@ function MainContent() {
         {activeTab === "matches" && (
           <MatchesScreen onNavigateToChat={handleOpenChatWithPartner} />
         )}
-        {activeTab === "messages" && (
+        {activeTab === "connect" && (
           <MessagesScreen initialPartnerUserId={chatPartnerUserId} />
         )}
-        {activeTab === "profile" && <ProfileScreen />}
+        {activeTab === "interests" && (
+          <InterestsScreen onNavigateToChat={handleOpenChatWithPartner} />
+        )}
+        {activeTab === "unblur" && <UnblurScreen />}
       </View>
 
-      {/* Bottom Navigation Bar with Web Parity Styling */}
-      <View className="flex-row items-center justify-around py-3 bg-white border-t border-slate-200/90 shadow-sm">
+      {/* Bottom Sticky Navigation Bar matching Web parity */}
+      <View className="flex-row items-center justify-around py-1.5 px-2 bg-white border-t border-slate-200/90 shadow-lg">
+        {/* Discover */}
         <TouchableOpacity
           onPress={() => setActiveTab("discover")}
-          className="items-center"
+          className={`flex-1 items-center justify-center py-1.5 rounded-xl ${
+            activeTab === "discover" ? "bg-rose-50/80" : ""
+          }`}
+          activeOpacity={0.7}
         >
-          <Sparkles
-            size={22}
-            color={activeTab === "discover" ? "#e11d48" : "#94a3b8"}
+          <Compass
+            size={20}
+            color={activeTab === "discover" ? "#e11d48" : "#64748b"}
+            strokeWidth={activeTab === "discover" ? 2.5 : 1.75}
           />
           <Text
-            className={`text-xs mt-1 font-medium ${
+            className={`text-[11px] mt-0.5 ${
               activeTab === "discover"
                 ? "text-rose-600 font-bold"
-                : "text-slate-500"
+                : "text-slate-600 font-medium"
             }`}
           >
             Discover
           </Text>
         </TouchableOpacity>
 
+        {/* Matches */}
         <TouchableOpacity
           onPress={() => setActiveTab("matches")}
-          className="items-center"
+          className={`flex-1 items-center justify-center py-1.5 rounded-xl ${
+            activeTab === "matches" ? "bg-rose-50/80" : ""
+          }`}
+          activeOpacity={0.7}
         >
-          <Heart
-            size={22}
-            color={activeTab === "matches" ? "#e11d48" : "#94a3b8"}
+          <Sparkles
+            size={20}
+            color={activeTab === "matches" ? "#e11d48" : "#64748b"}
+            strokeWidth={activeTab === "matches" ? 2.5 : 1.75}
           />
           <Text
-            className={`text-xs mt-1 font-medium ${
+            className={`text-[11px] mt-0.5 ${
               activeTab === "matches"
                 ? "text-rose-600 font-bold"
-                : "text-slate-500"
+                : "text-slate-600 font-medium"
             }`}
           >
             Matches
           </Text>
         </TouchableOpacity>
 
+        {/* Connect (Messages) */}
         <TouchableOpacity
-          onPress={() => setActiveTab("messages")}
-          className="items-center"
+          onPress={() => setActiveTab("connect")}
+          className={`flex-1 items-center justify-center py-1.5 rounded-xl ${
+            activeTab === "connect" ? "bg-rose-50/80" : ""
+          }`}
+          activeOpacity={0.7}
         >
           <MessageSquare
-            size={22}
-            color={activeTab === "messages" ? "#e11d48" : "#94a3b8"}
+            size={20}
+            color={activeTab === "connect" ? "#e11d48" : "#64748b"}
+            strokeWidth={activeTab === "connect" ? 2.5 : 1.75}
           />
           <Text
-            className={`text-xs mt-1 font-medium ${
-              activeTab === "messages"
+            className={`text-[11px] mt-0.5 ${
+              activeTab === "connect"
                 ? "text-rose-600 font-bold"
-                : "text-slate-500"
+                : "text-slate-600 font-medium"
             }`}
           >
-            Messages
+            Connect
           </Text>
         </TouchableOpacity>
 
+        {/* Interests */}
         <TouchableOpacity
-          onPress={() => setActiveTab("profile")}
-          className="items-center"
+          onPress={() => setActiveTab("interests")}
+          className={`flex-1 items-center justify-center py-1.5 rounded-xl ${
+            activeTab === "interests" ? "bg-rose-50/80" : ""
+          }`}
+          activeOpacity={0.7}
         >
-          <User
-            size={22}
-            color={activeTab === "profile" ? "#e11d48" : "#94a3b8"}
+          <Send
+            size={20}
+            color={activeTab === "interests" ? "#e11d48" : "#64748b"}
+            strokeWidth={activeTab === "interests" ? 2.5 : 1.75}
           />
           <Text
-            className={`text-xs mt-1 font-medium ${
-              activeTab === "profile"
+            className={`text-[11px] mt-0.5 ${
+              activeTab === "interests"
                 ? "text-rose-600 font-bold"
-                : "text-slate-500"
+                : "text-slate-600 font-medium"
             }`}
           >
-            Profile
+            Interests
+          </Text>
+        </TouchableOpacity>
+
+        {/* Unblur */}
+        <TouchableOpacity
+          onPress={() => setActiveTab("unblur")}
+          className={`flex-1 items-center justify-center py-1.5 rounded-xl ${
+            activeTab === "unblur" ? "bg-rose-50/80" : ""
+          }`}
+          activeOpacity={0.7}
+        >
+          <Eye
+            size={20}
+            color={activeTab === "unblur" ? "#e11d48" : "#64748b"}
+            strokeWidth={activeTab === "unblur" ? 2.5 : 1.75}
+          />
+          <Text
+            className={`text-[11px] mt-0.5 ${
+              activeTab === "unblur"
+                ? "text-rose-600 font-bold"
+                : "text-slate-600 font-medium"
+            }`}
+          >
+            Unblur
           </Text>
         </TouchableOpacity>
       </View>
@@ -178,7 +236,7 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <SafeAreaProvider>
-        <StatusBar style="light" />
+        <StatusBar style="dark" />
         <MainContent />
       </SafeAreaProvider>
     </QueryClientProvider>
