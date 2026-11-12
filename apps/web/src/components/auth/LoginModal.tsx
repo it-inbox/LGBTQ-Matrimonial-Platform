@@ -130,9 +130,13 @@ export const LoginModal: React.FC = () => {
           <div className="w-12 h-12 rounded-2xl bg-brand-50 text-brand-600 flex items-center justify-center mx-auto mb-3 shadow-inner">
             <Lock className="w-6 h-6" />
           </div>
-          <h2 className="text-2xl font-black text-slate-900">Verify Your Phone Number</h2>
+          <h2 className="text-2xl font-black text-slate-900">
+            {otpSent ? "Verify Mobile Number" : "Sign in / Register"}
+          </h2>
           <p className="text-xs text-slate-500 mt-1">
-            Sign in or create your account using instant phone OTP verification
+            {otpSent
+              ? `Enter the verification code sent to ${getFullPhoneNumber()}`
+              : "We'll send you a fast, passwordless SMS verification code"}
           </p>
         </div>
 
@@ -143,128 +147,152 @@ export const LoginModal: React.FC = () => {
           </div>
         )}
 
-        <form onSubmit={handleLogin} className="space-y-4">
-          <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-              Mobile Number <span className="text-rose-500">*</span>
-            </label>
-            <div className="flex gap-2">
-              {/* Searchable Country Code Dropdown */}
-              <div className="relative shrink-0" ref={countryDropdownRef}>
-                <button
-                  type="button"
-                  disabled={loading}
-                  onClick={() => {
-                    setCountryPickerOpen(!countryPickerOpen);
-                    setCountrySearch("");
-                  }}
-                  className="h-full px-3 py-2.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 flex items-center gap-1.5 select-none transition-colors cursor-pointer"
-                >
-                  {selectedCountryCode ? (
-                    <>
-                      <span className="bg-brand-100 text-brand-700 font-extrabold px-1.5 py-0.5 rounded text-[11px] tracking-wide">
-                        {ALL_COUNTRIES.find((c) => c.dialCode === selectedCountryCode)?.code || ""}
-                      </span>
-                      <span className="text-slate-600 font-mono text-xs">{selectedCountryCode}</span>
-                    </>
-                  ) : (
-                    <span className="text-slate-400 font-normal text-xs">Code</span>
-                  )}
-                  <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
-                </button>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (otpSent) {
+              handleLogin(e);
+            } else {
+              handleSendOtp();
+            }
+          }}
+          className="space-y-4"
+        >
+          {!otpSent ? (
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                Mobile Number <span className="text-rose-500">*</span>
+              </label>
+              <div className="flex gap-2">
+                {/* Searchable Country Code Dropdown */}
+                <div className="relative shrink-0" ref={countryDropdownRef}>
+                  <button
+                    type="button"
+                    disabled={loading}
+                    onClick={() => {
+                      setCountryPickerOpen(!countryPickerOpen);
+                      setCountrySearch("");
+                    }}
+                    className="h-full px-3 py-2.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 flex items-center gap-1.5 select-none transition-colors cursor-pointer"
+                  >
+                    {selectedCountryCode ? (
+                      <>
+                        <span className="bg-brand-100 text-brand-700 font-extrabold px-1.5 py-0.5 rounded text-[11px] tracking-wide">
+                          {ALL_COUNTRIES.find((c) => c.dialCode === selectedCountryCode)?.code || ""}
+                        </span>
+                        <span className="text-slate-600 font-mono text-xs">{selectedCountryCode}</span>
+                      </>
+                    ) : (
+                      <span className="text-slate-400 font-normal text-xs">Code</span>
+                    )}
+                    <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+                  </button>
 
-                {countryPickerOpen && (
-                  <div className="absolute top-full left-0 mt-1.5 w-64 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 overflow-hidden animate-fadeIn">
-                    <div className="p-2 border-b border-slate-100 bg-slate-50 flex items-center gap-2">
-                      <Search className="w-3.5 h-3.5 text-slate-400" />
-                      <input
-                        type="text"
-                        autoFocus
-                        value={countrySearch}
-                        onChange={(e) => setCountrySearch(e.target.value)}
-                        placeholder="Search country or code..."
-                        className="w-full bg-transparent text-xs text-slate-900 focus:outline-none placeholder:text-slate-400 font-medium"
-                      />
+                  {countryPickerOpen && (
+                    <div className="absolute top-full left-0 mt-1.5 w-64 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 overflow-hidden animate-fadeIn">
+                      <div className="p-2 border-b border-slate-100 bg-slate-50 flex items-center gap-2">
+                        <Search className="w-3.5 h-3.5 text-slate-400" />
+                        <input
+                          type="text"
+                          autoFocus
+                          value={countrySearch}
+                          onChange={(e) => setCountrySearch(e.target.value)}
+                          placeholder="Search country or code..."
+                          className="w-full bg-transparent text-xs text-slate-900 focus:outline-none placeholder:text-slate-400 font-medium"
+                        />
+                      </div>
+                      <div className="max-h-52 overflow-y-auto p-1 space-y-0.5">
+                        {filteredCountries.map((c) => {
+                          const isSelected = selectedCountryCode === c.dialCode;
+                          return (
+                            <button
+                              type="button"
+                              key={`${c.code}-${c.dialCode}`}
+                              onClick={() => {
+                                setSelectedCountryCode(c.dialCode);
+                                setCountryPickerOpen(false);
+                              }}
+                              className={`w-full px-2.5 py-1.5 rounded-lg text-left text-xs flex items-center justify-between transition-colors cursor-pointer ${
+                                isSelected
+                                  ? "bg-brand-50 text-brand-700 font-bold"
+                                  : "text-slate-700 hover:bg-slate-50"
+                              }`}
+                            >
+                              <span className="truncate pr-2">
+                                {c.name} ({c.code})
+                              </span>
+                              <span className="font-mono text-slate-500 font-bold shrink-0">
+                                {c.dialCode}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
-                    <div className="max-h-52 overflow-y-auto p-1 space-y-0.5">
-                      {filteredCountries.map((c) => {
-                        const isSelected = selectedCountryCode === c.dialCode;
-                        return (
-                          <button
-                            type="button"
-                            key={`${c.code}-${c.dialCode}`}
-                            onClick={() => {
-                              setSelectedCountryCode(c.dialCode);
-                              setCountryPickerOpen(false);
-                            }}
-                            className={`w-full px-2.5 py-1.5 rounded-lg text-left text-xs flex items-center justify-between transition-colors cursor-pointer ${
-                              isSelected
-                                ? "bg-brand-50 text-brand-700 font-bold"
-                                : "text-slate-700 hover:bg-slate-50"
-                            }`}
-                          >
-                            <span className="truncate pr-2">
-                              {c.name} ({c.code})
-                            </span>
-                            <span className="font-mono text-slate-500 font-bold shrink-0">
-                              {c.dialCode}
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
+                  )}
+                </div>
+
+                <input
+                  type="tel"
+                  required
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  placeholder="98765 43210"
+                  className="flex-1 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-500 transition-all font-mono"
+                  autoFocus
+                />
+              </div>
+              <p className="text-[11px] text-slate-400 mt-1.5">
+                We'll send a 6-digit verification code to confirm your number.
+              </p>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full mt-5 py-3 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-brand-600 to-pink-600 hover:from-brand-700 hover:to-pink-700 disabled:opacity-50 transition-all shadow-md shadow-brand-500/20 flex items-center justify-center gap-2 cursor-pointer"
+              >
+                {loading ? "Sending Code..." : "Send OTP"}
+                {!loading && <ArrowRight className="w-4 h-4" />}
+              </button>
+            </div>
+          ) : (
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                Verification Code (OTP)
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  maxLength={6}
+                  value={otpCode}
+                  onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ""))}
+                  placeholder="Enter 6-digit code"
+                  autoFocus
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-center text-lg font-mono tracking-widest text-slate-900 focus:outline-none focus:border-brand-600"
+                />
               </div>
 
-              <input
-                type="tel"
-                required
-                value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.target.value)}
-                placeholder="98765 43210"
-                className="flex-1 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-500 transition-all font-mono"
-              />
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full mt-5 py-3 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-brand-600 to-pink-600 hover:from-brand-700 hover:to-pink-700 disabled:opacity-50 transition-all shadow-md shadow-brand-500/20 flex items-center justify-center gap-2 cursor-pointer"
+              >
+                {loading ? "Verifying..." : "Verify & Continue"}
+              </button>
 
               <button
                 type="button"
-                onClick={handleSendOtp}
-                disabled={loading || cooldown > 0}
-                className="px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-slate-800 hover:bg-slate-900 disabled:opacity-50 transition-colors cursor-pointer shrink-0 min-w-[90px]"
+                onClick={() => {
+                  setOtpSent(false);
+                  setOtpCode("");
+                  setError(null);
+                }}
+                className="w-full mt-3 py-1.5 text-center text-xs text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
               >
-                {cooldown > 0 ? `${cooldown}s` : otpSent ? "Resend" : "Send OTP"}
+                Change phone number
               </button>
             </div>
-            <p className="text-[11px] text-slate-400 mt-1">
-              We'll send a 6-digit verification code to confirm your number.
-            </p>
-          </div>
-
-          {otpSent && (
-            <div className="p-4 rounded-2xl bg-brand-50/60 border border-brand-200 space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-brand-900">Enter Verification Code</span>
-                <span className="text-[11px] text-brand-600 font-medium">Valid for 5 mins</span>
-              </div>
-              <input
-                type="text"
-                maxLength={6}
-                value={otpCode}
-                onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ""))}
-                placeholder="• • • • • •"
-                className="w-full px-4 py-2.5 bg-white border border-brand-300 rounded-xl text-center text-xl font-mono tracking-widest focus:outline-none focus:border-brand-600"
-              />
-            </div>
           )}
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full mt-2 py-3 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-brand-600 to-pink-600 hover:from-brand-700 hover:to-pink-700 disabled:opacity-50 transition-all shadow-md shadow-brand-500/20 flex items-center justify-center gap-2 cursor-pointer"
-          >
-            {loading ? "Verifying..." : "Continue"}
-            {!loading && <ArrowRight className="w-4 h-4" />}
-          </button>
         </form>
 
         <p className="mt-6 text-center text-xs text-slate-500">
