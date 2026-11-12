@@ -22,7 +22,9 @@ import {
   PhoneCall,
   Check,
   CheckCheck,
+  Smile,
 } from "lucide-react-native";
+import { MobileEmojiPicker } from "../components/MobileEmojiPicker";
 
 type ConnectTab = "messages" | "calls";
 type ChatFilter = "ALL" | "UNREAD" | "ONLINE";
@@ -37,6 +39,7 @@ export const MessagesScreen: React.FC<{
   const [messageText, setMessageText] = useState("");
   const [activeTab, setActiveTab] = useState<ConnectTab>("messages");
   const [chatFilter, setChatFilter] = useState<ChatFilter>("ALL");
+  const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
   const flatListRef = useRef<FlatList>(null);
 
   // Notify parent whether user is inside an active chat thread
@@ -60,11 +63,19 @@ export const MessagesScreen: React.FC<{
     queryFn: async () => {
       if (!selectedConversation?.id) return [];
       const res = await api.get(`/chat/conversations/${selectedConversation.id}/messages`);
-      return res.data;
+      return res.data?.messages || (Array.isArray(res.data) ? res.data : []);
     },
     enabled: !!selectedConversation?.id,
     refetchInterval: 3000,
   });
+
+  // Mark conversation as read on opening
+  useEffect(() => {
+    if (selectedConversation?.id) {
+      api.post(`/chat/conversations/${selectedConversation.id}/read`).catch(() => {});
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.conversations });
+    }
+  }, [selectedConversation?.id, queryClient]);
 
   // Automatically select conversation if partnerUserId was passed
   useEffect(() => {
@@ -80,15 +91,24 @@ export const MessagesScreen: React.FC<{
     }
   }, [initialPartnerUserId, conversations]);
 
-  // Send message mutation
+  // Send message mutation (Uses POST /chat/messages with { conversationId, content })
   const sendMutation = useMutation({
     mutationFn: async (text: string) => {
-      return api.post(`/chat/conversations/${selectedConversation.id}/messages`, {
+      const res = await api.post("/chat/messages", {
+        conversationId: selectedConversation.id,
         content: text,
       });
+      return res.data;
     },
-    onSuccess: () => {
+    onSuccess: (newMessage) => {
       setMessageText("");
+      queryClient.setQueryData(
+        QUERY_KEYS.messages(selectedConversation?.id || ""),
+        (old: any[] = []) => {
+          if (!Array.isArray(old)) return [newMessage];
+          return [...old, newMessage];
+        }
+      );
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.messages(selectedConversation?.id),
       });
@@ -283,9 +303,18 @@ export const MessagesScreen: React.FC<{
         )}
 
         {/* Chat Input Bar */}
-        <View className="flex-row items-center p-3 bg-white border-t border-slate-200/90">
+        <View className="flex-row items-center p-3 bg-white border-t border-slate-200/90 gap-2">
+          {/* Emoji Picker Toggle Button */}
+          <TouchableOpacity
+            onPress={() => setEmojiPickerOpen(true)}
+            className="w-10 h-10 rounded-full items-center justify-center bg-slate-100 border border-slate-200"
+            activeOpacity={0.7}
+          >
+            <Smile size={20} color="#e11d48" />
+          </TouchableOpacity>
+
           <TextInput
-            placeholder="Type a message..."
+            placeholder={`Message ${displayName}...`}
             placeholderTextColor="#94a3b8"
             value={messageText}
             onChangeText={setMessageText}
@@ -295,7 +324,7 @@ export const MessagesScreen: React.FC<{
           <TouchableOpacity
             onPress={handleSendMessage}
             disabled={!messageText.trim() || sendMutation.isPending}
-            className={`ml-2 w-10 h-10 rounded-full items-center justify-center ${
+            className={`w-10 h-10 rounded-full items-center justify-center ${
               messageText.trim() ? "bg-rose-600 active:bg-rose-700" : "bg-slate-200"
             }`}
           >
@@ -305,6 +334,15 @@ export const MessagesScreen: React.FC<{
             />
           </TouchableOpacity>
         </View>
+
+        {/* Mobile Emoji Picker Sheet */}
+        <MobileEmojiPicker
+          visible={emojiPickerOpen}
+          onClose={() => setEmojiPickerOpen(false)}
+          onSelectEmoji={(emoji) => {
+            setMessageText((prev) => prev + emoji);
+          }}
+        />
       </KeyboardAvoidingView>
     );
   }
