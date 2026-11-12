@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from "react";
+import React, { useState, useMemo, useRef, useEffect } from "react";
 import {
   View,
   Text,
@@ -6,6 +6,8 @@ import {
   TouchableOpacity,
   ScrollView,
   Modal,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
 } from "react-native";
 import {
   Smile,
@@ -14,10 +16,22 @@ import {
   Flag,
   Search,
   X,
+  Coffee,
+  Activity,
+  Plane,
+  Lightbulb,
 } from "lucide-react-native";
 import { EMOJI_KEYWORDS } from "../data/emojiKeywords";
 
-export const EMOJI_CATEGORIES = [
+export interface EmojiCategory {
+  id: string;
+  name: string;
+  shortName: string;
+  icon: React.ComponentType<{ size?: number; color?: string }>;
+  emojis: string[];
+}
+
+export const EMOJI_CATEGORIES: EmojiCategory[] = [
   {
     id: "smileys",
     name: "Smileys & Emotion",
@@ -47,8 +61,8 @@ export const EMOJI_CATEGORIES = [
       "❤️", "🩷", "🧡", "💛", "💚", "💙", "🩵", "💜", "🖤", "🩶",
       "🤍", "🤎", "💔", "❤️‍🔥", "❤️‍🩹", "❣️", "💕", "💞", "💓", "💗",
       "💖", "💘", "💝", "💟", "💌", "💋", "🫂", "👩‍❤️‍👨", "👩‍❤️‍👩", "👨‍❤️‍👨",
-      "🫀", "🌹", "💐", "🌺", "🌸", "🌷", "🌻", "🌼", "✨", "💍",
-      "🕊️", "🥂", "🍾", "🎂", "🧁", "🕯️",
+      "👩‍❤️‍💋‍👨", "👩‍❤️‍💋‍👩", "👨‍❤️‍💋‍👨", "🫀", "🌹", "💐", "🌺", "🌸", "🌷",
+      "🌻", "🌼", "✨", "💍", "🕊️", "🥂", "🍾", "🎂", "🧁", "🕯️",
     ],
   },
   {
@@ -59,11 +73,13 @@ export const EMOJI_CATEGORIES = [
     emojis: [
       "👋", "🤚", "🖐️", "✋", "🖖", "🫱", "🫲", "🫳", "🫴", "👌",
       "🤌", "🤏", "✌️", "🤞", "🫰", "🤟", "🤘", "🤙", "👈", "👉",
-      "👆", "👇", "☝️", "🫵", "👍", "👎", "✊", "👊", "🤛", "🤜",
-      "👏", "🙌", "🫶", "👐", "🤲", "🤝", "🙏", "✍️", "💅", "🤳",
-      "💪", "🦵", "🦶", "👂", "👃", "👀", "👁️", "👅", "👄", "🫦",
-      "👶", "👧", "🧒", "👦", "👩", "🧑", "👨", "👱", "🧔", "👵",
-      "🧓", "👴", "🤴", "👸", "👳", "🧕", "👰", "🤵", "💃", "🕺",
+      "👆", "🖕", "👇", "☝️", "🫵", "👍", "👎", "✊", "👊", "🤛",
+      "🤜", "👏", "🙌", "🫶", "👐", "🤲", "🤝", "🙏", "✍️", "💅",
+      "🤳", "💪", "🦾", "🦿", "🦵", "🦶", "👂", "🦻", "👃", "👀",
+      "👁️", "👅", "👄", "🫦", "👶", "👧", "🧒", "👦", "👩", "🧑",
+      "👨", "🧑‍🦱", "🧑‍🦰", "🧑‍🦳", "🧑‍🦲", "👱", "🧔", "👵", "🧓", "👴",
+      "🤴", "👸", "👳", "🧕", "👰", "🤵", "🙇", "💁", "🙅", "🙆",
+      "🙋", "🧏", "🤦", "🤷", "💆", "💇", "💃", "🕺", "👯", "🧑‍🤝‍🧑",
     ],
   },
   {
@@ -76,6 +92,104 @@ export const EMOJI_CATEGORIES = [
       "🎉", "🎊", "🪩", "👑", "💖", "🫶", "🧑‍🤝‍🧑", "👭", "👬", "👫",
       "👩‍👩‍👦", "👨‍👨‍👦", "👩‍👩‍👧", "👨‍👨‍👧", "🥂", "🍷", "🍸", "🍹", "💄", "👠",
       "🪞", "🎭", "🎨", "🎤", "🎷", "🎸", "🔮", "🪄", "🪅", "🎈",
+    ],
+  },
+  {
+    id: "nature",
+    name: "Animals & Nature",
+    shortName: "Nature",
+    icon: Sparkles,
+    emojis: [
+      "🐶", "🐱", "🐭", "🐹", "🐰", "🦊", "🐻", "🐼", "🐨", "🐯",
+      "🦁", "🐮", "🐷", "🐸", "🐵", "🙈", "🙉", "🙊", "🐒", "🐔",
+      "🐧", "🐦", "🐤", "🐣", "🐥", "🦆", "🦅", "🦉", "🦇", "🐺",
+      "🐗", "🐴", "🦄", "🐝", "🪱", "🐛", "🦋", "🐌", "🐞", "🐜",
+      "🪰", "🪲", "🪳", "🦟", "🦗", "🕷️", "🦂", "🐢", "🐍", "🦎",
+      "🐙", "🦑", "🦐", "🦞", "🦀", "🐡", "🐠", "🐟", "🐬", "🐳",
+      "🐋", "🦈", "🐊", "🐅", "🐆", "🦓", "🦍", "🦧", "🦣", "🐘",
+      "🦛", "🦏", "🐪", "🐫", "🦒", "🦘", "🦬", "🐃", "🐂", "🐄",
+      "🐎", "🐖", "🐏", "🐑", "🦙", "🐐", "🦌", "🐕", "🐩", "🦮",
+      "🐈", "🐓", "🦃", "🦚", "🦜", "🦢", "🦩", "🕊️", "🐇", "🦝",
+      "🦨", "🦡", "🦫", "🦦", "🦥", "🐁", "🐀", "🐿️", "🦔", "🐾",
+      "🌱", "🪴", "🌲", "🌳", "🌴", "🌵", "🌾", "🌿", "☘️", "🍀",
+      "🍁", "🍂", "🍃", "🍄", "🪨", "🪵", "🌺", "🌸", "🌼", "🌻",
+    ],
+  },
+  {
+    id: "food",
+    name: "Food & Drink",
+    shortName: "Food",
+    icon: Coffee,
+    emojis: [
+      "🍏", "🍎", "🍐", "🍊", "🍋", "🍌", "🍉", "🍇", "🍓", "🫐",
+      "🍈", "🍒", "🍑", "🥭", "🍍", "🥥", "🥝", "🍅", "🍆", "🥑",
+      "🥦", "🥬", "🥒", "🌶️", "🫑", "🌽", "🥕", "🫒", "🧄", "🧅",
+      "🥔", "🍠", "🥐", "🥯", "🍞", "🥖", "🥨", "🧀", "🥚", "🍳",
+      "🧈", "🥞", "🧇", "🥓", "🥩", "🍗", "🍖", "🦴", "🌭", "🍔",
+      "🍟", "🍕", "🫓", "🥪", "🥙", "🧆", "🌮", "🌯", "🫔", "🥗",
+      "🥘", "🫕", "🥫", "🍝", "🍜", "🍲", "🍛", "🍣", "🍱", "🥟",
+      "🦪", "🍤", "🍙", "🍚", "🍘", "🍢", "🥠", "🥮", "🍧", "🍨",
+      "🍦", "🥧", "🧁", "🍰", "🎂", "🍮", "🍭", "🍬", "🍫", "🍿",
+      "🍩", "🍪", "🌰", "🥜", "🍯", "🥛", "🍼", "☕", "🫖", "🍵",
+      "🧃", "🥤", "🧋", "🍶", "🍺", "🍻", "🥂", "🍷", "🥃", "🍸",
+      "🍹", "🧉", "🍾", "🧊", "🥄", "🍴", "🍽️", "🥣", "🥡", "🥢",
+    ],
+  },
+  {
+    id: "activities",
+    name: "Activities & Sports",
+    shortName: "Activity",
+    icon: Activity,
+    emojis: [
+      "⚽", "🏀", "🏈", "⚾", "🥎", "🎾", "🏐", "🏉", "🥏", "🎱",
+      "🪀", "🏓", "🏸", "🏒", "🏑", "🥍", "🏏", "🪃", "🥅", "⛳",
+      "🪁", "🏹", "🎣", "🤿", "🥊", "🥋", "🎽", "🛹", "🛼", "🛷",
+      "⛸️", "🥌", "🎿", "⛷️", "🏂", "🪂", "🏋️", "🤼", "🤸", "🤺",
+      "⛹️", "🤾", "🧗", "🧘", "🏌️", "🏇", "🏄", "🏊", "🤽", "🚣",
+      "🧗", "🚵", "🚴", "🏆", "🥇", "🥈", "🥉", "🏅", "🎖️", "🏵️",
+      "🎫", "🎟️", "🎪", "🤹", "🎭", "🩰", "🎨", "🎬", "🎤", "🎧",
+      "🎼", "🎹", "🥁", "🪘", "🎷", "🎺", "🪗", "🎸", "🪕", "🎻",
+      "🎲", "♟️", "🎯", "🎳", "🎮", "🎰", "🧩", "🎳", "🪀", "🪄",
+    ],
+  },
+  {
+    id: "travel",
+    name: "Travel & Places",
+    shortName: "Travel",
+    icon: Plane,
+    emojis: [
+      "🚗", "🚕", "🚙", "🚌", "🚎", "🏎️", "🚓", "🚑", "🚒", "🚐",
+      "🛻", "🚚", "🚛", "🚜", "🛴", "🚲", "🛵", "🏍️", "🛺", "🚨",
+      "🚔", "🚍", "🚘", "🚖", "🚡", "🚠", "🚟", "🚃", "🚋", "🚞",
+      "🚝", "🚄", "🚅", "🚈", "🚂", "🚆", "🚇", "🚊", "🚉", "✈️",
+      "🛫", "🛬", "🛩️", "💺", "🛰️", "🚀", "🛸", "🚁", "🛶", "⛵",
+      "🚤", "🛥️", "🛳️", "⛴️", "🚢", "⚓", "🛟", "⛽", "🚧", "🚦",
+      "🚥", "🚏", "🗺️", "🗿", "🗽", "🗼", "🏰", "🏯", "🏟️", "🎡",
+      "🎢", "🎠", "⛲", "⛱️", "🏖️", "🏝️", "🏜️", "🌋", "⛰️", "🏔️",
+      "🗻", "🏕️", "⛺", "🛖", "🏠", "🏡", "🏘️", "🏚️", "🏗️", "🏭",
+      "🏢", "🏬", "🏣", "🏤", "🏥", "🏦", "🏨", "🏪", "🏫", "🏩",
+    ],
+  },
+  {
+    id: "objects",
+    name: "Objects & Symbols",
+    shortName: "Objects",
+    icon: Lightbulb,
+    emojis: [
+      "⌚", "📱", "📲", "💻", "⌨️", "🖥️", "🖨️", "🖱️", "🖲️", "🕹️",
+      "🗜️", "💽", "💾", "💿", "📀", "📼", "📷", "📸", "📹", "🎥",
+      "📽️", "🎞️", "📞", "☎️", "📟", "📠", "📺", "📻", "🎙️", "🎚️",
+      "🎛️", "🧭", "⏱️", "⏲️", "⏰", "🕰️", "⌛", "⏳", "📡", "🔋",
+      "🪫", "🔌", "💡", "🔦", "🕯️", "🪔", "🧯", "🛢️", "💸", "💵",
+      "💴", "💶", "💷", "🪙", "💰", "💳", "💎", "⚖️", "🪜", "🧰",
+      "🪛", "🔧", "🔨", "⚒️", "🛠️", "⛏️", "🪚", "🔩", "⚙️", "🪤",
+      "🧱", "⛓️", "🧲", "🔫", "💣", "🧨", "🪓", "🔪", "🗡️", "⚔️",
+      "🛡️", "🚬", "⚰️", "🪦", "⚱️", "🏺", "🔮", "📿", "🧿", "🪬",
+      "💈", "⚗️", "🔭", "🔬", "🕳️", "🩹", "🩺", "🩻", "🩼", "💊",
+      "💉", "🩸", "🧬", "🦠", "🧫", "🧪", "🌡️", "🧹", "🪠", "🧺",
+      "🧻", "🚽", "🚰", "🚿", "🛁", "🧼", "🪥", "🪒", "🧽", "🪣",
+      "🔑", "🗝️", "🚪", "🪑", "🛋️", "🛏️", "🛌", "🖼️", "🛍️", "🛒",
+      "🎁", "🎈", "🎏", "🎀", "🪄", "🪅", "🎊", "🎉", "🎎", "🏮",
     ],
   },
 ];
@@ -94,7 +208,10 @@ export const MobileEmojiPicker: React.FC<MobileEmojiPickerProps> = ({
   const [activeCategoryId, setActiveCategoryId] = useState("smileys");
   const [searchQuery, setSearchQuery] = useState("");
   const scrollViewRef = useRef<any>(null);
+  const tabsScrollViewRef = useRef<any>(null);
   const sectionPositions = useRef<{ [key: string]: number }>({});
+  const tabPositions = useRef<{ [key: string]: number }>({});
+  const isClickScrolling = useRef(false);
 
   // Flattened all emojis
   const allEmojis = useMemo(() => {
@@ -107,10 +224,7 @@ export const MobileEmojiPicker: React.FC<MobileEmojiPickerProps> = ({
     if (!q) return [];
 
     return allEmojis.filter((emoji) => {
-      // Direct symbol match
       if (emoji.includes(q)) return true;
-
-      // Keyword match
       const keywords = EMOJI_KEYWORDS[emoji];
       if (keywords && keywords.some((k) => k.toLowerCase().includes(q))) {
         return true;
@@ -119,11 +233,45 @@ export const MobileEmojiPicker: React.FC<MobileEmojiPickerProps> = ({
     });
   }, [searchQuery, allEmojis]);
 
+  // Keep active category tab in view when activeCategoryId changes
+  useEffect(() => {
+    const tabX = tabPositions.current[activeCategoryId];
+    if (tabX !== undefined && tabsScrollViewRef.current) {
+      tabsScrollViewRef.current.scrollTo({
+        x: Math.max(0, tabX - 40),
+        animated: true,
+      });
+    }
+  }, [activeCategoryId]);
+
   const scrollToCategory = (catId: string) => {
+    isClickScrolling.current = true;
     setActiveCategoryId(catId);
     const posY = sectionPositions.current[catId];
     if (posY !== undefined && scrollViewRef.current) {
       scrollViewRef.current.scrollTo({ y: Math.max(0, posY - 8), animated: true });
+    }
+    setTimeout(() => {
+      isClickScrolling.current = false;
+    }, 450);
+  };
+
+  // Scroll spy: Update active category badge as user scrolls
+  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    if (isClickScrolling.current || searchQuery.trim()) return;
+
+    const scrollY = event.nativeEvent.contentOffset.y;
+    let currentId = EMOJI_CATEGORIES[0].id;
+
+    for (const cat of EMOJI_CATEGORIES) {
+      const pos = sectionPositions.current[cat.id];
+      if (pos !== undefined && scrollY >= pos - 35) {
+        currentId = cat.id;
+      }
+    }
+
+    if (currentId !== activeCategoryId) {
+      setActiveCategoryId(currentId);
     }
   };
 
@@ -175,10 +323,11 @@ export const MobileEmojiPicker: React.FC<MobileEmojiPickerProps> = ({
             </TouchableOpacity>
           </View>
 
-          {/* Category Chips (Fixed height, no vertical stretching) */}
+          {/* Category Chips (All 9 Categories with Horizontal Auto-Scroll) */}
           {!searchQuery && (
             <View className="h-9 mb-3">
               <ScrollView
+                ref={tabsScrollViewRef}
                 horizontal
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={{ alignItems: "center", gap: 8 }}
@@ -190,6 +339,9 @@ export const MobileEmojiPicker: React.FC<MobileEmojiPickerProps> = ({
                     <TouchableOpacity
                       key={cat.id}
                       onPress={() => scrollToCategory(cat.id)}
+                      onLayout={(e) => {
+                        tabPositions.current[cat.id] = e.nativeEvent.layout.x;
+                      }}
                       style={{
                         height: 32,
                         paddingHorizontal: 12,
@@ -215,9 +367,11 @@ export const MobileEmojiPicker: React.FC<MobileEmojiPickerProps> = ({
             </View>
           )}
 
-          {/* Main Emoji List: Search Results or Continuous All-Category Scroll */}
+          {/* Main Emoji List: Search Results or Continuous All-Category Scroll with Scroll-Spy */}
           <ScrollView
             ref={scrollViewRef}
+            onScroll={handleScroll}
+            scrollEventThrottle={16}
             showsVerticalScrollIndicator={true}
             className="flex-1"
             contentContainerStyle={{ paddingBottom: 24 }}
