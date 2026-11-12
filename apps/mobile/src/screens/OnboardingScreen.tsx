@@ -114,13 +114,13 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
   // Single Source of Truth defaults matching Web exactly
   const [formData, setFormData] = useState<OnboardingFormData>({
     displayName: "",
-    dateOfBirth: "1998-05-15",
+    dateOfBirth: "2000-01-01",
     heightCm: 170,
-    nationality: "India",
-    country: "India",
-    state: "Maharashtra",
-    city: "Mumbai",
-    religion: "Hinduism",
+    nationality: "",
+    country: "",
+    state: "",
+    city: "",
+    religion: "",
     languagesSpoken: ["English"],
     gender: "MAN",
     orientation: "GAY",
@@ -156,7 +156,7 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   // Searchable modal pickers
-  const [activeModal, setActiveModal] = useState<"nationality" | "state" | "city" | null>(null);
+  const [activeModal, setActiveModal] = useState<"nationality" | "state" | "city" | "religion" | "language" | null>(null);
   const [searchFilter, setSearchFilter] = useState("");
 
   const stepTitles = [
@@ -685,39 +685,67 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
               </View>
             </View>
 
-            {/* Nationality, State, City Cascading Selectors */}
-            <View className="mt-3">
-              <Text className="text-slate-700 text-xs font-semibold mb-1">
-                Nationality <Text className="text-rose-500">*</Text>
-              </Text>
-              <TouchableOpacity
-                onPress={() => {
-                  setSearchFilter("");
-                  setActiveModal("nationality");
-                }}
-                className="bg-slate-50 p-3 rounded-xl border border-slate-200 flex-row items-center justify-between"
-              >
-                <Text className="text-slate-900 text-sm font-medium">
-                  {formData.nationality || "Select Nationality"}
-                </Text>
-                <ChevronDown size={16} color="#64748b" />
-              </TouchableOpacity>
-            </View>
-
+            {/* 2x2 Layout: Nationality & State, City & Religion */}
             <View className="flex-row gap-3 mt-3">
+              <View className="flex-1">
+                <Text className="text-slate-700 text-xs font-semibold mb-1">
+                  Nationality <Text className="text-rose-500">*</Text>
+                </Text>
+                <TouchableOpacity
+                  onPress={() => {
+                    setSearchFilter("");
+                    setActiveModal("nationality");
+                  }}
+                  className="bg-slate-50 p-3 rounded-xl border border-slate-200 flex-row items-center justify-between"
+                >
+                  <Text className="text-slate-900 text-xs font-medium truncate flex-1 pr-1">
+                    {formData.nationality || "Select"}
+                  </Text>
+                  <ChevronDown size={14} color="#64748b" />
+                </TouchableOpacity>
+              </View>
+
               <View className="flex-1">
                 <Text className="text-slate-700 text-xs font-semibold mb-1">
                   State / Province <Text className="text-rose-500">*</Text>
                 </Text>
                 <TouchableOpacity
                   onPress={() => {
+                    if (!formData.nationality) {
+                      setErrorMsg("Please select Nationality first.");
+                      return;
+                    }
                     setSearchFilter("");
                     setActiveModal("state");
                   }}
                   className="bg-slate-50 p-3 rounded-xl border border-slate-200 flex-row items-center justify-between"
                 >
                   <Text className="text-slate-900 text-xs font-medium truncate flex-1 pr-1">
-                    {formData.state || "Select State"}
+                    {formData.state || "Select"}
+                  </Text>
+                  <ChevronDown size={14} color="#64748b" />
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            <View className="flex-row gap-3 mt-3">
+              <View className="flex-1">
+                <Text className="text-slate-700 text-xs font-semibold mb-1">
+                  City <Text className="text-rose-500">*</Text>
+                </Text>
+                <TouchableOpacity
+                  onPress={() => {
+                    if (!formData.state) {
+                      setErrorMsg("Please select State first.");
+                      return;
+                    }
+                    setSearchFilter("");
+                    setActiveModal("city");
+                  }}
+                  className="bg-slate-50 p-3 rounded-xl border border-slate-200 flex-row items-center justify-between"
+                >
+                  <Text className="text-slate-900 text-xs font-medium truncate flex-1 pr-1">
+                    {formData.city || "Select"}
                   </Text>
                   <ChevronDown size={14} color="#64748b" />
                 </TouchableOpacity>
@@ -725,49 +753,24 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
 
               <View className="flex-1">
                 <Text className="text-slate-700 text-xs font-semibold mb-1">
-                  City <Text className="text-rose-500">*</Text>
+                  Religion / Belief
                 </Text>
                 <TouchableOpacity
                   onPress={() => {
                     setSearchFilter("");
-                    setActiveModal("city");
+                    setActiveModal("religion");
                   }}
                   className="bg-slate-50 p-3 rounded-xl border border-slate-200 flex-row items-center justify-between"
                 >
                   <Text className="text-slate-900 text-xs font-medium truncate flex-1 pr-1">
-                    {formData.city || "Select City"}
+                    {formData.religion || "Select"}
                   </Text>
                   <ChevronDown size={14} color="#64748b" />
                 </TouchableOpacity>
               </View>
             </View>
 
-            {/* Religion from Shared Single Source */}
-            <View className="mt-4">
-              <Text className="text-slate-700 text-xs font-semibold mb-1.5">
-                Religion / Belief
-              </Text>
-              <View className="flex-row flex-wrap gap-1.5">
-                {RELIGION_OPTIONS.map((rel) => {
-                  const sel = formData.religion === rel;
-                  return (
-                    <TouchableOpacity
-                      key={rel}
-                      onPress={() => handleChange("religion", rel)}
-                      className={`px-3 py-1.5 rounded-full border ${
-                        sel ? "bg-rose-600 border-rose-600" : "bg-slate-50 border-slate-200"
-                      }`}
-                    >
-                      <Text className={`text-xs ${sel ? "text-white font-bold" : "text-slate-700"}`}>
-                        {rel}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            </View>
-
-            {/* Languages Spoken */}
+            {/* Languages Spoken (Dropdown / Multi-select without nested scroll bar) */}
             <View className="mt-4">
               <View className="flex-row items-center justify-between mb-1.5">
                 <Text className="text-slate-700 text-xs font-semibold">Languages Spoken</Text>
@@ -775,31 +778,35 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
                   {formData.languagesSpoken.length} selected
                 </Text>
               </View>
-              <ScrollView
-                nestedScrollEnabled
-                showsVerticalScrollIndicator
-                style={{ maxHeight: 220 }}
-                className="bg-slate-50 p-2.5 rounded-xl border border-slate-200"
+              <TouchableOpacity
+                onPress={() => {
+                  setSearchFilter("");
+                  setActiveModal("language");
+                }}
+                className="bg-slate-50 p-3 rounded-xl border border-slate-200 flex-row items-center justify-between"
               >
-                <View className="flex-row flex-wrap gap-1.5">
-                  {LANGUAGE_OPTIONS.map((lang) => {
-                    const sel = formData.languagesSpoken.includes(lang);
-                    return (
-                      <TouchableOpacity
-                        key={lang}
-                        onPress={() => toggleArrayItem("languagesSpoken", lang)}
-                        className={`px-3 py-1.5 rounded-full border ${
-                          sel ? "bg-rose-600 border-rose-600" : "bg-white border-slate-200"
-                        }`}
-                      >
-                        <Text className={`text-xs ${sel ? "text-white font-bold" : "text-slate-700"}`}>
-                          {lang}
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  })}
+                <Text className="text-slate-900 text-xs font-medium truncate flex-1 pr-1">
+                  {formData.languagesSpoken.length > 0
+                    ? formData.languagesSpoken.join(", ")
+                    : "Select languages"}
+                </Text>
+                <ChevronDown size={14} color="#64748b" />
+              </TouchableOpacity>
+              {/* Selected Pills under the dropdown for quick removal without scrolling */}
+              {formData.languagesSpoken.length > 0 && (
+                <View className="flex-row flex-wrap gap-1.5 mt-2">
+                  {formData.languagesSpoken.map((lang) => (
+                    <TouchableOpacity
+                      key={lang}
+                      onPress={() => toggleArrayItem("languagesSpoken", lang)}
+                      className="bg-rose-50 border border-rose-200 px-2.5 py-1 rounded-full flex-row items-center"
+                    >
+                      <Text className="text-rose-700 text-[11px] font-semibold mr-1">{lang}</Text>
+                      <X size={12} color="#e11d48" />
+                    </TouchableOpacity>
+                  ))}
                 </View>
-              </ScrollView>
+              )}
             </View>
           </View>
         )}
@@ -1450,6 +1457,52 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
                       {formData.city === ct && <Check size={16} color="#e11d48" />}
                     </TouchableOpacity>
                   ))}
+
+              {activeModal === "religion" &&
+                RELIGION_OPTIONS
+                  .filter((r) => r.toLowerCase().includes(searchFilter.toLowerCase()))
+                  .map((r) => (
+                    <TouchableOpacity
+                      key={r}
+                      onPress={() => {
+                        handleChange("religion", r);
+                        setActiveModal(null);
+                      }}
+                      className={`p-3 rounded-xl flex-row items-center justify-between ${
+                        formData.religion === r
+                          ? "bg-rose-50 border border-rose-200"
+                          : "active:bg-slate-50"
+                      }`}
+                    >
+                      <Text className="text-slate-800 text-xs font-medium">{r}</Text>
+                      {formData.religion === r && <Check size={16} color="#e11d48" />}
+                    </TouchableOpacity>
+                  ))}
+
+              {activeModal === "language" &&
+                LANGUAGE_OPTIONS
+                  .filter((l) => l.toLowerCase().includes(searchFilter.toLowerCase()))
+                  .map((l) => {
+                    const sel = formData.languagesSpoken.includes(l);
+                    return (
+                      <TouchableOpacity
+                        key={l}
+                        onPress={() => toggleArrayItem("languagesSpoken", l)}
+                        className={`p-3 rounded-xl flex-row items-center justify-between ${
+                          sel ? "bg-rose-50 border border-rose-200" : "active:bg-slate-50"
+                        }`}
+                      >
+                        <Text
+                          className={`text-xs ${
+                            sel ? "text-rose-700 font-bold" : "text-slate-800 font-medium"
+                          }`}
+                        >
+                          {l}
+                        </Text>
+                        {sel && <Check size={16} color="#e11d48" />}
+                      </TouchableOpacity>
+                    );
+                  })}
             </ScrollView>
           </View>
         </View>

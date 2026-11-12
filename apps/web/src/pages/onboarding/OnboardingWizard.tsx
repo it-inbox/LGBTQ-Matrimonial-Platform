@@ -100,7 +100,7 @@ export const OnboardingWizard: React.FC = () => {
   const initialFormData: OnboardingFormData = {
     // Step 1: About You
     displayName: "",
-    dateOfBirth: "",
+    dateOfBirth: "2000-01-01",
     heightCm: 170,
     nationality: "",
     country: "",
