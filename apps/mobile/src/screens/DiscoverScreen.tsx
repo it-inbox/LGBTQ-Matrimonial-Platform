@@ -26,7 +26,9 @@ import {
   Search,
   Send,
   ChevronRight,
+  SlidersHorizontal,
 } from "lucide-react-native";
+import { DiscoveryFilterModal, DiscoveryFilters } from "../components/DiscoveryFilterModal";
 
 import { ProfileDetailScreen } from "./ProfileDetailScreen";
 
@@ -43,6 +45,23 @@ export const DiscoverScreen: React.FC<{
   const [searchInput, setSearchInput] = useState("");
   const [appliedSearchQuery, setAppliedSearchQuery] = useState("");
   const [activeQuickFilter, setActiveQuickFilter] = useState("All");
+
+  // Advanced filters state
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const [appliedFilters, setAppliedFilters] = useState<DiscoveryFilters>({
+    nationalities: [],
+    religions: [],
+    maritalStatuses: [],
+    minAge: 18,
+    maxAge: 60,
+  });
+
+  // Calculate active filters badge count
+  const activeFilterCount =
+    (appliedFilters.nationalities.length > 0 ? 1 : 0) +
+    (appliedFilters.religions.length > 0 ? 1 : 0) +
+    (appliedFilters.maritalStatuses.length > 0 ? 1 : 0) +
+    (appliedFilters.minAge !== 18 || appliedFilters.maxAge !== 60 ? 1 : 0);
 
   // Local ignored list so user can still tap "Ignore" to dismiss if they want
   const [ignoredProfileIds, setIgnoredProfileIds] = useState<string[]>([]);
@@ -68,6 +87,11 @@ export const DiscoverScreen: React.FC<{
       QUERY_KEYS.matchesFeed(1),
       appliedSearchQuery,
       activeQuickFilter,
+      appliedFilters.nationalities.join(","),
+      appliedFilters.religions.join(","),
+      appliedFilters.maritalStatuses.join(","),
+      appliedFilters.minAge,
+      appliedFilters.maxAge,
     ],
     queryFn: async () => {
       const params = new URLSearchParams({
@@ -76,6 +100,21 @@ export const DiscoverScreen: React.FC<{
       });
       if (appliedSearchQuery) params.set("search", appliedSearchQuery);
       if (activeQuickFilter !== "All") params.set("quickFilter", activeQuickFilter);
+      if (appliedFilters.nationalities.length > 0) {
+        params.set("nationalities", appliedFilters.nationalities.join(","));
+      }
+      if (appliedFilters.religions.length > 0) {
+        params.set("religions", appliedFilters.religions.join(","));
+      }
+      if (appliedFilters.maritalStatuses.length > 0) {
+        params.set("maritalStatuses", appliedFilters.maritalStatuses.join(","));
+      }
+      if (appliedFilters.minAge > 18) {
+        params.set("minAge", String(appliedFilters.minAge));
+      }
+      if (appliedFilters.maxAge < 60) {
+        params.set("maxAge", String(appliedFilters.maxAge));
+      }
 
       const res = await api.get(`/matches/feed?${params.toString()}`);
       return res.data;
@@ -434,6 +473,35 @@ export const DiscoverScreen: React.FC<{
           showsHorizontalScrollIndicator={false}
           className="mt-2.5 flex-row"
         >
+          {/* Advanced Filter Modal Trigger Button */}
+          <TouchableOpacity
+            onPress={() => setIsFilterModalOpen(true)}
+            className={`flex-row items-center px-3.5 py-1.5 rounded-full mr-2 border ${
+              activeFilterCount > 0
+                ? "bg-rose-50 border-rose-300"
+                : "bg-slate-100 border-slate-200"
+            }`}
+          >
+            <SlidersHorizontal
+              size={12}
+              color={activeFilterCount > 0 ? "#e11d48" : "#475569"}
+            />
+            <Text
+              className={`text-xs font-bold ml-1.5 ${
+                activeFilterCount > 0 ? "text-rose-600" : "text-slate-700"
+              }`}
+            >
+              Filters
+            </Text>
+            {activeFilterCount > 0 && (
+              <View className="ml-1 bg-rose-600 rounded-full px-1.5 py-0.2">
+                <Text className="text-[10px] font-bold text-white">
+                  {activeFilterCount}
+                </Text>
+              </View>
+            )}
+          </TouchableOpacity>
+
           {["All", "Nearby", "With Photos", "Recently Active"].map((pill) => {
             const isSelected = activeQuickFilter === pill;
             return (
@@ -577,6 +645,15 @@ export const DiscoverScreen: React.FC<{
         visible={detailUserId !== null}
         onClose={() => setDetailUserId(null)}
         onNavigateToChat={onNavigateToChat}
+      />
+
+      {/* Advanced Discovery Filters Modal */}
+      <DiscoveryFilterModal
+        visible={isFilterModalOpen}
+        onClose={() => setIsFilterModalOpen(false)}
+        filters={appliedFilters}
+        onApply={(newFilters) => setAppliedFilters(newFilters)}
+        totalMatchesCount={feedResult?.pagination?.total || matches.length}
       />
     </View>
   );
