@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -11,10 +11,13 @@ import { api } from "../lib/api";
 import { QUERY_KEYS } from "../lib/queryKeys";
 import { Sparkles } from "lucide-react-native";
 import { MobileProfileCard } from "../components/MobileProfileCard";
+import { ProfileDetailScreen } from "./ProfileDetailScreen";
 
 export const MatchesScreen: React.FC<{ onNavigateToChat?: (partnerId: string) => void }> = ({
   onNavigateToChat,
 }) => {
+  const [detailUserId, setDetailUserId] = useState<string | null>(null);
+
   // Fetch Accepted Matches (Mutual Matches)
   const {
     data: acceptedMatches = [],
@@ -57,6 +60,7 @@ export const MatchesScreen: React.FC<{ onNavigateToChat?: (partnerId: string) =>
             <MobileProfileCard
               item={item}
               isReceived={false}
+              onPressProfile={(uid) => setDetailUserId(uid)}
               onChat={
                 onNavigateToChat && (item.user?.id || item.targetUser?.id)
                   ? () => onNavigateToChat(item.user?.id || item.targetUser?.id)
@@ -77,6 +81,14 @@ export const MatchesScreen: React.FC<{ onNavigateToChat?: (partnerId: string) =>
           }
         />
       )}
+
+      {/* Profile Detail Screen */}
+      <ProfileDetailScreen
+        userId={detailUserId}
+        visible={detailUserId !== null}
+        onClose={() => setDetailUserId(null)}
+        onNavigateToChat={onNavigateToChat}
+      />
     </View>
   );
 };

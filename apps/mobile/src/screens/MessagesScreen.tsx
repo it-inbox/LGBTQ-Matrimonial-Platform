@@ -63,7 +63,14 @@ export const MessagesScreen: React.FC<{
     queryFn: async () => {
       if (!selectedConversation?.id) return [];
       const res = await api.get(`/chat/conversations/${selectedConversation.id}/messages`);
-      return res.data?.messages || (Array.isArray(res.data) ? res.data : []);
+      const rawList = res.data?.messages || (Array.isArray(res.data) ? res.data : []);
+      // Deduplicate messages by id preserving order
+      const seen = new Set();
+      return rawList.filter((m: any) => {
+        if (!m?.id || seen.has(m.id)) return false;
+        seen.add(m.id);
+        return true;
+      });
     },
     enabled: !!selectedConversation?.id,
     refetchInterval: 3000,
@@ -100,13 +107,18 @@ export const MessagesScreen: React.FC<{
       });
       return res.data;
     },
-    onSuccess: (newMessage) => {
+    onSuccess: (rawResult: any) => {
       setMessageText("");
+      const messageObj = rawResult?.message || rawResult;
+      if (!messageObj || !messageObj.id) return;
+
       queryClient.setQueryData(
         QUERY_KEYS.messages(selectedConversation?.id || ""),
         (old: any[] = []) => {
-          if (!Array.isArray(old)) return [newMessage];
-          return [...old, newMessage];
+          if (!Array.isArray(old)) return [messageObj];
+          // Prevent duplicates by checking id
+          if (old.some((m) => m?.id === messageObj.id)) return old;
+          return [...old, messageObj];
         }
       );
       queryClient.invalidateQueries({
@@ -252,7 +264,7 @@ export const MessagesScreen: React.FC<{
           <FlatList
             ref={flatListRef}
             data={messages}
-            keyExtractor={(item) => item.id || String(Math.random())}
+            keyExtractor={(item, index) => item.id || `msg-${index}`}
             showsVerticalScrollIndicator={true}
             indicatorStyle="black"
             contentContainerStyle={{ padding: 16 }}

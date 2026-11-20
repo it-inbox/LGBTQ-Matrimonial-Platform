@@ -1,10 +1,23 @@
 import axios from "axios";
+import { Platform } from "react-native";
 import { authStorage } from "./storage";
 
-// Default to production render endpoint or EXPO_PUBLIC_API_URL
-const BASE_URL =
-  process.env.EXPO_PUBLIC_API_URL ||
-  "https://lgbtq-matrimonial-platform.onrender.com/api/v1";
+// Determine local API vs environment variable
+const getBaseUrl = () => {
+  if (process.env.EXPO_PUBLIC_API_URL) {
+    return process.env.EXPO_PUBLIC_API_URL;
+  }
+  if (Platform.OS === "web") {
+    return "http://localhost:4001/api/v1";
+  }
+  // Android emulator uses 10.0.2.2 to access host machine, physical devices use host LAN IP
+  if (Platform.OS === "android") {
+    return "http://10.0.2.2:4001/api/v1";
+  }
+  return "http://localhost:4001/api/v1";
+};
+
+const BASE_URL = getBaseUrl();
 
 export const api = axios.create({
   baseURL: BASE_URL,

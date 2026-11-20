@@ -54,8 +54,12 @@ import {
   DRINKING_OPTIONS,
   SMOKING_OPTIONS,
   PHOTO_VISIBILITY_OPTIONS,
+  ANNUAL_INCOME_OPTIONS,
+  PET_OPTIONS,
+  CHILDREN_OPTIONS,
 } from "@everpride/shared";
-import { getStatesForCountry, getCitiesForState } from "../data/locations";
+import { getStatesForCountry, getCitiesForState, getCitiesForCountry } from "../data/locations";
+import { MobileAgeRangeSlider } from "../components/MobileAgeRangeSlider";
 
 export interface EducationEntry {
   qualification?: string;
@@ -70,10 +74,12 @@ export interface OnboardingFormData {
   displayName: string;
   dateOfBirth: string;
   heightCm: number;
-  nationality: string;
   country: string;
   state: string;
   city: string;
+  nationality: string;
+  originCountry?: string;
+  originCity?: string;
   religion: string;
   languagesSpoken: string[];
   gender: string;
@@ -86,12 +92,15 @@ export interface OnboardingFormData {
   educations: EducationEntry[];
   sector: string;
   profession: string;
+  annualIncome?: string;
   photos: string[];
   photoVisibility: "MUTUAL_MATCHES_ONLY" | "REQUEST_REQUIRED" | "ALL_MEMBERS";
   bio: string;
   diet: string;
   drinking: string;
   smoking: string;
+  pets?: string;
+  children?: string;
   hobbies: string[];
   ghostModeEnabled: boolean;
   preferredGenders: string[];
@@ -117,6 +126,8 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
     dateOfBirth: "2000-01-01",
     heightCm: 170,
     nationality: "",
+    originCountry: "",
+    originCity: "",
     country: "",
     state: "",
     city: "",
@@ -139,12 +150,15 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
     ],
     sector: "Private / IT",
     profession: "",
+    annualIncome: "",
     photos: [],
     photoVisibility: "MUTUAL_MATCHES_ONLY",
     bio: "",
     diet: "Vegetarian",
     drinking: "Non-drinker",
     smoking: "Non-smoker",
+    pets: "",
+    children: "",
     hobbies: [],
     ghostModeEnabled: false,
     preferredGenders: ["MAN"],
@@ -156,28 +170,32 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   // Searchable modal pickers
-  const [activeModal, setActiveModal] = useState<"nationality" | "state" | "city" | "religion" | "language" | null>(null);
+  const [activeModal, setActiveModal] = useState<"country" | "nationality" | "originCountry" | "originCity" | "state" | "city" | "religion" | "language" | null>(null);
   const [searchFilter, setSearchFilter] = useState("");
 
   const stepTitles = [
-    "Looking For",
+    "Looking For (Preferences)",
     "About You",
     "Identity",
     "Marital Status",
-    "Education",
+    "Education Details",
     "Work & Career",
-    "Photo Privacy Shield",
-    "Upload Photos",
-    "Bio / About You",
-    "Lifestyle & Habits",
+    "Privacy Safeguards",
+    "Pictures & Gallery",
+    "Bio",
+    "Lifestyle & Interests",
   ];
 
   const progressPercent = Math.round((step / totalSteps) * 100);
 
-  const availableStates = formData.nationality ? getStatesForCountry(formData.nationality) : [];
+  const availableStates = formData.country ? getStatesForCountry(formData.country) : [];
   const availableCities =
-    formData.nationality && formData.state
-      ? getCitiesForState(formData.nationality, formData.state)
+    formData.country && formData.state
+      ? getCitiesForState(formData.country, formData.state)
+      : [];
+  const availableOriginCities =
+    formData.originCountry || formData.nationality
+      ? getCitiesForCountry(formData.originCountry || formData.nationality)
       : [];
 
   const ageOptions = [
@@ -347,6 +365,10 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
         setErrorMsg("Please select your Nationality.");
         return false;
       }
+      if (!formData.country.trim()) {
+        setErrorMsg("Please select your Country of Residence.");
+        return false;
+      }
       if (!formData.state.trim() || !formData.city.trim()) {
         setErrorMsg("Please select your State and City.");
         return false;
@@ -402,6 +424,8 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
         city: formData.city.trim(),
         state: formData.state.trim(),
         country: formData.country.trim() || "India",
+        originCountry: formData.originCountry?.trim() || undefined,
+        originCity: formData.originCity?.trim() || undefined,
         education: (formData.educations?.[0]?.degree || formData.education || "").trim() || undefined,
         degree: (formData.educations?.[0]?.degreeName || formData.degree || "").trim() || undefined,
         educations: formData.educations
@@ -416,11 +440,14 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
           })),
         sector: formData.sector.trim() || undefined,
         profession: formData.profession.trim() || undefined,
+        annualIncome: formData.annualIncome ? formData.annualIncome.trim() : undefined,
         photos: formData.photos,
         bio: formData.bio.trim() || undefined,
         diet: formData.diet.trim() || undefined,
         drinking: formData.drinking || undefined,
         smoking: formData.smoking || undefined,
+        pets: formData.pets ? formData.pets.trim() : undefined,
+        children: formData.children ? formData.children.trim() : undefined,
         hobbies: formData.hobbies,
         photoVisibility: formData.photoVisibility,
         ghostModeEnabled: formData.ghostModeEnabled,
@@ -506,15 +533,9 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
       <View className="bg-white border border-slate-200/90 rounded-2xl p-5 mb-4 shadow-sm">
         {/* ── STEP 1: LOOKING FOR (PARTNER PREFERENCES) ── */}
         {step === 1 && (
-          <View className="space-y-4">
-            <View className="flex-row items-center gap-3 mb-2">
-              <View className="w-10 h-10 rounded-xl bg-rose-50 items-center justify-center border border-rose-200">
-                <Sliders size={20} color="#e11d48" />
-              </View>
-              <View>
-                <Text className="text-slate-900 text-lg font-bold">Looking For</Text>
-                <Text className="text-slate-500 text-xs">Tell us about your ideal match.</Text>
-              </View>
+          <View className="space-y-7">
+            <View className="mb-2">
+              <Text className="text-rose-600 text-xl font-bold">Looking For (Preferences)</Text>
             </View>
 
             {/* I'm looking for a (Genders) */}
@@ -529,14 +550,12 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
                     <TouchableOpacity
                       key={g.value}
                       onPress={() => togglePreferenceGender(g.value)}
-                      className={`px-3 py-2 rounded-xl border ${
-                        sel ? "bg-rose-600 border-rose-600" : "bg-slate-50 border-slate-200"
-                      }`}
+                      className={`px-3 py-2 rounded-xl border ${sel ? "bg-rose-600 border-rose-600" : "bg-slate-50 border-slate-200"
+                        }`}
                     >
                       <Text
-                        className={`text-xs ${
-                          sel ? "text-white font-bold" : "text-slate-700 font-medium"
-                        }`}
+                        className={`text-xs ${sel ? "text-white font-bold" : "text-slate-700 font-medium"
+                          }`}
                       >
                         {g.label}
                       </Text>
@@ -558,14 +577,12 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
                     <TouchableOpacity
                       key={o.value}
                       onPress={() => togglePreferenceOrientation(o.value)}
-                      className={`px-3 py-2 rounded-xl border ${
-                        sel ? "bg-rose-600 border-rose-600" : "bg-slate-50 border-slate-200"
-                      }`}
+                      className={`px-3 py-2 rounded-xl border ${sel ? "bg-rose-600 border-rose-600" : "bg-slate-50 border-slate-200"
+                        }`}
                     >
                       <Text
-                        className={`text-xs ${
-                          sel ? "text-white font-bold" : "text-slate-700 font-medium"
-                        }`}
+                        className={`text-xs ${sel ? "text-white font-bold" : "text-slate-700 font-medium"
+                          }`}
                       >
                         {o.label}
                       </Text>
@@ -575,53 +592,25 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
               </View>
             </View>
 
-            {/* Aged (Min Age & Max Age) */}
-            <View className="mt-3">
-              <Text className="text-slate-700 text-xs font-bold uppercase tracking-wider mb-2">
-                AGED
-              </Text>
-              <View className="flex-row items-center gap-3">
-                <View className="flex-1">
-                  <Text className="text-slate-500 text-[10px] mb-1 font-bold uppercase tracking-wider">MINIMUM AGE</Text>
-                  <TextInput
-                    value={String(formData.minAge)}
-                    onChangeText={(val) => handleChange("minAge", parseInt(val, 10) || 18)}
-                    keyboardType="numeric"
-                    className="bg-slate-50 text-slate-900 p-3 rounded-xl border border-slate-200 text-sm font-semibold text-center"
-                    placeholder="18"
-                    placeholderTextColor="#94a3b8"
-                  />
-                </View>
-
-                <Text className="text-slate-400 font-bold mt-4">to</Text>
-
-                <View className="flex-1">
-                  <Text className="text-slate-500 text-[10px] mb-1 font-bold uppercase tracking-wider">MAXIMUM AGE</Text>
-                  <TextInput
-                    value={String(formData.maxAge)}
-                    onChangeText={(val) => handleChange("maxAge", parseInt(val, 10) || 40)}
-                    keyboardType="numeric"
-                    className="bg-slate-50 text-slate-900 p-3 rounded-xl border border-slate-200 text-sm font-semibold text-center"
-                    placeholder="40"
-                    placeholderTextColor="#94a3b8"
-                  />
-                </View>
-              </View>
+            {/* Partner Age Range Slider */}
+            <View className="mt-4 pt-2 border-t border-slate-100">
+              <MobileAgeRangeSlider
+                minAge={formData.minAge}
+                maxAge={formData.maxAge}
+                onChange={(min, max) => {
+                  handleChange("minAge", min);
+                  handleChange("maxAge", max);
+                }}
+              />
             </View>
           </View>
         )}
 
         {/* ── STEP 2: ABOUT YOU ── */}
         {step === 2 && (
-          <View className="space-y-4">
-            <View className="flex-row items-center gap-3 mb-2">
-              <View className="w-10 h-10 rounded-xl bg-rose-50 items-center justify-center border border-rose-200">
-                <User size={20} color="#e11d48" />
-              </View>
-              <View>
-                <Text className="text-slate-900 text-lg font-bold">About You</Text>
-                <Text className="text-slate-500 text-xs">Basic details to establish your profile.</Text>
-              </View>
+          <View className="space-y-7">
+            <View className="mb-2">
+              <Text className="text-rose-600 text-xl font-bold">About You</Text>
             </View>
 
             <View className="mt-2">
@@ -641,79 +630,83 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
             </View>
 
             {/* Date of Birth */}
-            <View className="flex-row gap-3 mt-3">
-              <View className="flex-1">
-                <Text className="text-slate-700 text-xs font-bold uppercase tracking-wider mb-1.5">
-                  DATE OF BIRTH <Text className="text-rose-500">*</Text>
-                </Text>
-                {Platform.OS === "web" ? (
-                  // @ts-ignore
-                  <input
-                    type="date"
-                    value={formData.dateOfBirth}
-                    onChange={(e: any) => handleChange("dateOfBirth", e.target.value)}
-                    style={{
-                      backgroundColor: "#f8fafc",
-                      color: "#0f172a",
-                      padding: "12px",
-                      borderRadius: "12px",
-                      border: "1px solid #e2e8f0",
-                      fontSize: "14px",
-                      width: "100%",
-                      outline: "none",
-                    }}
-                  />
-                ) : (
-                  <TextInput
-                    value={formData.dateOfBirth}
-                    onChangeText={(val) => handleChange("dateOfBirth", val)}
-                    className="bg-slate-50 text-slate-900 p-3 rounded-xl border border-slate-200 text-sm"
-                    placeholder="YYYY-MM-DD"
-                    placeholderTextColor="#94a3b8"
-                  />
-                )}
-              </View>
-              <View className="flex-1">
-                <Text className="text-slate-700 text-xs font-bold uppercase tracking-wider mb-1.5">HEIGHT (CM)</Text>
+            <View className="mt-4 pt-3 border-t border-slate-100">
+              <Text className="text-slate-700 text-xs font-bold uppercase tracking-wider mb-1.5">
+                DATE OF BIRTH <Text className="text-rose-500">*</Text>
+              </Text>
+              {Platform.OS === "web" ? (
+                // @ts-ignore
+                <input
+                  type="date"
+                  value={formData.dateOfBirth}
+                  onChange={(e: any) => handleChange("dateOfBirth", e.target.value)}
+                  style={{
+                    backgroundColor: "#f8fafc",
+                    color: "#0f172a",
+                    padding: "12px",
+                    borderRadius: "12px",
+                    border: "1px solid #e2e8f0",
+                    fontSize: "14px",
+                    width: "100%",
+                    outline: "none",
+                  }}
+                />
+              ) : (
                 <TextInput
-                  value={String(formData.heightCm || 170)}
-                  onChangeText={(val) => handleChange("heightCm", parseInt(val, 10) || 170)}
-                  keyboardType="numeric"
+                  value={formData.dateOfBirth}
+                  onChangeText={(val) => handleChange("dateOfBirth", val)}
                   className="bg-slate-50 text-slate-900 p-3 rounded-xl border border-slate-200 text-sm"
-                  placeholder="170"
+                  placeholder="YYYY-MM-DD"
                   placeholderTextColor="#94a3b8"
                 />
-              </View>
+              )}
             </View>
 
-            {/* 2x2 Layout: Nationality & State, City & Religion */}
-            <View className="flex-row gap-3 mt-3">
-              <View className="flex-1">
+            {/* Height */}
+            <View className="mt-4 pt-3 border-t border-slate-100">
+              <Text className="text-slate-700 text-xs font-bold uppercase tracking-wider mb-1.5">HEIGHT (CM)</Text>
+              <TextInput
+                value={String(formData.heightCm || 170)}
+                onChangeText={(val) => handleChange("heightCm", parseInt(val, 10) || 170)}
+                keyboardType="numeric"
+                className="bg-slate-50 text-slate-900 p-3 rounded-xl border border-slate-200 text-sm"
+                placeholder="170"
+                placeholderTextColor="#94a3b8"
+              />
+            </View>
+
+            {/* Current Residence Section */}
+            <View className="mt-6 pt-5 border-t border-slate-100">
+              <Text className="text-slate-800 text-sm font-extrabold uppercase tracking-wider mb-3">
+                Current Residence
+              </Text>
+
+              <View className="mb-3">
                 <Text className="text-slate-700 text-xs font-bold uppercase tracking-wider mb-1.5">
-                  NATIONALITY <Text className="text-rose-500">*</Text>
+                  COUNTRY <Text className="text-rose-500">*</Text>
                 </Text>
                 <TouchableOpacity
                   onPress={() => {
                     setSearchFilter("");
-                    setActiveModal("nationality");
+                    setActiveModal("country");
                   }}
                   className="bg-slate-50 p-3 rounded-xl border border-slate-200 flex-row items-center justify-between"
                 >
                   <Text className="text-slate-900 text-xs font-medium truncate flex-1 pr-1">
-                    {formData.nationality || "Select"}
+                    {formData.country || "Select"}
                   </Text>
                   <ChevronDown size={14} color="#64748b" />
                 </TouchableOpacity>
               </View>
 
-              <View className="flex-1">
+              <View className="mb-3">
                 <Text className="text-slate-700 text-xs font-bold uppercase tracking-wider mb-1.5">
-                  STATE / PROVINCE <Text className="text-rose-500">*</Text>
+                  STATE <Text className="text-rose-500">*</Text>
                 </Text>
                 <TouchableOpacity
                   onPress={() => {
-                    if (!formData.nationality) {
-                      setErrorMsg("Please select Nationality first.");
+                    if (!formData.country) {
+                      setErrorMsg("Please select Country first.");
                       return;
                     }
                     setSearchFilter("");
@@ -727,10 +720,8 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
                   <ChevronDown size={14} color="#64748b" />
                 </TouchableOpacity>
               </View>
-            </View>
 
-            <View className="flex-row gap-3 mt-3">
-              <View className="flex-1">
+              <View className="mb-1">
                 <Text className="text-slate-700 text-xs font-bold uppercase tracking-wider mb-1.5">
                   CITY <Text className="text-rose-500">*</Text>
                 </Text>
@@ -751,10 +742,75 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
                   <ChevronDown size={14} color="#64748b" />
                 </TouchableOpacity>
               </View>
+            </View>
 
-              <View className="flex-1">
+            {/* Origin & Citizenship Section */}
+            <View className="mt-6 pt-5 border-t border-slate-100">
+              <Text className="text-slate-800 text-sm font-extrabold uppercase tracking-wider mb-3">
+                Origin & Citizenship
+              </Text>
+
+              <View className="mb-3">
                 <Text className="text-slate-700 text-xs font-bold uppercase tracking-wider mb-1.5">
-                  RELIGION / BELIEF
+                  NATIONALITY / CITIZENSHIP <Text className="text-rose-500">*</Text>
+                </Text>
+                <TouchableOpacity
+                  onPress={() => {
+                    setSearchFilter("");
+                    setActiveModal("nationality");
+                  }}
+                  className="bg-slate-50 p-3 rounded-xl border border-slate-200 flex-row items-center justify-between"
+                >
+                  <Text className="text-slate-900 text-xs font-medium truncate flex-1 pr-1">
+                    {formData.nationality || "Select"}
+                  </Text>
+                  <ChevronDown size={14} color="#64748b" />
+                </TouchableOpacity>
+              </View>
+
+              <View className="mb-3">
+                <Text className="text-slate-700 text-xs font-bold uppercase tracking-wider mb-1.5">
+                  COUNTRY OF ORIGIN
+                </Text>
+                <TouchableOpacity
+                  onPress={() => {
+                    setSearchFilter("");
+                    setActiveModal("originCountry");
+                  }}
+                  className="bg-slate-50 p-3 rounded-xl border border-slate-200 flex-row items-center justify-between"
+                >
+                  <Text className="text-slate-900 text-xs font-medium truncate flex-1 pr-1">
+                    {formData.originCountry || "Select"}
+                  </Text>
+                  <ChevronDown size={14} color="#64748b" />
+                </TouchableOpacity>
+              </View>
+
+              <View className="mb-3">
+                <Text className="text-slate-700 text-xs font-bold uppercase tracking-wider mb-1.5">
+                  HOMETOWN
+                </Text>
+                <TouchableOpacity
+                  onPress={() => {
+                    if (!formData.originCountry && !formData.nationality) {
+                      setErrorMsg("Please select Nationality or Country of Origin first.");
+                      return;
+                    }
+                    setSearchFilter("");
+                    setActiveModal("originCity");
+                  }}
+                  className="bg-slate-50 p-3 rounded-xl border border-slate-200 flex-row items-center justify-between"
+                >
+                  <Text className="text-slate-900 text-xs font-medium truncate flex-1 pr-1">
+                    {formData.originCity || "Select Hometown"}
+                  </Text>
+                  <ChevronDown size={14} color="#64748b" />
+                </TouchableOpacity>
+              </View>
+
+              <View className="mb-1 mt-4 pt-3 border-t border-slate-100">
+                <Text className="text-slate-700 text-xs font-bold uppercase tracking-wider mb-1.5">
+                  RELIGION
                 </Text>
                 <TouchableOpacity
                   onPress={() => {
@@ -771,11 +827,11 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
               </View>
             </View>
 
-            {/* Languages Spoken (Can select multiple) Dropdown */}
-            <View className="mt-4">
+            {/* Languages Spoken Dropdown */}
+            <View className="mt-5 pt-4 border-t border-slate-100">
               <View className="flex-row items-center justify-between mb-1.5">
                 <Text className="text-slate-700 text-xs font-bold uppercase tracking-wider">
-                  LANGUAGES SPOKEN (CAN SELECT MULTIPLE)
+                  LANGUAGES
                 </Text>
                 {formData.languagesSpoken.length > 0 && (
                   <Text className="text-rose-600 text-[10px] font-bold">
@@ -818,15 +874,9 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
 
         {/* ── STEP 3: IDENTITY ── */}
         {step === 3 && (
-          <View className="space-y-4">
-            <View className="flex-row items-center gap-3 mb-2">
-              <View className="w-10 h-10 rounded-xl bg-pink-50 items-center justify-center border border-pink-200">
-                <Sparkles size={20} color="#ec4899" />
-              </View>
-              <View>
-                <Text className="text-slate-900 text-lg font-bold">Identity & Affirmation</Text>
-                <Text className="text-slate-500 text-xs">Affirm your authentic gender and orientation.</Text>
-              </View>
+          <View className="space-y-7">
+            <View className="mb-2">
+              <Text className="text-rose-600 text-xl font-bold">Identity</Text>
             </View>
 
             {/* Gender Identity */}
@@ -841,9 +891,8 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
                     <TouchableOpacity
                       key={g.value}
                       onPress={() => handleChange("gender", g.value)}
-                      className={`px-3 py-2 rounded-xl border ${
-                        sel ? "bg-rose-600 border-rose-600" : "bg-slate-50 border-slate-200"
-                      }`}
+                      className={`px-3 py-2 rounded-xl border ${sel ? "bg-rose-600 border-rose-600" : "bg-slate-50 border-slate-200"
+                        }`}
                     >
                       <Text className={`text-xs ${sel ? "text-white font-bold" : "text-slate-700"}`}>
                         {g.label}
@@ -866,9 +915,8 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
                     <TouchableOpacity
                       key={o.value}
                       onPress={() => handleChange("orientation", o.value)}
-                      className={`px-3 py-2 rounded-xl border ${
-                        sel ? "bg-rose-600 border-rose-600" : "bg-slate-50 border-slate-200"
-                      }`}
+                      className={`px-3 py-2 rounded-xl border ${sel ? "bg-rose-600 border-rose-600" : "bg-slate-50 border-slate-200"
+                        }`}
                     >
                       <Text className={`text-xs ${sel ? "text-white font-bold" : "text-slate-700"}`}>
                         {o.label}
@@ -894,7 +942,7 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
             {/* Outness Status */}
             <View className="mt-4">
               <Text className="text-slate-700 text-xs font-bold uppercase tracking-wider mb-2">
-                OUTNESS STATUS <Text className="text-rose-500">*</Text>
+                ARE YOU OUT OF THE CLOSET <Text className="text-rose-500">*</Text>
               </Text>
               <View className="space-y-2">
                 {OUTNESS_OPTIONS.map((out) => {
@@ -903,9 +951,8 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
                     <TouchableOpacity
                       key={out.id}
                       onPress={() => handleChange("outnessStatus", out.id)}
-                      className={`p-3 rounded-xl border flex-row items-center justify-between ${
-                        sel ? "bg-rose-50 border-rose-500" : "bg-slate-50 border-slate-200"
-                      }`}
+                      className={`p-3 rounded-xl border flex-row items-center justify-between ${sel ? "bg-rose-50 border-rose-500" : "bg-slate-50 border-slate-200"
+                        }`}
                     >
                       <Text className={`text-xs ${sel ? "text-rose-700 font-bold" : "text-slate-700"}`}>
                         {out.label}
@@ -921,15 +968,9 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
 
         {/* ── STEP 4: MARITAL STATUS ── */}
         {step === 4 && (
-          <View className="space-y-4">
-            <View className="flex-row items-center gap-3 mb-2">
-              <View className="w-10 h-10 rounded-xl bg-purple-50 items-center justify-center border border-purple-200">
-                <Heart size={20} color="#a855f7" />
-              </View>
-              <View>
-                <Text className="text-slate-900 text-lg font-bold">Marital Status</Text>
-                <Text className="text-slate-500 text-xs">Your current relationship legal/ritual status.</Text>
-              </View>
+          <View className="space-y-7">
+            <View className="mb-2">
+              <Text className="text-rose-600 text-xl font-bold">Marital Status</Text>
             </View>
 
             <View className="space-y-2 mt-2">
@@ -939,15 +980,13 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
                   <TouchableOpacity
                     key={ms.id}
                     onPress={() => handleChange("maritalStatus", ms.id)}
-                    className={`p-3.5 rounded-xl border flex-row items-center justify-between ${
-                      sel ? "bg-rose-50 border-rose-500" : "bg-slate-50 border-slate-200"
-                    }`}
+                    className={`p-3.5 rounded-xl border flex-row items-center justify-between ${sel ? "bg-rose-50 border-rose-500" : "bg-slate-50 border-slate-200"
+                      }`}
                   >
                     <View className="flex-1 pr-2">
                       <Text className={`text-sm font-bold ${sel ? "text-rose-700" : "text-slate-900"}`}>
                         {ms.id}
                       </Text>
-                      <Text className="text-slate-500 text-xs mt-0.5">{ms.desc}</Text>
                     </View>
                     {sel && <Check size={18} color="#e11d48" />}
                   </TouchableOpacity>
@@ -959,32 +998,22 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
 
         {/* ── STEP 5: EDUCATION ── */}
         {step === 5 && (
-          <View className="space-y-4">
-            <View className="flex-row items-center gap-3 mb-2">
-              <View className="w-10 h-10 rounded-xl bg-blue-50 items-center justify-center border border-blue-200">
-                <GraduationCap size={20} color="#3b82f6" />
-              </View>
-              <View>
-                <Text className="text-slate-900 text-lg font-bold">Education Details</Text>
-                <Text className="text-slate-500 text-xs">Add your academic background.</Text>
-              </View>
+          <View className="space-y-7">
+            <View className="mb-2">
+              <Text className="text-rose-600 text-xl font-bold">Education Details</Text>
             </View>
 
             {formData.educations?.map((edu, idx) => (
               <View key={idx} className="bg-slate-50 p-4 rounded-xl border border-slate-200 mb-3">
-                <View className="flex-row items-center justify-between mb-2">
-                  <Text className="text-slate-800 text-xs font-bold">Qualification #{idx + 1}</Text>
-                  {formData.educations.length > 1 && (
+                {formData.educations.length > 1 && (
+                  <View className="flex-row items-center justify-end mb-2">
                     <TouchableOpacity onPress={() => handleRemoveEducation(idx)}>
                       <Trash2 size={16} color="#ef4444" />
                     </TouchableOpacity>
-                  )}
-                </View>
+                  </View>
+                )}
 
-                {/* Qualification Level */}
-                <Text className="text-slate-700 text-xs font-bold uppercase tracking-wider mb-1.5">
-                  QUALIFICATION LEVEL <Text className="text-rose-500">*</Text>
-                </Text>
+                {/* Qualification Level Chips */}
                 <View className="flex-row flex-wrap gap-1.5 mb-3">
                   {QUALIFICATION_OPTIONS.map((q) => {
                     const sel = edu.degree === q;
@@ -992,9 +1021,8 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
                       <TouchableOpacity
                         key={q}
                         onPress={() => handleUpdateEducation(idx, "degree", q)}
-                        className={`px-2.5 py-1.5 rounded-lg border ${
-                          sel ? "bg-rose-600 border-rose-600" : "bg-white border-slate-200"
-                        }`}
+                        className={`px-2.5 py-1.5 rounded-lg border ${sel ? "bg-rose-600 border-rose-600" : "bg-white border-slate-200"
+                          }`}
                       >
                         <Text className={`text-xs ${sel ? "text-white font-bold" : "text-slate-700"}`}>
                           {q}
@@ -1007,7 +1035,7 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
                 {edu.degree !== "High School" && (
                   <>
                     <Text className="text-slate-700 text-xs font-bold uppercase tracking-wider mb-1.5">
-                      DEGREE NAME <Text className="text-rose-500">*</Text>
+                      DEGREE <Text className="text-rose-500">*</Text>
                     </Text>
                     <TextInput
                       value={edu.degreeName || ""}
@@ -1018,7 +1046,7 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
                     />
 
                     <Text className="text-slate-700 text-xs font-bold uppercase tracking-wider mb-1.5">
-                      MAJOR / FIELD OF STUDY (OPTIONAL)
+                      FIELD OF STUDY
                     </Text>
                     <TextInput
                       value={edu.major || ""}
@@ -1031,13 +1059,24 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
                 )}
 
                 <Text className="text-slate-700 text-xs font-bold uppercase tracking-wider mb-1.5">
-                  INSTITUTION / SCHOOL <Text className="text-rose-500">*</Text>
+                  {edu.degree === "High School"
+                    ? "SCHOOL"
+                    : edu.degree === "Diploma" || edu.degree === "Other"
+                      ? "INSTITUTION"
+                      : "UNIVERSITY"}{" "}
+                  <Text className="text-rose-500">*</Text>
                 </Text>
                 <TextInput
                   value={edu.institution}
                   onChangeText={(val) => handleUpdateEducation(idx, "institution", val)}
                   className="bg-white text-slate-900 p-2.5 rounded-lg border border-slate-200 text-xs"
-                  placeholder="e.g. University of Mumbai"
+                  placeholder={
+                    edu.degree === "High School"
+                      ? "e.g. DPS, St. Xavier's, City High School"
+                      : edu.degree === "Diploma" || edu.degree === "Other"
+                        ? "e.g. National Institute of Design, Tech Academy"
+                        : "e.g. Stanford University, Delhi University"
+                  }
                   placeholderTextColor="#94a3b8"
                 />
               </View>
@@ -1053,17 +1092,11 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
           </View>
         )}
 
-        {/* ── STEP 6: WORK & CAREER ── */}
+        {/* ── STEP 6: CAREER ── */}
         {step === 6 && (
-          <View className="space-y-4">
-            <View className="flex-row items-center gap-3 mb-2">
-              <View className="w-10 h-10 rounded-xl bg-amber-50 items-center justify-center border border-amber-200">
-                <Briefcase size={20} color="#f59e0b" />
-              </View>
-              <View>
-                <Text className="text-slate-900 text-lg font-bold">Work & Profession</Text>
-                <Text className="text-slate-500 text-xs">Your career and employment sector.</Text>
-              </View>
+          <View className="space-y-7">
+            <View className="mb-2">
+              <Text className="text-rose-600 text-xl font-bold">Career</Text>
             </View>
 
             <View className="mt-2">
@@ -1077,9 +1110,8 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
                     <TouchableOpacity
                       key={sec}
                       onPress={() => handleChange("sector", sec)}
-                      className={`px-3 py-1.5 rounded-lg border ${
-                        sel ? "bg-rose-600 border-rose-600" : "bg-slate-50 border-slate-200"
-                      }`}
+                      className={`px-3 py-1.5 rounded-lg border ${sel ? "bg-rose-600 border-rose-600" : "bg-slate-50 border-slate-200"
+                        }`}
                     >
                       <Text className={`text-xs ${sel ? "text-white font-bold" : "text-slate-700"}`}>
                         {sec}
@@ -1092,7 +1124,7 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
 
             <View className="mt-4">
               <Text className="text-slate-700 text-xs font-bold uppercase tracking-wider mb-1.5">
-                JOB TITLE / PROFESSION
+                JOB TITLE
               </Text>
               <TextInput
                 value={formData.profession}
@@ -1102,20 +1134,40 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
                 placeholderTextColor="#94a3b8"
               />
             </View>
+
+            <View className="mt-4">
+              <Text className="text-slate-700 text-xs font-bold uppercase tracking-wider mb-1.5">
+                ANNUAL INCOME
+              </Text>
+              <View className="flex-row flex-wrap gap-2">
+                {ANNUAL_INCOME_OPTIONS.map((incomeOpt) => {
+                  const sel = formData.annualIncome === incomeOpt;
+                  return (
+                    <TouchableOpacity
+                      key={incomeOpt}
+                      onPress={() => handleChange("annualIncome", sel ? "" : incomeOpt)}
+                      className={`px-3 py-2 rounded-xl border ${sel ? "bg-rose-600 border-rose-600" : "bg-slate-50 border-slate-200"
+                        }`}
+                    >
+                      <Text
+                        className={`text-xs ${sel ? "text-white font-bold" : "text-slate-700 font-medium"
+                          }`}
+                      >
+                        {incomeOpt}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
           </View>
         )}
 
-        {/* ── STEP 7: PHOTO PRIVACY SHIELD ── */}
+        {/* ── STEP 7: PICTURE PRIVACY SETTINGS ── */}
         {step === 7 && (
-          <View className="space-y-4">
-            <View className="flex-row items-center gap-3 mb-2">
-              <View className="w-10 h-10 rounded-xl bg-emerald-50 items-center justify-center border border-emerald-200">
-                <Shield size={20} color="#10b981" />
-              </View>
-              <View>
-                <Text className="text-slate-900 text-lg font-bold">Photo Privacy Shield</Text>
-                <Text className="text-slate-500 text-xs">Choose who can view your clear photos.</Text>
-              </View>
+          <View className="space-y-7">
+            <View className="mb-2">
+              <Text className="text-rose-600 text-xl font-bold">Picture Privacy Settings</Text>
             </View>
 
             <View className="space-y-2.5 mt-2">
@@ -1125,9 +1177,8 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
                   <TouchableOpacity
                     key={opt.id}
                     onPress={() => handleChange("photoVisibility", opt.id)}
-                    className={`p-3.5 rounded-xl border flex-row items-center justify-between ${
-                      sel ? "bg-rose-50 border-rose-500" : "bg-slate-50 border-slate-200"
-                    }`}
+                    className={`p-3.5 rounded-xl border flex-row items-center justify-between ${sel ? "bg-rose-50 border-rose-500" : "bg-slate-50 border-slate-200"
+                      }`}
                   >
                     <View className="flex-1 pr-3">
                       <Text className={`text-sm font-bold ${sel ? "text-rose-700" : "text-slate-900"}`}>
@@ -1143,17 +1194,11 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
           </View>
         )}
 
-        {/* ── STEP 8: UPLOAD PHOTOS ── */}
+        {/* ── STEP 8: YOUR PICTURES ── */}
         {step === 8 && (
-          <View className="space-y-4">
-            <View className="flex-row items-center gap-3 mb-2">
-              <View className="w-10 h-10 rounded-xl bg-rose-50 items-center justify-center border border-rose-200">
-                <Camera size={20} color="#e11d48" />
-              </View>
-              <View>
-                <Text className="text-slate-900 text-lg font-bold">Upload Photos</Text>
-                <Text className="text-slate-500 text-xs">Add photos to your profile ({formData.photos.length}/6).</Text>
-              </View>
+          <View className="space-y-7">
+            <View className="mb-2">
+              <Text className="text-rose-600 text-xl font-bold">Your Pictures</Text>
             </View>
 
             {/* Photo Grid */}
@@ -1196,19 +1241,12 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
 
         {/* ── STEP 9: BIO ── */}
         {step === 9 && (
-          <View className="space-y-4">
-            <View className="flex-row items-center gap-3 mb-2">
-              <View className="w-10 h-10 rounded-xl bg-indigo-50 items-center justify-center border border-indigo-200">
-                <BookOpen size={20} color="#6366f1" />
-              </View>
-              <View>
-                <Text className="text-slate-900 text-lg font-bold">Your Bio / About You</Text>
-                <Text className="text-slate-500 text-xs">Introduce yourself to prospective partners.</Text>
-              </View>
+          <View className="space-y-7">
+            <View className="mb-2">
+              <Text className="text-rose-600 text-xl font-bold">Bio</Text>
             </View>
 
             <View className="mt-2">
-              <Text className="text-slate-700 text-xs font-bold uppercase tracking-wider mb-1.5">ABOUT ME</Text>
               <TextInput
                 value={formData.bio}
                 onChangeText={(val) => handleChange("bio", val)}
@@ -1227,15 +1265,9 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
 
         {/* ── STEP 10: LIFESTYLE & HABITS ── */}
         {step === 10 && (
-          <View className="space-y-4">
-            <View className="flex-row items-center gap-3 mb-2">
-              <View className="w-10 h-10 rounded-xl bg-orange-50 items-center justify-center border border-orange-200">
-                <Coffee size={20} color="#f97316" />
-              </View>
-              <View>
-                <Text className="text-slate-900 text-lg font-bold">Lifestyle & Habits</Text>
-                <Text className="text-slate-500 text-xs">Dietary preferences, hobbies, and interests.</Text>
-              </View>
+          <View className="space-y-7">
+            <View className="mb-2">
+              <Text className="text-rose-600 text-xl font-bold">Lifestyle & Interests</Text>
             </View>
 
             {/* Diet */}
@@ -1250,9 +1282,8 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
                     <TouchableOpacity
                       key={d}
                       onPress={() => handleChange("diet", d)}
-                      className={`px-3 py-1.5 rounded-xl border ${
-                        sel ? "bg-rose-600 border-rose-600" : "bg-slate-50 border-slate-200"
-                      }`}
+                      className={`px-3 py-1.5 rounded-xl border ${sel ? "bg-rose-600 border-rose-600" : "bg-slate-50 border-slate-200"
+                        }`}
                     >
                       <Text className={`text-xs ${sel ? "text-white font-bold" : "text-slate-700"}`}>
                         {d}
@@ -1275,14 +1306,12 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
                     <TouchableOpacity
                       key={dr.id}
                       onPress={() => handleChange("drinking", dr.id)}
-                      className={`px-3.5 py-2 rounded-xl border ${
-                        sel ? "bg-rose-600 border-rose-600" : "bg-slate-50 border-slate-200"
-                      }`}
+                      className={`px-3.5 py-2 rounded-xl border ${sel ? "bg-rose-600 border-rose-600" : "bg-slate-50 border-slate-200"
+                        }`}
                     >
                       <Text
-                        className={`text-xs ${
-                          sel ? "text-white font-bold" : "text-slate-700 font-medium"
-                        }`}
+                        className={`text-xs ${sel ? "text-white font-bold" : "text-slate-700 font-medium"
+                          }`}
                       >
                         {dr.label}
                       </Text>
@@ -1304,16 +1333,68 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
                     <TouchableOpacity
                       key={sm.id}
                       onPress={() => handleChange("smoking", sm.id)}
-                      className={`px-3.5 py-2 rounded-xl border ${
-                        sel ? "bg-rose-600 border-rose-600" : "bg-slate-50 border-slate-200"
-                      }`}
+                      className={`px-3.5 py-2 rounded-xl border ${sel ? "bg-rose-600 border-rose-600" : "bg-slate-50 border-slate-200"
+                        }`}
                     >
                       <Text
-                        className={`text-xs ${
-                          sel ? "text-white font-bold" : "text-slate-700 font-medium"
-                        }`}
+                        className={`text-xs ${sel ? "text-white font-bold" : "text-slate-700 font-medium"
+                          }`}
                       >
                         {sm.label}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
+
+            {/* Pet Preferences */}
+            <View className="mt-4">
+              <Text className="text-slate-700 text-xs font-bold uppercase tracking-wider mb-2">
+                PET PREFERENCES
+              </Text>
+              <View className="flex-row flex-wrap gap-2">
+                {PET_OPTIONS.map((petOpt) => {
+                  const sel = formData.pets === petOpt;
+                  return (
+                    <TouchableOpacity
+                      key={petOpt}
+                      onPress={() => handleChange("pets", sel ? "" : petOpt)}
+                      className={`px-3.5 py-2 rounded-xl border ${sel ? "bg-rose-600 border-rose-600" : "bg-slate-50 border-slate-200"
+                        }`}
+                    >
+                      <Text
+                        className={`text-xs ${sel ? "text-white font-bold" : "text-slate-700 font-medium"
+                          }`}
+                      >
+                        {petOpt}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
+
+            {/* Children Preferences */}
+            <View className="mt-4">
+              <Text className="text-slate-700 text-xs font-bold uppercase tracking-wider mb-2">
+                CHILDREN PREFERENCES
+              </Text>
+              <View className="flex-row flex-wrap gap-2">
+                {CHILDREN_OPTIONS.map((childOpt) => {
+                  const sel = formData.children === childOpt;
+                  return (
+                    <TouchableOpacity
+                      key={childOpt}
+                      onPress={() => handleChange("children", sel ? "" : childOpt)}
+                      className={`px-3.5 py-2 rounded-xl border ${sel ? "bg-rose-600 border-rose-600" : "bg-slate-50 border-slate-200"
+                        }`}
+                    >
+                      <Text
+                        className={`text-xs ${sel ? "text-white font-bold" : "text-slate-700 font-medium"
+                          }`}
+                      >
+                        {childOpt}
                       </Text>
                     </TouchableOpacity>
                   );
@@ -1341,14 +1422,12 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
                     <TouchableOpacity
                       key={hobby}
                       onPress={() => toggleArrayItem("hobbies", hobby)}
-                      className={`px-3 py-1.5 rounded-full border ${
-                        sel ? "bg-rose-600 border-rose-600 shadow-xs" : "bg-white border-slate-200"
-                      }`}
+                      className={`px-3 py-1.5 rounded-full border ${sel ? "bg-rose-600 border-rose-600 shadow-xs" : "bg-white border-slate-200"
+                        }`}
                     >
                       <Text
-                        className={`text-xs ${
-                          sel ? "text-white font-bold" : "text-slate-700 font-medium"
-                        }`}
+                        className={`text-xs ${sel ? "text-white font-bold" : "text-slate-700 font-medium"
+                          }`}
                       >
                         {hobby}
                       </Text>
@@ -1423,7 +1502,7 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
             </View>
 
             <ScrollView className="space-y-1">
-              {activeModal === "nationality" &&
+              {(activeModal === "country" || activeModal === "nationality" || activeModal === "originCountry") &&
                 ALL_COUNTRIES
                   .filter((c) =>
                     c.name.toLowerCase().includes(searchFilter.toLowerCase())
@@ -1432,20 +1511,30 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
                     <TouchableOpacity
                       key={c.code}
                       onPress={() => {
-                        handleChange("nationality", c.name);
-                        handleChange("country", c.name);
-                        handleChange("state", "");
-                        handleChange("city", "");
+                        if (activeModal === "country") {
+                          handleChange("country", c.name);
+                          handleChange("state", "");
+                          handleChange("city", "");
+                        } else if (activeModal === "nationality") {
+                          handleChange("nationality", c.name);
+                        } else if (activeModal === "originCountry") {
+                          handleChange("originCountry", c.name);
+                        }
                         setActiveModal(null);
                       }}
-                      className={`p-3 rounded-xl flex-row items-center justify-between ${
-                        formData.nationality === c.name
-                          ? "bg-rose-50 border border-rose-200"
-                          : "active:bg-slate-50"
-                      }`}
+                      className={`p-3 rounded-xl flex-row items-center justify-between ${(activeModal === "country" && formData.country === c.name) ||
+                        (activeModal === "nationality" && formData.nationality === c.name) ||
+                        (activeModal === "originCountry" && formData.originCountry === c.name)
+                        ? "bg-rose-50 border border-rose-200"
+                        : "active:bg-slate-50"
+                        }`}
                     >
                       <Text className="text-slate-800 text-xs font-medium">{c.name}</Text>
-                      {formData.nationality === c.name && <Check size={16} color="#e11d48" />}
+                      {((activeModal === "country" && formData.country === c.name) ||
+                        (activeModal === "nationality" && formData.nationality === c.name) ||
+                        (activeModal === "originCountry" && formData.originCountry === c.name)) && (
+                          <Check size={16} color="#e11d48" />
+                        )}
                     </TouchableOpacity>
                   ))}
 
@@ -1460,11 +1549,10 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
                         handleChange("city", "");
                         setActiveModal(null);
                       }}
-                      className={`p-3 rounded-xl flex-row items-center justify-between ${
-                        formData.state === st
-                          ? "bg-rose-50 border border-rose-200"
-                          : "active:bg-slate-50"
-                      }`}
+                      className={`p-3 rounded-xl flex-row items-center justify-between ${formData.state === st
+                        ? "bg-rose-50 border border-rose-200"
+                        : "active:bg-slate-50"
+                        }`}
                     >
                       <Text className="text-slate-800 text-xs font-medium">{st}</Text>
                       {formData.state === st && <Check size={16} color="#e11d48" />}
@@ -1481,14 +1569,33 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
                         handleChange("city", ct);
                         setActiveModal(null);
                       }}
-                      className={`p-3 rounded-xl flex-row items-center justify-between ${
-                        formData.city === ct
-                          ? "bg-rose-50 border border-rose-200"
-                          : "active:bg-slate-50"
-                      }`}
+                      className={`p-3 rounded-xl flex-row items-center justify-between ${formData.city === ct
+                        ? "bg-rose-50 border border-rose-200"
+                        : "active:bg-slate-50"
+                        }`}
                     >
                       <Text className="text-slate-800 text-xs font-medium">{ct}</Text>
                       {formData.city === ct && <Check size={16} color="#e11d48" />}
+                    </TouchableOpacity>
+                  ))}
+
+              {activeModal === "originCity" &&
+                availableOriginCities
+                  .filter((ct) => ct.toLowerCase().includes(searchFilter.toLowerCase()))
+                  .map((ct) => (
+                    <TouchableOpacity
+                      key={ct}
+                      onPress={() => {
+                        handleChange("originCity", ct);
+                        setActiveModal(null);
+                      }}
+                      className={`p-3 rounded-xl flex-row items-center justify-between ${formData.originCity === ct
+                        ? "bg-rose-50 border border-rose-200"
+                        : "active:bg-slate-50"
+                        }`}
+                    >
+                      <Text className="text-slate-800 text-xs font-medium">{ct}</Text>
+                      {formData.originCity === ct && <Check size={16} color="#e11d48" />}
                     </TouchableOpacity>
                   ))}
 
@@ -1502,11 +1609,10 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
                         handleChange("religion", r);
                         setActiveModal(null);
                       }}
-                      className={`p-3 rounded-xl flex-row items-center justify-between ${
-                        formData.religion === r
-                          ? "bg-rose-50 border border-rose-200"
-                          : "active:bg-slate-50"
-                      }`}
+                      className={`p-3 rounded-xl flex-row items-center justify-between ${formData.religion === r
+                        ? "bg-rose-50 border border-rose-200"
+                        : "active:bg-slate-50"
+                        }`}
                     >
                       <Text className="text-slate-800 text-xs font-medium">{r}</Text>
                       {formData.religion === r && <Check size={16} color="#e11d48" />}
@@ -1522,14 +1628,12 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
                       <TouchableOpacity
                         key={l}
                         onPress={() => toggleArrayItem("languagesSpoken", l)}
-                        className={`p-3 rounded-xl flex-row items-center justify-between ${
-                          sel ? "bg-rose-50 border border-rose-200" : "active:bg-slate-50"
-                        }`}
+                        className={`p-3 rounded-xl flex-row items-center justify-between ${sel ? "bg-rose-50 border border-rose-200" : "active:bg-slate-50"
+                          }`}
                       >
                         <Text
-                          className={`text-xs ${
-                            sel ? "text-rose-700 font-bold" : "text-slate-800 font-medium"
-                          }`}
+                          className={`text-xs ${sel ? "text-rose-700 font-bold" : "text-slate-800 font-medium"
+                            }`}
                         >
                           {l}
                         </Text>

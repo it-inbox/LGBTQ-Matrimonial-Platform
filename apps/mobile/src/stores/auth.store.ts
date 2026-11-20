@@ -22,6 +22,23 @@ export interface Profile {
   ghostModeEnabled: boolean;
   city: string;
   state: string;
+  country?: string;
+  nationality?: string;
+  religion?: string;
+  maritalStatus?: string;
+  languagesSpoken?: string[];
+  education?: string;
+  degree?: string;
+  educations?: Array<{
+    id?: string;
+    qualification?: string;
+    degree: string;
+    degreeName?: string | null;
+    major?: string | null;
+    institution: string;
+    year?: number | null;
+  }>;
+  sector?: string;
   bio?: string;
   profession?: string;
   occupation?: string;
@@ -126,7 +143,18 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   logout: async () => {
+    // 1. Notify backend to clear refresh token cookie/sessions and revoke database record
+    try {
+      const refreshToken = await authStorage.getRefreshToken();
+      await api.post("/auth/logout", { refreshToken });
+    } catch {
+      // Ignore network errors on logout
+    }
+
+    // 2. Clear secure storage tokens
     await authStorage.clearTokens();
+
+    // 3. Reset auth store state
     set({
       user: null,
       profile: null,

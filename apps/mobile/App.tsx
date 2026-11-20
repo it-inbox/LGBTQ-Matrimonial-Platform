@@ -13,6 +13,7 @@ import { InterestsScreen } from "./src/screens/InterestsScreen";
 import { UnblurScreen } from "./src/screens/UnblurScreen";
 import { OnboardingScreen } from "./src/screens/OnboardingScreen";
 import { AppHeader } from "./src/components/AppHeader";
+import { AppLoadingScreen } from "./src/components/AppLoadingScreen";
 import {
   Compass,
   Sparkles,
@@ -57,14 +58,7 @@ function MainContent() {
   }, [checkAuth]);
 
   if (isLoading) {
-    return (
-      <View className="flex-1 items-center justify-center bg-slate-50">
-        <ActivityIndicator size="large" color="#e11d48" />
-        <Text className="text-slate-500 mt-4 text-sm font-medium">
-          Loading EverPride...
-        </Text>
-      </View>
-    );
+    return <AppLoadingScreen />;
   }
 
   if (!isAuthenticated) {
@@ -88,12 +82,18 @@ function MainContent() {
   return (
     <SafeAreaView className="flex-1 bg-slate-50" edges={["top", "bottom"]}>
       {/* Top Navigation Bar with Logo and Hamburger */}
-      <AppHeader onOpenOnboarding={() => setShowOnboarding(true)} />
+      <AppHeader
+        onOpenOnboarding={() => setShowOnboarding(true)}
+        onNavigateToChat={handleOpenChatWithPartner}
+      />
 
       {/* Screen view based on active tab */}
       <View className="flex-1">
         {activeTab === "discover" && (
-          <DiscoverScreen onOpenOnboarding={() => setShowOnboarding(true)} />
+          <DiscoverScreen
+            onOpenOnboarding={() => setShowOnboarding(true)}
+            onNavigateToChat={handleOpenChatWithPartner}
+          />
         )}
         {activeTab === "matches" && (
           <MatchesScreen onNavigateToChat={handleOpenChatWithPartner} />

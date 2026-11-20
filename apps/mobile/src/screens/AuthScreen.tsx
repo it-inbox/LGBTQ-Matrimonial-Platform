@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import { Image } from "expo-image";
 import { useAuthStore } from "../stores/auth.store";
+import { api } from "../lib/api";
 import {
   Heart,
   ArrowRight,
@@ -20,13 +21,14 @@ import {
   Search,
   X,
   AlertCircle,
+  UserPlus,
 } from "lucide-react-native";
 import { ALL_COUNTRIES, CountryData } from "@everpride/shared";
 
 const heroCoupleImg = require("../../assets/hero-couple.jpg");
 
 export const AuthScreen: React.FC = () => {
-  const { sendOtp, login, isLoading } = useAuthStore();
+  const { sendOtp, login, register, isLoading } = useAuthStore();
 
   // Auth / Login Modal State
   const [loginModalVisible, setLoginModalVisible] = useState(false);
@@ -36,32 +38,43 @@ export const AuthScreen: React.FC = () => {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [otp, setOtp] = useState("");
   const [otpSent, setOtpSent] = useState(false);
+  const [isRegistering, setIsRegistering] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [countryModalVisible, setCountryModalVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [showNewAccountPrompt, setShowNewAccountPrompt] = useState(false);
+  const [showExistingAccountPrompt, setShowExistingAccountPrompt] = useState(false);
+  const [authMode, setAuthMode] = useState<"signin" | "register">("register");
 
   // Clear inputs on mount
   useEffect(() => {
     setPhoneNumber("");
     setOtp("");
     setOtpSent(false);
+    setIsRegistering(true);
+    setShowNewAccountPrompt(false);
+    setShowExistingAccountPrompt(false);
     setErrorMsg(null);
     setBusy(false);
   }, []);
 
-  const openAuthModal = () => {
+  const openAuthModal = (mode: "signin" | "register" = "register") => {
+    setAuthMode(mode);
+    setIsRegistering(mode === "register");
     setErrorMsg(null);
+    setShowNewAccountPrompt(false);
+    setShowExistingAccountPrompt(false);
     setLoginModalVisible(true);
   };
 
   const filteredCountries = searchQuery.trim()
     ? ALL_COUNTRIES.filter(
-        (c: CountryData) =>
-          c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          c.dialCode.includes(searchQuery) ||
-          c.code.toLowerCase().includes(searchQuery.toLowerCase())
-      )
+      (c: CountryData) =>
+        c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        c.dialCode.includes(searchQuery) ||
+        c.code.toLowerCase().includes(searchQuery.toLowerCase())
+    )
     : ALL_COUNTRIES;
 
   const getFullPhoneNumber = () => {
@@ -71,7 +84,7 @@ export const AuthScreen: React.FC = () => {
     return `${selectedCountry.dialCode}${raw}`;
   };
 
-  const handleSendOtp = async () => {
+  const handleSendOtp = async (overrideMode?: "login" | "register") => {
     if (busy) return;
     const fullPhone = getFullPhoneNumber();
     if (!phoneNumber.trim() || fullPhone.replace(/\D/g, "").length < 7) {
@@ -81,7 +94,37 @@ export const AuthScreen: React.FC = () => {
     setErrorMsg(null);
     setBusy(true);
     try {
+      if (overrideMode) {
+        setIsRegistering(overrideMode === "register");
+      } else if (authMode === "register") {
+        // Register intent: check if account already exists
+        const checkRes = await api.get("/auth/check-phone", {
+          params: { phoneNumber: fullPhone },
+        });
+        if (checkRes.data?.exists) {
+          setShowExistingAccountPrompt(true);
+          setShowNewAccountPrompt(false);
+          setBusy(false);
+          return;
+        }
+        setIsRegistering(true);
+      } else {
+        // Sign In intent: check if account exists
+        const checkRes = await api.get("/auth/check-phone", {
+          params: { phoneNumber: fullPhone },
+        });
+        if (!checkRes.data?.exists) {
+          setShowNewAccountPrompt(true);
+          setShowExistingAccountPrompt(false);
+          setBusy(false);
+          return;
+        }
+        setIsRegistering(false);
+      }
+
       await sendOtp(fullPhone);
+      setShowNewAccountPrompt(false);
+      setShowExistingAccountPrompt(false);
       setOtpSent(true);
     } catch (err: any) {
       setErrorMsg(
@@ -102,11 +145,15 @@ export const AuthScreen: React.FC = () => {
     setErrorMsg(null);
     setBusy(true);
     try {
-      await login(fullPhone, otp.trim());
+      if (isRegistering) {
+        await register(fullPhone, otp.trim());
+      } else {
+        await login(fullPhone, otp.trim());
+      }
       setLoginModalVisible(false);
     } catch (err: any) {
       setErrorMsg(
-        err.response?.data?.message || "Login failed. Please check the code."
+        err.response?.data?.message || "Authentication failed. Please check the code."
       );
       setBusy(false);
     }
@@ -162,14 +209,23 @@ export const AuthScreen: React.FC = () => {
           </Text>
         </View>
 
-        {/* Bottom Area: Conveniently placed "Let's Begin" Action Button */}
-        <View className="w-full items-center">
+        {/* Bottom Area: Separate "Register" and "Sign In" Action Buttons */}
+        <View className="w-full space-y-3">
           <TouchableOpacity
-            onPress={openAuthModal}
+            onPress={() => openAuthModal("register")}
             className="w-full py-4 rounded-2xl bg-rose-600 active:bg-rose-700 shadow-xl shadow-rose-950/50 flex-row items-center justify-center gap-2"
           >
-            <Text className="text-white font-bold text-base">Let's Begin</Text>
+            <Text className="text-white font-bold text-base">Register</Text>
             <ArrowRight size={18} color="#ffffff" />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => openAuthModal("signin")}
+            className="w-full py-3.5 rounded-2xl bg-white/20 active:bg-white/30 border border-white/30 backdrop-blur-md items-center justify-center"
+          >
+            <Text className="text-white font-bold text-sm">
+              Sign In
+            </Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -195,7 +251,11 @@ export const AuthScreen: React.FC = () => {
                   <Heart size={16} color="#e11d48" fill="#e11d48" />
                 </View>
                 <Text className="text-slate-900 text-lg font-bold">
-                  {otpSent ? "Verify Mobile Number" : "Sign in / Register"}
+                  {otpSent
+                    ? "Verify Mobile Number"
+                    : authMode === "register"
+                      ? "Create Your Account"
+                      : "Welcome Back"}
                 </Text>
               </View>
               <TouchableOpacity
@@ -209,7 +269,9 @@ export const AuthScreen: React.FC = () => {
             <Text className="text-slate-500 text-xs mt-2.5 mb-4">
               {otpSent
                 ? `Enter the verification code sent to ${getFullPhoneNumber()}`
-                : "We'll send you a fast, passwordless SMS verification code"}
+                : authMode === "register"
+                  ? "Enter your mobile number to get started with EverPride"
+                  : "Sign in with your registered mobile number"}
             </Text>
 
             {errorMsg && (
@@ -219,7 +281,108 @@ export const AuthScreen: React.FC = () => {
               </View>
             )}
 
-            {!otpSent ? (
+            {/* Already Registered Phone Prompt (when user arrived via Let's Begin / Register) */}
+            {showExistingAccountPrompt && !otpSent ? (
+              <View className="space-y-4">
+                <View className="p-4 rounded-2xl bg-rose-50 border border-rose-200">
+                  <View className="flex-row items-center gap-2 mb-1.5">
+                    <Heart size={16} color="#e11d48" />
+                    <Text className="text-rose-900 font-bold text-xs uppercase tracking-wider">
+                      Account Already Exists
+                    </Text>
+                  </View>
+                  <Text className="text-xs text-rose-900/90 leading-relaxed">
+                    An account with mobile number{" "}
+                    <Text className="font-bold text-slate-900 font-mono">
+                      {getFullPhoneNumber()}
+                    </Text>{" "}
+                    is already registered with EverPride.
+                  </Text>
+                  <Text className="text-xs text-rose-950 font-bold mt-2">
+                    Would you like to sign in to your existing account instead?
+                  </Text>
+                </View>
+
+                <View className="pt-1 space-y-2">
+                  <TouchableOpacity
+                    onPress={() => handleSendOtp("login")}
+                    disabled={busy}
+                    className="w-full py-3.5 rounded-xl bg-rose-600 active:bg-rose-700 flex-row items-center justify-center gap-1.5 shadow-sm"
+                  >
+                    {busy ? (
+                      <ActivityIndicator size="small" color="#ffffff" />
+                    ) : (
+                      <>
+                        <Text className="text-white font-bold text-xs">
+                          Sign In to Existing Account
+                        </Text>
+                        <ArrowRight size={14} color="#ffffff" />
+                      </>
+                    )}
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    onPress={() => setShowExistingAccountPrompt(false)}
+                    disabled={busy}
+                    className="w-full py-2.5 rounded-xl bg-slate-100 active:bg-slate-200 items-center justify-center mt-2"
+                  >
+                    <Text className="text-slate-700 font-bold text-xs">
+                      No, Change Phone Number
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            ) : showNewAccountPrompt && !otpSent ? (
+              <View className="space-y-4">
+                <View className="p-4 rounded-2xl bg-amber-50 border border-amber-200">
+                  <View className="flex-row items-center gap-2 mb-1.5">
+                    <UserPlus size={16} color="#d97706" />
+                    <Text className="text-amber-900 font-bold text-xs uppercase tracking-wider">
+                      Account Not Found
+                    </Text>
+                  </View>
+                  <Text className="text-xs text-amber-900/90 leading-relaxed">
+                    We couldn't find an existing account registered with{" "}
+                    <Text className="font-bold text-slate-900 font-mono">
+                      {getFullPhoneNumber()}
+                    </Text>
+                    .
+                  </Text>
+                  <Text className="text-xs text-amber-950 font-bold mt-2">
+                    Would you like to register and create a new account with this number?
+                  </Text>
+                </View>
+
+                <View className="pt-1 space-y-2">
+                  <TouchableOpacity
+                    onPress={() => handleSendOtp("register")}
+                    disabled={busy}
+                    className="w-full py-3.5 rounded-xl bg-rose-600 active:bg-rose-700 flex-row items-center justify-center gap-1.5 shadow-sm"
+                  >
+                    {busy ? (
+                      <ActivityIndicator size="small" color="#ffffff" />
+                    ) : (
+                      <>
+                        <Text className="text-white font-bold text-xs">
+                          Yes, Create New Account
+                        </Text>
+                        <ArrowRight size={14} color="#ffffff" />
+                      </>
+                    )}
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    onPress={() => setShowNewAccountPrompt(false)}
+                    disabled={busy}
+                    className="w-full py-2.5 rounded-xl bg-slate-100 active:bg-slate-200 items-center justify-center mt-2"
+                  >
+                    <Text className="text-slate-700 font-bold text-xs">
+                      No, Change Phone Number
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            ) : !otpSent ? (
               <View>
                 <Text className="text-slate-700 text-xs font-bold uppercase tracking-wider mb-1.5">
                   Mobile Number <Text className="text-rose-500">*</Text>
@@ -260,7 +423,7 @@ export const AuthScreen: React.FC = () => {
                 </Text>
 
                 <TouchableOpacity
-                  onPress={handleSendOtp}
+                  onPress={() => handleSendOtp()}
                   disabled={busy}
                   className="mt-5 bg-rose-600 active:bg-rose-700 py-3.5 rounded-xl items-center flex-row justify-center shadow-xs"
                 >
@@ -367,9 +530,8 @@ export const AuthScreen: React.FC = () => {
                       setCountryModalVisible(false);
                       setSearchQuery("");
                     }}
-                    className={`flex-row items-center justify-between p-3 rounded-xl ${
-                      isSelected ? "bg-rose-50 border border-rose-200" : "active:bg-slate-50"
-                    }`}
+                    className={`flex-row items-center justify-between p-3 rounded-xl ${isSelected ? "bg-rose-50 border border-rose-200" : "active:bg-slate-50"
+                      }`}
                   >
                     <View className="flex-row items-center gap-2.5">
                       <View className="bg-rose-100 px-2 py-0.5 rounded">

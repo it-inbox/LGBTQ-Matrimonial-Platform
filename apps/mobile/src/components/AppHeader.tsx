@@ -24,97 +24,28 @@ import {
 } from "lucide-react-native";
 import { useAuthStore } from "../stores/auth.store";
 import { api } from "../lib/api";
+import { EditProfileScreen } from "../screens/EditProfileScreen";
+import { PartnerPreferencesScreen } from "../screens/PartnerPreferencesScreen";
+import { PrivacySafeguardsScreen } from "../screens/PrivacySafeguardsScreen";
+import { ProfileDetailScreen } from "../screens/ProfileDetailScreen";
 
 interface AppHeaderProps {
   onOpenOnboarding?: () => void;
+  onNavigateToChat?: (partnerId: string) => void;
 }
 
-export const AppHeader: React.FC<AppHeaderProps> = ({ onOpenOnboarding }) => {
+export const AppHeader: React.FC<AppHeaderProps> = ({ onOpenOnboarding, onNavigateToChat }) => {
   const { profile, logout, fetchProfile } = useAuthStore();
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   // Sub-modals for drawer actions
   const [activeModal, setActiveModal] = useState<
-    "edit-profile" | "partner-pref" | "safety" | "help" | "stories" | "upgrade" | null
+    "view-profile" | "edit-profile" | "partner-pref" | "safety" | "help" | "stories" | "upgrade" | null
   >(null);
-
-  // Edit profile state
-  const [editDisplayName, setEditDisplayName] = useState(profile?.displayName || "");
-  const [editBio, setEditBio] = useState(profile?.bio || "");
-  const [editCity, setEditCity] = useState(profile?.city || "");
-  const [editState, setEditState] = useState(profile?.state || "");
-  const [editSaving, setEditSaving] = useState(false);
-
-  // Partner preferences state
-  const [prefMinAge, setPrefMinAge] = useState(
-    String(profile?.partnerPreference?.minAge ?? 21)
-  );
-  const [prefMaxAge, setPrefMaxAge] = useState(
-    String(profile?.partnerPreference?.maxAge ?? 45)
-  );
-  const [prefSaving, setPrefSaving] = useState(false);
-
-  // Safety settings
-  const [photoPrivacy, setPhotoPrivacy] = useState<"PUBLIC" | "BLURRED_FOR_ALL" | "MEMBERS_ONLY">(
-    ((profile as any)?.photoPrivacySetting as any) || "PUBLIC"
-  );
-  const [safetySaving, setSafetySaving] = useState(false);
 
   const primaryPhoto =
     profile?.photos?.find((p: any) => p.isPrimary) || profile?.photos?.[0];
   const primaryPhotoUrl = primaryPhoto?.originalUrl || primaryPhoto?.url;
-
-  const handleSaveProfile = async () => {
-    setEditSaving(true);
-    try {
-      await api.patch("/profiles/me", {
-        displayName: editDisplayName.trim(),
-        bio: editBio.trim(),
-        city: editCity.trim(),
-        state: editState.trim(),
-      });
-      await fetchProfile();
-      setActiveModal(null);
-      Alert.alert("Success", "Profile updated successfully!");
-    } catch (e: any) {
-      Alert.alert("Error", e?.response?.data?.message || "Failed to update profile");
-    } finally {
-      setEditSaving(false);
-    }
-  };
-
-  const handleSavePreferences = async () => {
-    setPrefSaving(true);
-    try {
-      await api.patch("/profiles/me/preferences", {
-        minAge: parseInt(prefMinAge, 10) || 18,
-        maxAge: parseInt(prefMaxAge, 10) || 60,
-      });
-      await fetchProfile();
-      setActiveModal(null);
-      Alert.alert("Success", "Partner preferences updated!");
-    } catch (e: any) {
-      Alert.alert("Error", e?.response?.data?.message || "Failed to update preferences");
-    } finally {
-      setPrefSaving(false);
-    }
-  };
-
-  const handleSaveSafety = async () => {
-    setSafetySaving(true);
-    try {
-      await api.patch("/profiles/me/privacy-settings", {
-        photoPrivacySetting: photoPrivacy,
-      });
-      await fetchProfile();
-      setActiveModal(null);
-      Alert.alert("Success", "Privacy settings saved!");
-    } catch (e: any) {
-      Alert.alert("Error", e?.response?.data?.message || "Failed to update privacy");
-    } finally {
-      setSafetySaving(false);
-    }
-  };
 
   return (
     <>
@@ -170,8 +101,14 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ onOpenOnboarding }) => {
 
             {/* Scrollable Body */}
             <ScrollView className="flex-1 p-5 pt-7" showsVerticalScrollIndicator={false}>
-              {/* Profile Card Header */}
-              <View className="flex-row items-center gap-3.5 mb-5">
+              {/* Profile Card Header (Clickable to view full profile) */}
+              <TouchableOpacity
+                onPress={() => {
+                  setDrawerOpen(false);
+                  setActiveModal("view-profile");
+                }}
+                className="flex-row items-center gap-3.5 mb-5 active:opacity-80"
+              >
                 <View className="w-14 h-14 rounded-full overflow-hidden bg-slate-100 border border-slate-200 items-center justify-center">
                   {primaryPhotoUrl ? (
                     <Image
@@ -187,11 +124,11 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ onOpenOnboarding }) => {
                   <Text className="font-extrabold text-slate-900 text-lg leading-tight" numberOfLines={1}>
                     {profile?.displayName || "Member"}
                   </Text>
-                  <Text className="text-xs text-slate-500 mt-0.5">
-                    {profile?.city ? `${profile.city}, ${profile.state || ""}` : "Profile"}
+                  <Text className="text-xs text-rose-600 font-semibold mt-0.5">
+                    View & Preview Profile →
                   </Text>
                 </View>
-              </View>
+              </TouchableOpacity>
 
               {/* Upgrade Membership Card */}
               <View className="mb-4">
@@ -219,33 +156,34 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ onOpenOnboarding }) => {
               <View className="space-y-1">
                 {[
                   {
+                    label: "View My Profile",
+                    icon: User,
+                    onPress: () => {
+                      setDrawerOpen(false);
+                      setActiveModal("view-profile");
+                    },
+                  },
+                  {
                     label: "Edit Profile",
                     icon: Edit3,
                     onPress: () => {
                       setDrawerOpen(false);
-                      setEditDisplayName(profile?.displayName || "");
-                      setEditBio(profile?.bio || "");
-                      setEditCity(profile?.city || "");
-                      setEditState(profile?.state || "");
                       setActiveModal("edit-profile");
                     },
                   },
                   {
-                    label: "Partner Preferences",
+                    label: "Looking For (Preferences)",
                     icon: Heart,
                     onPress: () => {
                       setDrawerOpen(false);
-                      setPrefMinAge(String(profile?.partnerPreference?.minAge ?? 21));
-                      setPrefMaxAge(String(profile?.partnerPreference?.maxAge ?? 45));
                       setActiveModal("partner-pref");
                     },
                   },
                   {
-                    label: "Safety Center",
+                    label: "Privacy Safeguards",
                     icon: ShieldCheck,
                     onPress: () => {
                       setDrawerOpen(false);
-                      setPhotoPrivacy(((profile as any)?.photoPrivacySetting as any) || "PUBLIC");
                       setActiveModal("safety");
                     },
                   },
@@ -305,199 +243,31 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ onOpenOnboarding }) => {
         </View>
       </Modal>
 
-      {/* Modal: Edit Profile */}
-      <Modal
+      {/* Modal: View My Profile Screen */}
+      <ProfileDetailScreen
+        userId={profile?.userId || profile?.id || null}
+        visible={activeModal === "view-profile"}
+        onClose={() => setActiveModal(null)}
+        onNavigateToChat={onNavigateToChat}
+      />
+
+      {/* Modal: Edit Profile (Full Screen Recreated from Web) */}
+      <EditProfileScreen
         visible={activeModal === "edit-profile"}
-        animationType="slide"
-        presentationStyle="pageSheet"
-        onRequestClose={() => setActiveModal(null)}
-      >
-        <View className="flex-1 bg-white">
-          <View className="px-5 py-4 border-b border-slate-200 flex-row items-center justify-between">
-            <Text className="text-lg font-bold text-slate-900">Edit Profile</Text>
-            <TouchableOpacity onPress={() => setActiveModal(null)}>
-              <X size={20} color="#64748b" />
-            </TouchableOpacity>
-          </View>
-          <ScrollView className="flex-1 p-5 space-y-4">
-            <View>
-              <Text className="text-xs font-bold text-slate-700 uppercase mb-1">
-                Display Name
-              </Text>
-              <TextInput
-                value={editDisplayName}
-                onChangeText={setEditDisplayName}
-                className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-900"
-                placeholder="Your name"
-              />
-            </View>
-            <View className="mt-3">
-              <Text className="text-xs font-bold text-slate-700 uppercase mb-1">
-                About Me
-              </Text>
-              <TextInput
-                value={editBio}
-                onChangeText={setEditBio}
-                multiline
-                numberOfLines={3}
-                className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-900"
-                placeholder="Tell others about yourself..."
-              />
-            </View>
-            <View className="mt-3 flex-row gap-3">
-              <View className="flex-1">
-                <Text className="text-xs font-bold text-slate-700 uppercase mb-1">
-                  City
-                </Text>
-                <TextInput
-                  value={editCity}
-                  onChangeText={setEditCity}
-                  className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-900"
-                  placeholder="City"
-                />
-              </View>
-              <View className="flex-1">
-                <Text className="text-xs font-bold text-slate-700 uppercase mb-1">
-                  State
-                </Text>
-                <TextInput
-                  value={editState}
-                  onChangeText={setEditState}
-                  className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-900"
-                  placeholder="State"
-                />
-              </View>
-            </View>
+        onClose={() => setActiveModal(null)}
+      />
 
-            <TouchableOpacity
-              onPress={handleSaveProfile}
-              disabled={editSaving}
-              className="mt-6 w-full py-3 rounded-xl bg-rose-600 items-center justify-center"
-            >
-              <Text className="text-white font-bold text-sm">
-                {editSaving ? "Saving..." : "Save Changes"}
-              </Text>
-            </TouchableOpacity>
-          </ScrollView>
-        </View>
-      </Modal>
-
-      {/* Modal: Partner Preferences */}
-      <Modal
+      {/* Modal: Partner Preferences (Dedicated Screen) */}
+      <PartnerPreferencesScreen
         visible={activeModal === "partner-pref"}
-        animationType="slide"
-        presentationStyle="pageSheet"
-        onRequestClose={() => setActiveModal(null)}
-      >
-        <View className="flex-1 bg-white">
-          <View className="px-5 py-4 border-b border-slate-200 flex-row items-center justify-between">
-            <Text className="text-lg font-bold text-slate-900">Partner Preferences</Text>
-            <TouchableOpacity onPress={() => setActiveModal(null)}>
-              <X size={20} color="#64748b" />
-            </TouchableOpacity>
-          </View>
-          <ScrollView className="flex-1 p-5 space-y-4">
-            <Text className="text-sm text-slate-600 mb-2">
-              Set your ideal partner age criteria for match discovery recommendations.
-            </Text>
-            <View className="flex-row gap-4">
-              <View className="flex-1">
-                <Text className="text-xs font-bold text-slate-700 uppercase mb-1">
-                  Min Age
-                </Text>
-                <TextInput
-                  value={prefMinAge}
-                  onChangeText={setPrefMinAge}
-                  keyboardType="numeric"
-                  className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-900"
-                />
-              </View>
-              <View className="flex-1">
-                <Text className="text-xs font-bold text-slate-700 uppercase mb-1">
-                  Max Age
-                </Text>
-                <TextInput
-                  value={prefMaxAge}
-                  onChangeText={setPrefMaxAge}
-                  keyboardType="numeric"
-                  className="border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-900"
-                />
-              </View>
-            </View>
+        onClose={() => setActiveModal(null)}
+      />
 
-            <TouchableOpacity
-              onPress={handleSavePreferences}
-              disabled={prefSaving}
-              className="mt-6 w-full py-3 rounded-xl bg-rose-600 items-center justify-center"
-            >
-              <Text className="text-white font-bold text-sm">
-                {prefSaving ? "Saving..." : "Save Preferences"}
-              </Text>
-            </TouchableOpacity>
-          </ScrollView>
-        </View>
-      </Modal>
-
-      {/* Modal: Safety Center */}
-      <Modal
+      {/* Modal: Privacy Safeguards (Dedicated Screen) */}
+      <PrivacySafeguardsScreen
         visible={activeModal === "safety"}
-        animationType="slide"
-        presentationStyle="pageSheet"
-        onRequestClose={() => setActiveModal(null)}
-      >
-        <View className="flex-1 bg-white">
-          <View className="px-5 py-4 border-b border-slate-200 flex-row items-center justify-between">
-            <Text className="text-lg font-bold text-slate-900">Safety Center</Text>
-            <TouchableOpacity onPress={() => setActiveModal(null)}>
-              <X size={20} color="#64748b" />
-            </TouchableOpacity>
-          </View>
-          <ScrollView className="flex-1 p-5 space-y-4">
-            <Text className="text-xs font-bold text-slate-700 uppercase mb-2">
-              Photo Privacy Setting
-            </Text>
-            {[
-              {
-                id: "PUBLIC",
-                title: "Public to All",
-                desc: "All verified members can view your photos normally.",
-              },
-              {
-                id: "BLURRED_FOR_ALL",
-                title: "Blurred for All",
-                desc: "Photos are blurred until you approve an unblur request.",
-              },
-              {
-                id: "MEMBERS_ONLY",
-                title: "Connected Matches Only",
-                desc: "Photos visible only to mutual matches you have accepted.",
-              },
-            ].map((opt) => (
-              <TouchableOpacity
-                key={opt.id}
-                onPress={() => setPhotoPrivacy(opt.id as any)}
-                className={`p-3.5 rounded-xl border mb-2 ${photoPrivacy === opt.id
-                    ? "border-rose-500 bg-rose-50/40"
-                    : "border-slate-200 bg-white"
-                  }`}
-              >
-                <Text className="font-bold text-slate-800 text-sm">{opt.title}</Text>
-                <Text className="text-xs text-slate-500 mt-1">{opt.desc}</Text>
-              </TouchableOpacity>
-            ))}
-
-            <TouchableOpacity
-              onPress={handleSaveSafety}
-              disabled={safetySaving}
-              className="mt-6 w-full py-3 rounded-xl bg-rose-600 items-center justify-center"
-            >
-              <Text className="text-white font-bold text-sm">
-                {safetySaving ? "Saving..." : "Save Privacy Settings"}
-              </Text>
-            </TouchableOpacity>
-          </ScrollView>
-        </View>
-      </Modal>
+        onClose={() => setActiveModal(null)}
+      />
 
       {/* Modal: Help & Support */}
       <Modal

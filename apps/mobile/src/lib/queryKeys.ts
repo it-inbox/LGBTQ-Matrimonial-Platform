@@ -8,6 +8,8 @@ export const QUERY_KEYS = {
   conversations: ["chat", "conversations"],
   messages: (convId: string) => ["chat", "messages", convId],
   myProfile: ["profile", "me"],
+  memberProfile: (userId: string) => ["profile", "member", userId],
+  interactionStatus: (targetUserId: string) => ["profile", "interaction", targetUserId],
   membership: ["payments", "membership"],
 };
 

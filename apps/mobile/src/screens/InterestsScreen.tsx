@@ -13,11 +13,15 @@ import { api } from "../lib/api";
 import { QUERY_KEYS } from "../lib/queryKeys";
 import { Send } from "lucide-react-native";
 import { MobileProfileCard } from "../components/MobileProfileCard";
+import { ProfileDetailScreen } from "./ProfileDetailScreen";
 
 type StatusFilter = "ALL" | "PENDING" | "ACCEPTED" | "DECLINED";
 
-export const InterestsScreen: React.FC<{ onNavigateToChat?: (partnerId: string) => void }> = () => {
+export const InterestsScreen: React.FC<{ onNavigateToChat?: (partnerId: string) => void }> = ({
+  onNavigateToChat,
+}) => {
   const queryClient = useQueryClient();
+  const [detailUserId, setDetailUserId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"received" | "sent">("received");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("ALL");
 
@@ -215,6 +219,7 @@ export const InterestsScreen: React.FC<{ onNavigateToChat?: (partnerId: string) 
             <MobileProfileCard
               item={item}
               isReceived={activeTab === "received"}
+              onPressProfile={(uid) => setDetailUserId(uid)}
               onAccept={() =>
                 respondMutation.mutate({ interestId: item.id, status: "ACCEPTED" })
               }
@@ -238,6 +243,13 @@ export const InterestsScreen: React.FC<{ onNavigateToChat?: (partnerId: string) 
           }
         />
       )}
+
+      {/* Full Profile Detail Modal */}
+      <ProfileDetailScreen
+        userId={detailUserId}
+        visible={detailUserId !== null}
+        onClose={() => setDetailUserId(null)}
+      />
     </View>
   );
 };

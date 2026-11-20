@@ -23,6 +23,7 @@ export interface MobileProfileCardProps {
   onDecline?: () => void;
   onUnsend?: () => void;
   onChat?: () => void;
+  onPressProfile?: (userId: string) => void;
   isResponding?: boolean;
 }
 
@@ -33,6 +34,7 @@ export const MobileProfileCard: React.FC<MobileProfileCardProps> = ({
   onDecline,
   onUnsend,
   onChat,
+  onPressProfile,
   isResponding = false,
 }) => {
   // Resolve partnerUser from either accepted matches format or interest format
@@ -89,7 +91,16 @@ export const MobileProfileCard: React.FC<MobileProfileCardProps> = ({
 
   return (
     <View className="bg-white rounded-2xl border border-slate-200/90 overflow-hidden shadow-xs mb-3.5">
-      <View className="flex-row min-h-[170px]">
+      <TouchableOpacity
+        activeOpacity={onPressProfile ? 0.85 : 1}
+        onPress={() => {
+          const targetId = partnerUser.id || partnerUser.userId || profile.userId || profile.id;
+          if (targetId && onPressProfile) {
+            onPressProfile(targetId);
+          }
+        }}
+        className="flex-row min-h-[170px]"
+      >
         {/* Left Photo / Fallback Avatar */}
         <View className="w-32 bg-slate-100 relative items-center justify-center overflow-hidden">
           {photoUrl ? (
@@ -226,7 +237,7 @@ export const MobileProfileCard: React.FC<MobileProfileCardProps> = ({
             </View>
           </View>
         </View>
-      </View>
+      </TouchableOpacity>
 
       {/* Bottom Full-width Actions (for Received & Pending items) */}
       {isReceived && isPending && onAccept && onDecline && (

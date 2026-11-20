@@ -14,6 +14,7 @@ import { Image } from "expo-image";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "../lib/api";
 import { QUERY_KEYS } from "../lib/queryKeys";
+import { AppLoadingScreen } from "../components/AppLoadingScreen";
 import {
   Heart,
   X,
@@ -27,8 +28,14 @@ import {
   ChevronRight,
 } from "lucide-react-native";
 
-export const DiscoverScreen: React.FC<{ onOpenOnboarding?: () => void }> = ({
+import { ProfileDetailScreen } from "./ProfileDetailScreen";
+
+export const DiscoverScreen: React.FC<{
+  onOpenOnboarding?: () => void;
+  onNavigateToChat?: (partnerId: string) => void;
+}> = ({
   onOpenOnboarding,
+  onNavigateToChat,
 }) => {
   const queryClient = useQueryClient();
 
@@ -45,6 +52,9 @@ export const DiscoverScreen: React.FC<{ onOpenOnboarding?: () => void }> = ({
   const [activeProfile, setActiveProfile] = useState<any | null>(null);
   const [interestModalVisible, setInterestModalVisible] = useState(false);
   const [customMessage, setCustomMessage] = useState("");
+
+  // Full Profile Detail Modal State
+  const [detailUserId, setDetailUserId] = useState<string | null>(null);
 
   // Fetch feed matches
   const {
@@ -165,8 +175,12 @@ export const DiscoverScreen: React.FC<{ onOpenOnboarding?: () => void }> = ({
 
     return (
       <View className="bg-white rounded-2xl border border-slate-200/90 overflow-hidden shadow-sm mb-4">
-        {/* Card Body: Row layout */}
-        <View className="flex-row h-64">
+        {/* Card Body: Row layout (Tapping opens full Profile Details) */}
+        <TouchableOpacity
+          activeOpacity={0.85}
+          onPress={() => setDetailUserId(item.userId || item.id)}
+          className="flex-row h-64"
+        >
           {/* Left Photo Container: fixed width, full height */}
           <View className="w-36 h-full relative bg-slate-100 overflow-hidden">
             <Image
@@ -294,7 +308,7 @@ export const DiscoverScreen: React.FC<{ onOpenOnboarding?: () => void }> = ({
               ) : null}
             </View>
           </View>
-        </View>
+        </TouchableOpacity>
 
         {/* Bottom Actions Footer: Interest, Ignore, Chat */}
         <View className="flex-row border-t border-rose-100 bg-rose-50/50 h-11 items-center">
@@ -336,14 +350,7 @@ export const DiscoverScreen: React.FC<{ onOpenOnboarding?: () => void }> = ({
   };
 
   if (isLoading) {
-    return (
-      <View className="flex-1 items-center justify-center bg-slate-50">
-        <ActivityIndicator size="large" color="#e11d48" />
-        <Text className="text-slate-500 mt-4 font-medium text-sm">
-          Loading EverPride matches...
-        </Text>
-      </View>
-    );
+    return <AppLoadingScreen message="Loading EverPride matches..." />;
   }
 
   if (error) {
@@ -435,8 +442,8 @@ export const DiscoverScreen: React.FC<{ onOpenOnboarding?: () => void }> = ({
                 key={pill}
                 onPress={() => setActiveQuickFilter(pill)}
                 className={`px-3.5 py-1.5 rounded-full mr-2 ${isSelected
-                    ? "bg-slate-900"
-                    : "bg-slate-100 border border-slate-200"
+                  ? "bg-slate-900"
+                  : "bg-slate-100 border border-slate-200"
                   }`}
               >
                 <Text
@@ -564,6 +571,14 @@ export const DiscoverScreen: React.FC<{ onOpenOnboarding?: () => void }> = ({
           </View>
         </View>
       </Modal>
+
+      {/* Full Profile Detail Screen (Recreated from Web) */}
+      <ProfileDetailScreen
+        userId={detailUserId}
+        visible={detailUserId !== null}
+        onClose={() => setDetailUserId(null)}
+        onNavigateToChat={onNavigateToChat}
+      />
     </View>
   );
 };
