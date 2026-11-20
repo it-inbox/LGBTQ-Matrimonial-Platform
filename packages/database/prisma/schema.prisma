@@ -230,7 +230,6 @@ model Profile {
   sector             String?         // Sector of work (IT, Healthcare, Govt, etc.)
   profession         String?         // Job Title
   company            String?
-  annualIncome       String?         @map("annual_income")
 
   // Lifestyle
   bio                String?

@@ -35,7 +35,6 @@ export const createProfileSchema = z.object({
   sector: z.string().max(100).trim().optional(),
   profession: z.string().max(100).trim().optional(),
   company: z.string().max(100).trim().optional(),
-  annualIncome: z.string().max(50).trim().optional(),
   educations: z
     .array(
       z.object({

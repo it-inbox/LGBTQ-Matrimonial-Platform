@@ -297,17 +297,6 @@ export const CHILDREN_OPTIONS: string[] = [
   "Not sure yet",
 ];
 
-export const ANNUAL_INCOME_OPTIONS: string[] = [
-  "Under ₹5 Lakh",
-  "₹5 Lakh - ₹10 Lakh",
-  "₹10 Lakh - ₹20 Lakh",
-  "₹20 Lakh - ₹35 Lakh",
-  "₹35 Lakh - ₹50 Lakh",
-  "₹50 Lakh - ₹1 Crore",
-  "₹1 Crore+",
-  "Prefer not to say",
-];
-
 export const PHOTO_VISIBILITY_OPTIONS: {
   id: PhotoVisibility;
   title: string;
