@@ -3,8 +3,69 @@ import * as SecureStore from "expo-secure-store";
 
 const ACCESS_TOKEN_KEY = "everpride_access_token";
 const REFRESH_TOKEN_KEY = "everpride_refresh_token";
+const ONBOARDING_DRAFT_KEY = "everpride_mobile_onboarding_draft";
+const ONBOARDING_STEP_KEY = "everpride_mobile_onboarding_step";
 
 const isWeb = Platform.OS === "web";
+
+export const onboardingStorage = {
+  async getDraft(): Promise<{ formData?: any; step?: number } | null> {
+    try {
+      const rawDraft = isWeb
+        ? typeof window !== "undefined"
+          ? localStorage.getItem(ONBOARDING_DRAFT_KEY)
+          : null
+        : await SecureStore.getItemAsync(ONBOARDING_DRAFT_KEY);
+
+      const rawStep = isWeb
+        ? typeof window !== "undefined"
+          ? localStorage.getItem(ONBOARDING_STEP_KEY)
+          : null
+        : await SecureStore.getItemAsync(ONBOARDING_STEP_KEY);
+
+      if (!rawDraft) return null;
+      return {
+        formData: JSON.parse(rawDraft),
+        step: rawStep ? parseInt(rawStep, 10) : 1,
+      };
+    } catch {
+      return null;
+    }
+  },
+
+  async saveDraft(formData: any, step: number): Promise<void> {
+    try {
+      const serialized = JSON.stringify(formData);
+      if (isWeb) {
+        if (typeof window !== "undefined") {
+          localStorage.setItem(ONBOARDING_DRAFT_KEY, serialized);
+          localStorage.setItem(ONBOARDING_STEP_KEY, String(step));
+        }
+        return;
+      }
+      await SecureStore.setItemAsync(ONBOARDING_DRAFT_KEY, serialized);
+      await SecureStore.setItemAsync(ONBOARDING_STEP_KEY, String(step));
+    } catch (e) {
+      console.warn("Failed to save onboarding draft:", e);
+    }
+  },
+
+  async clearDraft(): Promise<void> {
+    try {
+      if (isWeb) {
+        if (typeof window !== "undefined") {
+          localStorage.removeItem(ONBOARDING_DRAFT_KEY);
+          localStorage.removeItem(ONBOARDING_STEP_KEY);
+        }
+        return;
+      }
+      await SecureStore.deleteItemAsync(ONBOARDING_DRAFT_KEY);
+      await SecureStore.deleteItemAsync(ONBOARDING_STEP_KEY);
+    } catch (e) {
+      console.warn("Failed to clear onboarding draft:", e);
+    }
+  },
+};
 
 export const authStorage = {
   async getAccessToken(): Promise<string | null> {

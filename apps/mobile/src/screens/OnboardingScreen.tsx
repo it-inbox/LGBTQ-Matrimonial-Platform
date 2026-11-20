@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -13,6 +13,7 @@ import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "../lib/api";
+import { authStorage, onboardingStorage } from "../lib/storage";
 import { QUERY_KEYS } from "../lib/queryKeys";
 import { useAuthStore } from "../stores/auth.store";
 import {
@@ -171,6 +172,33 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
   const [activeModal, setActiveModal] = useState<"country" | "nationality" | "originCountry" | "originCity" | "state" | "city" | "religion" | "language" | null>(null);
   const [degreePickerIndex, setDegreePickerIndex] = useState<number | null>(null);
   const [searchFilter, setSearchFilter] = useState("");
+  const isInitialMount = useRef(true);
+
+  // Restore draft on mount if available
+  useEffect(() => {
+    (async () => {
+      const draft = await onboardingStorage.getDraft();
+      if (draft?.formData) {
+        setFormData((prev) => ({ ...prev, ...draft.formData }));
+        if (draft.step && draft.step >= 1 && draft.step <= totalSteps) {
+          setStep(draft.step);
+        }
+      }
+    })();
+  }, []);
+
+  // Debounced auto-save draft on changes
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+    const timer = setTimeout(() => {
+      onboardingStorage.saveDraft(formData, step);
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [formData, step]);
 
   const stepTitles = [
     "Looking For (Preferences)",
@@ -468,6 +496,7 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
       return res.data;
     },
     onSuccess: (data) => {
+      onboardingStorage.clearDraft();
       setProfile(data);
       fetchProfile();
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.myProfile });
