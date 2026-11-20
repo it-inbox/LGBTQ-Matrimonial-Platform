@@ -23,8 +23,13 @@ import {
   Check,
   CheckCheck,
   Smile,
+  Pencil,
+  Trash2,
+  X,
 } from "lucide-react-native";
+import { Alert } from "react-native";
 import { MobileEmojiPicker } from "../components/MobileEmojiPicker";
+import { useChatStore, MessageItem } from "../stores/chat.store";
 
 type ConnectTab = "messages" | "calls";
 type ChatFilter = "ALL" | "UNREAD" | "ONLINE";
@@ -40,12 +45,92 @@ export const MessagesScreen: React.FC<{
   const [activeTab, setActiveTab] = useState<ConnectTab>("messages");
   const [chatFilter, setChatFilter] = useState<ChatFilter>("ALL");
   const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
+  const [editingMessage, setEditingMessage] = useState<MessageItem | null>(null);
   const flatListRef = useRef<FlatList>(null);
+
+  const {
+    socket,
+    sendMessage: socketSendMessage,
+    editMessage: socketEditMessage,
+    deleteMessage: socketDeleteMessage,
+    emitTyping,
+    typingUsers,
+    onlineUserIds,
+    setActiveConversationId,
+  } = useChatStore();
 
   // Notify parent whether user is inside an active chat thread
   useEffect(() => {
     onActiveConversationChange?.(!!selectedConversation);
-  }, [selectedConversation, onActiveConversationChange]);
+    setActiveConversationId(selectedConversation?.id || null);
+  }, [selectedConversation, onActiveConversationChange, setActiveConversationId]);
+
+  // Listen to real-time message stream for active conversation
+  useEffect(() => {
+    if (!socket || !selectedConversation?.id) return;
+
+    const handleNewMessage = (msg: MessageItem) => {
+      if (msg.conversationId === selectedConversation.id) {
+        queryClient.setQueryData(
+          QUERY_KEYS.messages(selectedConversation.id),
+          (old: any[] = []) => {
+            if (!Array.isArray(old)) return [msg];
+            if (old.some((m) => m?.id === msg.id)) return old;
+            return [...old, msg];
+          }
+        );
+        socket.emit("mark_read", { conversationId: selectedConversation.id });
+      }
+    };
+
+    const handleMessageEdited = (msg: MessageItem) => {
+      if (msg.conversationId === selectedConversation.id) {
+        queryClient.setQueryData(
+          QUERY_KEYS.messages(selectedConversation.id),
+          (old: any[] = []) => {
+            if (!Array.isArray(old)) return [];
+            return old.map((m) => (m.id === msg.id ? { ...m, ...msg } : m));
+          }
+        );
+      }
+    };
+
+    const handleMessageDeleted = ({ messageId, conversationId }: any) => {
+      if (conversationId === selectedConversation.id) {
+        queryClient.setQueryData(
+          QUERY_KEYS.messages(selectedConversation.id),
+          (old: any[] = []) => {
+            if (!Array.isArray(old)) return [];
+            return old.filter((m) => m.id !== messageId);
+          }
+        );
+      }
+    };
+
+    const handleMessagesRead = ({ conversationId }: any) => {
+      if (conversationId === selectedConversation.id) {
+        queryClient.setQueryData(
+          QUERY_KEYS.messages(selectedConversation.id),
+          (old: any[] = []) => {
+            if (!Array.isArray(old)) return [];
+            return old.map((m) => ({ ...m, isRead: true }));
+          }
+        );
+      }
+    };
+
+    socket.on("new_message", handleNewMessage);
+    socket.on("message_edited", handleMessageEdited);
+    socket.on("message_deleted", handleMessageDeleted);
+    socket.on("messages_read", handleMessagesRead);
+
+    return () => {
+      socket.off("new_message", handleNewMessage);
+      socket.off("message_edited", handleMessageEdited);
+      socket.off("message_deleted", handleMessageDeleted);
+      socket.off("messages_read", handleMessagesRead);
+    };
+  }, [socket, selectedConversation?.id, queryClient]);
 
   // 1. Fetch conversations list
   const { data: conversations = [], isLoading: loadingConversations } = useQuery({
@@ -98,39 +183,85 @@ export const MessagesScreen: React.FC<{
     }
   }, [initialPartnerUserId, conversations]);
 
-  // Send message mutation (Uses POST /chat/messages with { conversationId, content })
-  const sendMutation = useMutation({
-    mutationFn: async (text: string) => {
-      const res = await api.post("/chat/messages", {
-        conversationId: selectedConversation.id,
-        content: text,
-      });
-      return res.data;
-    },
-    onSuccess: (rawResult: any) => {
-      setMessageText("");
-      const messageObj = rawResult?.message || rawResult;
-      if (!messageObj || !messageObj.id) return;
+  const handleSendMessage = async () => {
+    const trimmed = messageText.trim();
+    if (!trimmed || !selectedConversation?.id) return;
 
+    if (editingMessage) {
+      const msgId = editingMessage.id;
+      setEditingMessage(null);
+      setMessageText("");
+      const updated = await socketEditMessage(msgId, trimmed);
+      if (updated) {
+        queryClient.setQueryData(
+          QUERY_KEYS.messages(selectedConversation.id),
+          (old: any[] = []) => {
+            if (!Array.isArray(old)) return [];
+            return old.map((m) => (m.id === msgId ? { ...m, ...updated } : m));
+          }
+        );
+      }
+      return;
+    }
+
+    setMessageText("");
+    emitTyping(selectedConversation.id, false);
+    const sent = await socketSendMessage(selectedConversation.id, trimmed);
+    if (sent) {
       queryClient.setQueryData(
-        QUERY_KEYS.messages(selectedConversation?.id || ""),
+        QUERY_KEYS.messages(selectedConversation.id),
         (old: any[] = []) => {
-          if (!Array.isArray(old)) return [messageObj];
-          // Prevent duplicates by checking id
-          if (old.some((m) => m?.id === messageObj.id)) return old;
-          return [...old, messageObj];
+          if (!Array.isArray(old)) return [sent];
+          if (old.some((m) => m?.id === sent.id)) return old;
+          return [...old, sent];
         }
       );
-      queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.messages(selectedConversation?.id),
-      });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.conversations });
-    },
-  });
+    }
+  };
 
-  const handleSendMessage = () => {
-    if (!messageText.trim() || !selectedConversation?.id) return;
-    sendMutation.mutate(messageText.trim());
+  const handleMessageLongPress = (item: any) => {
+    if (item.senderId !== user?.id) return;
+
+    Alert.alert(
+      "Message Options",
+      "Choose an action for this message:",
+      [
+        {
+          text: "Edit Message",
+          onPress: () => {
+            setEditingMessage(item);
+            setMessageText(item.content);
+          },
+        },
+        {
+          text: "Delete Message",
+          style: "destructive",
+          onPress: () => {
+            Alert.alert("Delete Message", "Are you sure you want to delete this message?", [
+              { text: "Cancel", style: "cancel" },
+              {
+                text: "Delete",
+                style: "destructive",
+                onPress: async () => {
+                  const success = await socketDeleteMessage(item.id);
+                  if (success) {
+                    queryClient.setQueryData(
+                      QUERY_KEYS.messages(selectedConversation.id),
+                      (old: any[] = []) => {
+                        if (!Array.isArray(old)) return [];
+                        return old.filter((m) => m.id !== item.id);
+                      }
+                    );
+                  }
+                },
+              },
+            ]);
+          },
+        },
+        { text: "Cancel", style: "cancel" },
+      ],
+      { cancelable: true }
+    );
   };
 
   // Helper to extract partner photo and display info
@@ -272,7 +403,10 @@ export const MessagesScreen: React.FC<{
             renderItem={({ item }) => {
               const isMine = item.senderId === user?.id;
               return (
-                <View
+                <TouchableOpacity
+                  activeOpacity={isMine ? 0.8 : 1}
+                  onLongPress={() => handleMessageLongPress(item)}
+                  delayLongPress={250}
                   className={`mb-3 max-w-[80%] ${
                     isMine ? "self-end items-end" : "self-start items-start"
                   }`}
@@ -318,7 +452,7 @@ export const MessagesScreen: React.FC<{
                       </View>
                     )}
                   </View>
-                </View>
+                </TouchableOpacity>
               );
             }}
             ListEmptyComponent={
@@ -334,6 +468,27 @@ export const MessagesScreen: React.FC<{
           />
         )}
 
+        {/* Editing indicator */}
+        {editingMessage && (
+          <View className="flex-row items-center justify-between px-4 py-2 bg-rose-50 border-t border-rose-200">
+            <View className="flex-row items-center flex-1 mr-2">
+              <Pencil size={14} color="#e11d48" />
+              <Text className="text-xs font-bold text-rose-700 ml-1.5" numberOfLines={1}>
+                Editing: <Text className="font-normal text-slate-700">{editingMessage.content}</Text>
+              </Text>
+            </View>
+            <TouchableOpacity
+              onPress={() => {
+                setEditingMessage(null);
+                setMessageText("");
+              }}
+              className="p-1"
+            >
+              <X size={16} color="#64748b" />
+            </TouchableOpacity>
+          </View>
+        )}
+
         {/* Chat Input Bar */}
         <View className="flex-row items-center p-3 bg-white border-t border-slate-200/90 gap-2">
           {/* Emoji Picker Toggle Button */}
@@ -346,24 +501,33 @@ export const MessagesScreen: React.FC<{
           </TouchableOpacity>
 
           <TextInput
-            placeholder={`Message ${displayName}...`}
+            placeholder={editingMessage ? "Edit message..." : `Message ${displayName}...`}
             placeholderTextColor="#94a3b8"
             value={messageText}
-            onChangeText={setMessageText}
+            onChangeText={(text) => {
+              setMessageText(text);
+              if (selectedConversation?.id) {
+                emitTyping(selectedConversation.id, text.length > 0);
+              }
+            }}
             onSubmitEditing={handleSendMessage}
             className="flex-1 bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-slate-800 text-sm max-h-24"
           />
           <TouchableOpacity
             onPress={handleSendMessage}
-            disabled={!messageText.trim() || sendMutation.isPending}
+            disabled={!messageText.trim()}
             className={`w-10 h-10 rounded-full items-center justify-center ${
               messageText.trim() ? "bg-rose-600 active:bg-rose-700" : "bg-slate-200"
             }`}
           >
-            <Send
-              size={18}
-              color={messageText.trim() ? "#ffffff" : "#94a3b8"}
-            />
+            {editingMessage ? (
+              <Check size={18} color="#ffffff" />
+            ) : (
+              <Send
+                size={18}
+                color={messageText.trim() ? "#ffffff" : "#94a3b8"}
+              />
+            )}
           </TouchableOpacity>
         </View>
 

@@ -2,9 +2,11 @@ import React, { useEffect, useState } from "react";
 import "./global.css";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { View, Text, TouchableOpacity, ActivityIndicator } from "react-native";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { queryClient } from "./src/lib/queryClient";
+import { View, Text, TouchableOpacity, ActivityIndicator, AppState, AppStateStatus } from "react-native";
 import { useAuthStore } from "./src/stores/auth.store";
+import { useChatStore } from "./src/stores/chat.store";
 import { DiscoverScreen } from "./src/screens/DiscoverScreen";
 import { AuthScreen } from "./src/screens/AuthScreen";
 import { MatchesScreen } from "./src/screens/MatchesScreen";
@@ -22,22 +24,7 @@ import {
   Eye,
 } from "lucide-react-native";
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 5 * 60 * 1000,
-      refetchOnWindowFocus: false,
-      retry: (failureCount, error: any) => {
-        // Do not retry 4xx client errors (400, 401, 403, 404)
-        const status = error?.response?.status;
-        if (status && status >= 400 && status < 500) {
-          return false;
-        }
-        return failureCount < 1;
-      },
-    },
-  },
-});
+// (queryClient initialized from ./src/lib/queryClient)
 
 type TabType = "discover" | "matches" | "connect" | "interests" | "unblur";
 
@@ -56,6 +43,29 @@ function MainContent() {
   useEffect(() => {
     checkAuth();
   }, [checkAuth]);
+
+  // Connect socket when user is authenticated and app is active
+  const { connectSocket, disconnectSocket } = useChatStore();
+  useEffect(() => {
+    if (isAuthenticated) {
+      connectSocket();
+    } else {
+      disconnectSocket();
+    }
+
+    const subscription = AppState.addEventListener("change", (nextAppState: AppStateStatus) => {
+      if (nextAppState === "active") {
+        if (isAuthenticated) connectSocket();
+      } else if (nextAppState === "background") {
+        disconnectSocket();
+      }
+    });
+
+    return () => {
+      subscription.remove();
+      disconnectSocket();
+    };
+  }, [isAuthenticated, connectSocket, disconnectSocket]);
 
   if (isLoading) {
     return <AppLoadingScreen />;

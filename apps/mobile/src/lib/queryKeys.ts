@@ -1,6 +1,7 @@
 export const QUERY_KEYS = {
   matchesFeed: (page = 1, filters?: any) => ["matches-feed", page, filters],
   matchesRecent: ["matches", "recent"],
+  acceptedMatches: ["matches", "accepted"],
   sentInterests: ["interests", "sent"],
   receivedInterests: ["interests", "received"],
   sentUnblur: ["unblur", "sent"],
