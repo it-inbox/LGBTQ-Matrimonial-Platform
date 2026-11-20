@@ -281,7 +281,6 @@ export const DiscoverScreen: React.FC<{
                   className="text-xs text-slate-600 ml-1.5 flex-1"
                 >
                   {item.profession || item.occupation || "Professional"}
-                  {item.annualIncome ? ` • ${item.annualIncome}` : ""}
                 </Text>
               </View>
 

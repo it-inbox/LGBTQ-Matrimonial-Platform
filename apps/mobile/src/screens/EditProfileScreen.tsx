@@ -45,7 +45,6 @@ import {
   DIET_OPTIONS,
   DRINKING_OPTIONS,
   SMOKING_OPTIONS,
-  ANNUAL_INCOME_OPTIONS,
   PET_OPTIONS,
   CHILDREN_OPTIONS,
 } from "@everpride/shared";
@@ -111,7 +110,6 @@ export const EditProfileScreen: React.FC<EditProfileScreenProps> = ({
 
   const [sector, setSector] = useState(profile?.sector || "Private / IT");
   const [profession, setProfession] = useState(profile?.profession || "");
-  const [annualIncome, setAnnualIncome] = useState((profile as any)?.annualIncome || "");
   const [bio, setBio] = useState(profile?.bio || "");
 
   const [diet, setDiet] = useState(profile?.diet || "Vegetarian");
@@ -168,7 +166,6 @@ export const EditProfileScreen: React.FC<EditProfileScreenProps> = ({
       );
       setSector(profile.sector || "Private / IT");
       setProfession(profile.profession || "");
-      setAnnualIncome((profile as any)?.annualIncome || "");
       setBio(profile.bio || "");
       setDiet(profile.diet || "Vegetarian");
       setDrinking(profile.drinking || "Non-drinker");
@@ -290,7 +287,6 @@ export const EditProfileScreen: React.FC<EditProfileScreenProps> = ({
         degree: (educations?.[0]?.degreeName || "").trim() || undefined,
         sector: sector.trim() || undefined,
         profession: profession.trim() || undefined,
-        annualIncome: annualIncome ? annualIncome.trim() : undefined,
         bio: bio.trim() || undefined,
         diet: diet.trim() || undefined,
         drinking: drinking || undefined,
@@ -690,7 +686,7 @@ export const EditProfileScreen: React.FC<EditProfileScreenProps> = ({
                     value={pronouns}
                     onChangeText={setPronouns}
                     className="bg-slate-50 text-slate-900 px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium"
-                    placeholder="e.g. they/them, she/her, he/him"
+                    placeholder=" they/them, she/her, he/him"
                     placeholderTextColor="#94a3b8"
                   />
                 </View>
@@ -839,10 +835,6 @@ export const EditProfileScreen: React.FC<EditProfileScreenProps> = ({
                                   setEducations(updated);
                                 }}
                                 className="bg-white text-slate-900 px-3 py-2 rounded-lg border border-slate-200 text-xs font-medium"
-                                placeholder={
-                                  degreeList[0] || "e.g. Bachelor of Science (B.S.)"
-                                }
-                                placeholderTextColor="#94a3b8"
                               />
                             </View>
 
@@ -858,8 +850,6 @@ export const EditProfileScreen: React.FC<EditProfileScreenProps> = ({
                                   setEducations(updated);
                                 }}
                                 className="bg-white text-slate-900 px-3 py-2 rounded-lg border border-slate-200 text-xs font-medium"
-                                placeholder="e.g. Computer Science, Finance"
-                                placeholderTextColor="#94a3b8"
                               />
                             </View>
                           </>
@@ -882,14 +872,6 @@ export const EditProfileScreen: React.FC<EditProfileScreenProps> = ({
                               setEducations(updated);
                             }}
                             className="bg-white text-slate-900 px-3 py-2 rounded-lg border border-slate-200 text-xs font-medium"
-                            placeholder={
-                              edu.degree === "High School"
-                                ? "e.g. DPS, St. Xavier's, City High School"
-                                : edu.degree === "Diploma" || edu.degree === "Other"
-                                  ? "e.g. National Institute of Design, Tech Academy"
-                                  : "e.g. Oxford University, Delhi University"
-                            }
-                            placeholderTextColor="#94a3b8"
                           />
                         </View>
                       </View>
@@ -964,37 +946,7 @@ export const EditProfileScreen: React.FC<EditProfileScreenProps> = ({
                       value={profession}
                       onChangeText={setProfession}
                       className="bg-slate-50 text-slate-900 px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium"
-                      placeholder="e.g. Senior Software Engineer, Architect"
-                      placeholderTextColor="#94a3b8"
                     />
-                  </View>
-
-                  <View>
-                    <Text className="text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-2">
-                      Annual Income
-                    </Text>
-                    <View className="flex-row flex-wrap gap-2">
-                      {ANNUAL_INCOME_OPTIONS.map((incomeOpt) => {
-                        const sel = annualIncome === incomeOpt;
-                        return (
-                          <TouchableOpacity
-                            key={incomeOpt}
-                            onPress={() => setAnnualIncome(sel ? "" : incomeOpt)}
-                            className={`px-3 py-1.5 rounded-xl border ${sel
-                              ? "bg-rose-600 border-rose-600"
-                              : "bg-slate-50 border-slate-200"
-                              }`}
-                          >
-                            <Text
-                              className={`text-xs ${sel ? "text-white font-bold" : "text-slate-700 font-medium"
-                                }`}
-                            >
-                              {incomeOpt}
-                            </Text>
-                          </TouchableOpacity>
-                        );
-                      })}
-                    </View>
                   </View>
                 </View>
               </View>

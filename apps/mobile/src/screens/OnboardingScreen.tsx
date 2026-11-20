@@ -54,7 +54,6 @@ import {
   DRINKING_OPTIONS,
   SMOKING_OPTIONS,
   PHOTO_VISIBILITY_OPTIONS,
-  ANNUAL_INCOME_OPTIONS,
   PET_OPTIONS,
   CHILDREN_OPTIONS,
   getDegreesForQualification,
@@ -93,7 +92,6 @@ export interface OnboardingFormData {
   educations: EducationEntry[];
   sector: string;
   profession: string;
-  annualIncome?: string;
   photos: string[];
   photoVisibility: "MUTUAL_MATCHES_ONLY" | "REQUEST_REQUIRED" | "ALL_MEMBERS";
   bio: string;
@@ -151,7 +149,6 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
     ],
     sector: "Private / IT",
     profession: "",
-    annualIncome: "",
     photos: [],
     photoVisibility: "MUTUAL_MATCHES_ONLY",
     bio: "",
@@ -449,7 +446,6 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
           })),
         sector: formData.sector.trim() || undefined,
         profession: formData.profession.trim() || undefined,
-        annualIncome: formData.annualIncome ? formData.annualIncome.trim() : undefined,
         photos: formData.photos,
         bio: formData.bio.trim() || undefined,
         diet: formData.diet.trim() || undefined,
@@ -1068,8 +1064,6 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
                       value={edu.major || ""}
                       onChangeText={(val) => handleUpdateEducation(idx, "major", val)}
                       className="bg-white text-slate-900 p-2.5 rounded-lg border border-slate-200 text-xs mb-2.5"
-                      placeholder="e.g. Computer Science, Finance"
-                      placeholderTextColor="#94a3b8"
                     />
                   </>
                 )}
@@ -1086,14 +1080,6 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
                   value={edu.institution}
                   onChangeText={(val) => handleUpdateEducation(idx, "institution", val)}
                   className="bg-white text-slate-900 p-2.5 rounded-lg border border-slate-200 text-xs"
-                  placeholder={
-                    edu.degree === "High School"
-                      ? "e.g. DPS, St. Xavier's, City High School"
-                      : edu.degree === "Diploma" || edu.degree === "Other"
-                        ? "e.g. National Institute of Design, Tech Academy"
-                        : "e.g. Stanford University, Delhi University"
-                  }
-                  placeholderTextColor="#94a3b8"
                 />
               </View>
             ))}
@@ -1146,35 +1132,7 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
                 value={formData.profession}
                 onChangeText={(val) => handleChange("profession", val)}
                 className="bg-slate-50 text-slate-900 p-3 rounded-xl border border-slate-200 text-sm"
-                placeholder="e.g. Software Engineer, Doctor, Designer"
-                placeholderTextColor="#94a3b8"
               />
-            </View>
-
-            <View className="mt-4">
-              <Text className="text-slate-700 text-xs font-bold uppercase tracking-wider mb-1.5">
-                ANNUAL INCOME
-              </Text>
-              <View className="flex-row flex-wrap gap-2">
-                {ANNUAL_INCOME_OPTIONS.map((incomeOpt) => {
-                  const sel = formData.annualIncome === incomeOpt;
-                  return (
-                    <TouchableOpacity
-                      key={incomeOpt}
-                      onPress={() => handleChange("annualIncome", sel ? "" : incomeOpt)}
-                      className={`px-3 py-2 rounded-xl border ${sel ? "bg-rose-600 border-rose-600" : "bg-slate-50 border-slate-200"
-                        }`}
-                    >
-                      <Text
-                        className={`text-xs ${sel ? "text-white font-bold" : "text-slate-700 font-medium"
-                          }`}
-                      >
-                        {incomeOpt}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
             </View>
           </View>
         )}

@@ -100,7 +100,6 @@ erDiagram
     string sector
     string profession
     string company
-    string annualIncome
     string bio
     string diet
     string drinking

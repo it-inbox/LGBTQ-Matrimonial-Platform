@@ -512,15 +512,6 @@ export const ProfileDetailScreen: React.FC<ProfileDetailScreenProps> = ({
                         </Text>
                       </View>
                     )}
-
-                    {profile.annualIncome && (
-                      <View className="py-2.5 flex-row items-baseline">
-                        <Text className="w-36 text-xs text-slate-500 font-medium">Annual Income</Text>
-                        <Text className="flex-1 text-xs font-semibold text-slate-800 text-left">
-                          {profile.annualIncome}
-                        </Text>
-                      </View>
-                    )}
                   </View>
                 </View>
 
