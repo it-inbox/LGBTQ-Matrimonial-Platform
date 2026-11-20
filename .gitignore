@@ -33,5 +33,5 @@ pnpm-debug.log*
 Thumbs.db
 
 # Local development notes
-docs/TODO.md
+TODO.*
 

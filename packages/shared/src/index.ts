@@ -5,4 +5,5 @@ export * from "./schemas/auth.schema.js";
 export * from "./schemas/profile.schema.js";
 export * from "./schemas/match.schema.js";
 export * from "./schemas/chat.schema.js";
+export * from "./schemas/payment.schema.js";
 export * from "./styles/theme.js";

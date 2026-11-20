@@ -20,10 +20,14 @@ export const createProfileSchema = z.object({
   // Contact
   phoneNumber: z.string().max(30).trim().optional(),
 
-  // Location
+  // Location (Current Residence)
   city: z.string().min(1, "City is required").max(100).trim(),
   state: z.string().min(1, "State is required").max(100).trim(),
   country: z.string().max(100).default("India"),
+
+  // Origin & Background
+  originCountry: z.string().max(100).trim().optional().nullable(),
+  originCity: z.string().max(100).trim().optional().nullable(),
 
   // Education & Work
   education: z.string().max(100).trim().optional(),
@@ -51,6 +55,7 @@ export const createProfileSchema = z.object({
   drinking: z.string().max(50).trim().optional(),
   smoking: z.string().max(50).trim().optional(),
   pets: z.string().max(50).trim().optional(),
+  children: z.string().max(50).trim().optional(),
   hobbies: z.array(z.string().trim()).default([]),
   photos: z.array(z.string()).default([]),
 

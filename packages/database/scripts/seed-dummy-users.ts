@@ -179,7 +179,7 @@ async function runSeeder() {
         ${escapeSql(diet)},
         'Socially',
         'Never',
-        'Dog lover',
+        'Have pets',
         ${formatSqlArray(hobbiesList)},
         '${photoVisibility}',
         false,
@@ -236,7 +236,7 @@ async function runSeeder() {
       await tx.$executeRawUnsafe(`
         INSERT INTO "profiles" (
           id, user_id, display_name, gender, orientation, pronouns, outness_status, date_of_birth, height_cm,
-          nationality, religion, mother_tongue, languages_spoken, marital_status, phone_number,
+          nationality, religion, mother_tongue, languages_spoken, marital_status,
           city, state, country, education, degree, sector, profession, company, annual_income, bio, diet,
           drinking, smoking, pets, hobbies, photo_visibility, ghost_mode_enabled, created_at, updated_at
         ) VALUES ${profileRows.join(",")};

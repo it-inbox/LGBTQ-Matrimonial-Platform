@@ -6,6 +6,7 @@
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
+    "test": "turbo run test",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
     "db:generate": "turbo run db:generate",
@@ -18,7 +19,8 @@
   "devDependencies": {
     "@jridgewell/trace-mapping": "^0.3.25",
     "turbo": "^2.3.3",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "vitest": "^5.1.1"
   },
   "dependencies": {
     "rxjs": "7.8.1"
