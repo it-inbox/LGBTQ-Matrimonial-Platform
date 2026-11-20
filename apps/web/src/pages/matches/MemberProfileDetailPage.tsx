@@ -752,15 +752,6 @@ export const MemberProfileDetailPage: React.FC = () => {
                         </span>
                       </div>
                     )}
-
-                    {profile.annualIncome && (
-                      <div className="py-2.5 flex items-baseline">
-                        <span className="w-48 sm:w-60 text-xs text-slate-500 font-medium shrink-0">Annual Income</span>
-                        <span className="text-xs font-semibold text-slate-800">
-                          {profile.annualIncome}
-                        </span>
-                      </div>
-                    )}
                   </div>
                 </div>
 

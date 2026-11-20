@@ -45,7 +45,6 @@ import {
   DRINKING_OPTIONS,
   SMOKING_OPTIONS,
   PHOTO_VISIBILITY_OPTIONS,
-  ANNUAL_INCOME_OPTIONS,
   PET_OPTIONS,
   CHILDREN_OPTIONS,
 } from "@everpride/shared";
@@ -86,7 +85,6 @@ export interface OnboardingFormData {
   educations: EducationEntry[];
   sector: string;
   profession: string;
-  annualIncome: string;
   photos: string[];
   photoVisibility: string;
   bio: string;
@@ -145,7 +143,6 @@ export const OnboardingWizard: React.FC = () => {
     ],
     sector: "Private / IT",
     profession: "",
-    annualIncome: "",
 
     // Step 5: Upload Photos
     photos: [],
@@ -530,7 +527,6 @@ export const OnboardingWizard: React.FC = () => {
           })),
         sector: formData.sector.trim() || undefined,
         profession: formData.profession.trim() || undefined,
-        annualIncome: formData.annualIncome ? formData.annualIncome.trim() : undefined,
         photos: formData.photos,
         bio: formData.bio.trim() || undefined,
         diet: formData.diet.trim() || undefined,
@@ -1052,7 +1048,6 @@ export const OnboardingWizard: React.FC = () => {
                               </label>
                               <input
                                 type="text"
-                                placeholder="e.g. Computer Science, Economics, Fine Arts"
                                 value={edu.major || ""}
                                 onChange={(e) => handleUpdateEducation(idx, "major", e.target.value)}
                                 className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:border-brand-500"
@@ -1072,13 +1067,6 @@ export const OnboardingWizard: React.FC = () => {
                           </label>
                           <input
                             type="text"
-                            placeholder={
-                              edu.degree === "High School"
-                                ? "e.g. DPS, St. Xavier's, City High School"
-                                : edu.degree === "Diploma" || edu.degree === "Other"
-                                  ? "e.g. National Institute of Design, Tech Academy"
-                                  : "e.g. Stanford University, Delhi University"
-                            }
                             value={edu.institution}
                             onChange={(e) => handleUpdateEducation(idx, "institution", e.target.value)}
                             className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:border-brand-500"
@@ -1140,29 +1128,10 @@ export const OnboardingWizard: React.FC = () => {
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. Senior Product Designer, Architect"
                   value={formData.profession}
                   onChange={(e) => handleChange("profession", e.target.value)}
                   className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-500"
                 />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                  ANNUAL INCOME
-                </label>
-                <select
-                  value={formData.annualIncome || ""}
-                  onChange={(e) => handleChange("annualIncome", e.target.value)}
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-500 font-medium"
-                >
-                  <option value="">Select Annual Income (Optional)</option>
-                  {ANNUAL_INCOME_OPTIONS.map((opt) => (
-                    <option key={opt} value={opt}>
-                      {opt}
-                    </option>
-                  ))}
-                </select>
               </div>
             </div>
           </div>

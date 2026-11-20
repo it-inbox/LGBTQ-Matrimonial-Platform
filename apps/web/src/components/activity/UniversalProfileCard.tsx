@@ -24,7 +24,6 @@ export interface ProfileCardData {
   state?: string | null;
   religion?: string | null;
   profession?: string | null;
-  annualIncome?: string | null;
   education?: string | null;
   maritalStatus?: string | null;
   photos?: Array<{
@@ -183,12 +182,6 @@ export const UniversalProfileCard: React.FC<UniversalProfileCardProps> = ({
             <div className="flex items-center gap-1.5 text-slate-600 flex-wrap">
               <Briefcase className="w-3.5 h-3.5 text-slate-400 shrink-0" />
               <span className="truncate max-w-[200px]">{profile.profession || "Professional"}</span>
-              {profile.annualIncome && (
-                <>
-                  <span className="text-slate-300">•</span>
-                  <span className="text-slate-600 truncate">{profile.annualIncome}</span>
-                </>
-              )}
             </div>
             <div className="flex items-center gap-4 text-slate-600 flex-wrap">
               <div className="flex items-center gap-1.5">
