@@ -2,22 +2,27 @@ import React, { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../stores/auth.store";
 import { ALL_COUNTRIES } from "@everpride/shared";
-import { Phone, AlertCircle, ArrowRight, X, Lock, Search, Check, ChevronDown } from "lucide-react";
+import { api } from "../../lib/api";
+import { Phone, AlertCircle, ArrowRight, X, Lock, Search, Check, ChevronDown, UserPlus, HelpCircle } from "lucide-react";
+import { Button, AlertBanner } from "../ui";
 
 export const LoginModal: React.FC = () => {
-  const { isLoginModalOpen, closeLoginModal, login, sendOtp } = useAuthStore();
+  const { isLoginModalOpen, authModalMode, closeLoginModal, login, register, sendOtp } = useAuthStore();
   const navigate = useNavigate();
 
   const [selectedCountryCode, setSelectedCountryCode] = useState("+91");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [otpCode, setOtpCode] = useState("");
   const [otpSent, setOtpSent] = useState(false);
+  const [isRegistering, setIsRegistering] = useState(false);
   const [cooldown, setCooldown] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [countryPickerOpen, setCountryPickerOpen] = useState(false);
   const [countrySearch, setCountrySearch] = useState("");
   const countryDropdownRef = useRef<HTMLDivElement>(null);
+  const [showNewAccountPrompt, setShowNewAccountPrompt] = useState(false);
+  const [showExistingAccountPrompt, setShowExistingAccountPrompt] = useState(false);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -44,11 +49,14 @@ export const LoginModal: React.FC = () => {
       setPhoneNumber("");
       setOtpCode("");
       setOtpSent(false);
+      setIsRegistering(authModalMode === "register");
+      setShowNewAccountPrompt(false);
+      setShowExistingAccountPrompt(false);
       setCooldown(0);
       setError(null);
       setLoading(false);
     }
-  }, [isLoginModalOpen]);
+  }, [isLoginModalOpen, authModalMode]);
 
   // Cooldown countdown timer
   React.useEffect(() => {
@@ -69,7 +77,7 @@ export const LoginModal: React.FC = () => {
     return `${selectedCountryCode}${raw}`;
   };
 
-  const handleSendOtp = async () => {
+  const handleSendOtp = async (overrideMode?: "login" | "register") => {
     if (!selectedCountryCode && !phoneNumber.trim().startsWith("+")) {
       setError("Please select your country code.");
       return;
@@ -82,7 +90,35 @@ export const LoginModal: React.FC = () => {
     setError(null);
     setLoading(true);
     try {
+      if (overrideMode) {
+        setIsRegistering(overrideMode === "register");
+      } else if (authModalMode === "register") {
+        // User clicked "Let's Begin" / Register intent:
+        // Check if phone number is ALREADY registered
+        const checkRes = await api.get("/auth/check-phone", { params: { phoneNumber: fullPhone } });
+        if (checkRes.data?.exists) {
+          setShowExistingAccountPrompt(true);
+          setShowNewAccountPrompt(false);
+          setLoading(false);
+          return;
+        }
+        setIsRegistering(true);
+      } else {
+        // User clicked "Sign In" intent:
+        // Check if account exists; if not, show "Account Not Found" prompt
+        const checkRes = await api.get("/auth/check-phone", { params: { phoneNumber: fullPhone } });
+        if (!checkRes.data?.exists) {
+          setShowNewAccountPrompt(true);
+          setShowExistingAccountPrompt(false);
+          setLoading(false);
+          return;
+        }
+        setIsRegistering(false);
+      }
+
       await sendOtp(fullPhone);
+      setShowNewAccountPrompt(false);
+      setShowExistingAccountPrompt(false);
       setOtpSent(true);
       setCooldown(30); // 30s cooldown before allow resend
       setOtpCode(""); // User enters real OTP
@@ -109,7 +145,11 @@ export const LoginModal: React.FC = () => {
     setLoading(true);
 
     try {
-      await login(fullPhone, otpCode.trim());
+      if (isRegistering) {
+        await register(fullPhone, otpCode.trim());
+      } else {
+        await login(fullPhone, otpCode.trim());
+      }
       closeLoginModal();
       const currentProfile = useAuthStore.getState().profile;
       if (currentProfile) {
@@ -143,33 +183,125 @@ export const LoginModal: React.FC = () => {
             <Lock className="w-6 h-6" />
           </div>
           <h2 className="text-2xl font-black text-slate-900">
-            {otpSent ? "Verify Mobile Number" : "Sign in / Register"}
+            {otpSent
+              ? "Verify Mobile Number"
+              : authModalMode === "register"
+              ? "Create Your Account"
+              : "Welcome Back"}
           </h2>
           <p className="text-xs text-slate-500 mt-1">
             {otpSent
               ? `Enter the verification code sent to ${getFullPhoneNumber()}`
-              : "We'll send you a fast, passwordless SMS verification code"}
+              : authModalMode === "register"
+              ? "Enter your mobile number to get started with EverPride"
+              : "Sign in with your registered mobile number"}
           </p>
         </div>
 
         {error && (
-          <div className="mb-5 p-3 rounded-xl bg-rose-50 border border-rose-200 flex items-center gap-2 text-xs font-semibold text-rose-700">
-            <AlertCircle className="w-4 h-4 shrink-0" />
-            <span>{error}</span>
-          </div>
+          <AlertBanner
+            variant="error"
+            message={error}
+            onClose={() => setError(null)}
+            className="mb-5"
+          />
         )}
 
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (otpSent) {
-              handleLogin(e);
-            } else {
-              handleSendOtp();
-            }
-          }}
-          className="space-y-4"
-        >
+        {/* Already Registered Phone Prompt (when user arrived via Let's Begin / Register) */}
+        {showExistingAccountPrompt && !otpSent ? (
+          <div className="space-y-4">
+            <div className="p-4 rounded-2xl bg-brand-50/80 border border-brand-200/80 text-brand-950">
+              <div className="flex items-center gap-2 mb-1.5 text-brand-800 font-bold text-sm">
+                <Check className="w-4 h-4 text-brand-600" />
+                <span>Account Already Exists</span>
+              </div>
+              <p className="text-xs text-brand-900/90 leading-relaxed">
+                An account with mobile number{" "}
+                <span className="font-bold text-slate-900 font-mono">{getFullPhoneNumber()}</span> is already registered with EverPride.
+              </p>
+              <p className="text-xs text-brand-900 font-semibold mt-2">
+                Would you like to sign in to your existing account instead?
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-2 pt-1">
+              <Button
+                type="button"
+                variant="gradient"
+                size="md"
+                isLoading={loading}
+                onClick={() => handleSendOtp("login")}
+                className="w-full py-3"
+                icon={<ArrowRight className="w-4 h-4" />}
+              >
+                Sign In to Existing Account
+              </Button>
+
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                disabled={loading}
+                onClick={() => setShowExistingAccountPrompt(false)}
+                className="w-full text-slate-600 hover:text-slate-900"
+              >
+                No, Change Phone Number
+              </Button>
+            </div>
+          </div>
+        ) : showNewAccountPrompt && !otpSent ? (
+          <div className="space-y-4">
+            <div className="p-4 rounded-2xl bg-amber-50/80 border border-amber-200/80 text-amber-900">
+              <div className="flex items-center gap-2 mb-1.5 text-amber-800 font-bold text-sm">
+                <UserPlus className="w-4 h-4 text-amber-600" />
+                <span>Account Not Found</span>
+              </div>
+              <p className="text-xs text-amber-800/90 leading-relaxed">
+                We couldn't find an existing account registered with{" "}
+                <span className="font-bold text-slate-900 font-mono">{getFullPhoneNumber()}</span>.
+              </p>
+              <p className="text-xs text-amber-900 font-semibold mt-2">
+                Would you like to register and create a new account with this number?
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-2 pt-1">
+              <Button
+                type="button"
+                variant="gradient"
+                size="md"
+                isLoading={loading}
+                onClick={() => handleSendOtp("register")}
+                className="w-full py-3"
+                icon={<ArrowRight className="w-4 h-4" />}
+              >
+                Yes, Create New Account
+              </Button>
+
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                disabled={loading}
+                onClick={() => setShowNewAccountPrompt(false)}
+                className="w-full text-slate-600 hover:text-slate-900"
+              >
+                No, Change Phone Number
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (otpSent) {
+                handleLogin(e);
+              } else {
+                handleSendOtp();
+              }
+            }}
+            className="space-y-4"
+          >
           {!otpSent ? (
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
@@ -258,14 +390,16 @@ export const LoginModal: React.FC = () => {
                 We'll send a 6-digit verification code to confirm your number.
               </p>
 
-              <button
+              <Button
                 type="submit"
-                disabled={loading}
-                className="w-full mt-5 py-3 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-brand-600 to-pink-600 hover:from-brand-700 hover:to-pink-700 disabled:opacity-50 transition-all shadow-md shadow-brand-500/20 flex items-center justify-center gap-2 cursor-pointer"
+                variant="gradient"
+                size="md"
+                isLoading={loading}
+                className="w-full mt-5 py-3"
+                icon={<ArrowRight className="w-4 h-4" />}
               >
-                {loading ? "Sending Code..." : "Send OTP"}
-                {!loading && <ArrowRight className="w-4 h-4" />}
-              </button>
+                Send OTP
+              </Button>
             </div>
           ) : (
             <div>
@@ -284,13 +418,15 @@ export const LoginModal: React.FC = () => {
                 />
               </div>
 
-              <button
+              <Button
                 type="submit"
-                disabled={loading}
-                className="w-full mt-5 py-3 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-brand-600 to-pink-600 hover:from-brand-700 hover:to-pink-700 disabled:opacity-50 transition-all shadow-md shadow-brand-500/20 flex items-center justify-center gap-2 cursor-pointer"
+                variant="gradient"
+                size="md"
+                isLoading={loading}
+                className="w-full mt-5 py-3"
               >
-                {loading ? "Verifying..." : "Verify & Continue"}
-              </button>
+                Verify & Continue
+              </Button>
 
               <button
                 type="button"
@@ -306,6 +442,7 @@ export const LoginModal: React.FC = () => {
             </div>
           )}
         </form>
+        )}
 
         <p className="mt-6 text-center text-xs text-slate-500">
           By continuing, your phone number will be verified securely. New users are seamlessly redirected to set up their private profile.

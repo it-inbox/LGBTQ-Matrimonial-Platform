@@ -1,5 +1,7 @@
 import { create } from "zustand";
 import { api } from "../lib/api";
+import { useChatStore } from "./chat.store";
+import { queryClient } from "../lib/queryClient";
 
 interface User {
   id: string;
@@ -21,7 +23,30 @@ interface Profile {
   ghostModeEnabled: boolean;
   city: string;
   state: string;
+  country?: string;
+  nationality?: string;
+  religion?: string;
+  heightCm?: number;
+  dateOfBirth?: string;
+  maritalStatus?: string;
+  languagesSpoken?: string[];
+  education?: string;
+  degree?: string;
+  educations?: any[];
+  sector?: string;
+  profession?: string;
+  diet?: string;
+  smoking?: string;
+  drinking?: string;
+  hobbies?: string[];
   bio?: string;
+  partnerPreference?: {
+    preferredGenders?: string[];
+    preferredOrientations?: string[];
+    minAge?: number;
+    maxAge?: number;
+    maxDistanceKm?: number | null;
+  };
   photos?: Array<{ id: string; url?: string; originalUrl?: string; blurredUrl?: string | null; isPrimary: boolean; isBlurred?: boolean }>;
 }
 
@@ -45,7 +70,8 @@ interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   isLoginModalOpen: boolean;
-  openLoginModal: () => void;
+  authModalMode: "signin" | "register";
+  openLoginModal: (mode?: "signin" | "register") => void;
   closeLoginModal: () => void;
   sendOtp: (phoneNumber: string) => Promise<any>;
   verifyOtp: (phoneNumber: string, otp: string) => Promise<any>;
@@ -68,7 +94,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   isAuthenticated: !!localStorage.getItem("everpride_access_token"),
   isLoading: true,
   isLoginModalOpen: false,
-  openLoginModal: () => set({ isLoginModalOpen: true }),
+  authModalMode: "signin",
+  openLoginModal: (mode = "signin") => set({ isLoginModalOpen: true, authModalMode: mode }),
   closeLoginModal: () => set({ isLoginModalOpen: false }),
 
   sendOtp: async (phoneNumber: string) => {
@@ -110,8 +137,32 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   logout: () => {
+    const refreshToken = localStorage.getItem("everpride_refresh_token");
+
+    // 1. Notify backend to clear httpOnly refresh token cookie and revoke database record
+    api.post("/auth/logout", { refreshToken }).catch(() => {
+      // Ignore network errors on logout
+    });
+
+    // 2. Disconnect persistent WebSocket chat connection
+    try {
+      useChatStore.getState().disconnectSocket();
+    } catch {
+      // Ignore if chat store is not initialized
+    }
+
+    // 3. Clear local storage tokens
     localStorage.removeItem("everpride_access_token");
     localStorage.removeItem("everpride_refresh_token");
+
+    // 4. Reset TanStack Query cache to avoid displaying stale user data
+    try {
+      queryClient.clear();
+    } catch {
+      // Ignore if queryClient is not available
+    }
+
+    // 5. Reset auth store state
     set({ user: null, profile: null, membership: null, isAuthenticated: false, isLoading: false });
   },
 
@@ -176,8 +227,20 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           isLoading: false,
         });
       } catch (err: any) {
-        // If the server explicitly rejected auth (401/403) and refresh failed, clear session
+        // If the server explicitly rejected auth (401/403) and refresh failed, clear session and storage
         if (err.response?.status === 401 || err.response?.status === 403 || !localStorage.getItem("everpride_access_token")) {
+          localStorage.removeItem("everpride_access_token");
+          localStorage.removeItem("everpride_refresh_token");
+          try {
+            useChatStore.getState().disconnectSocket();
+          } catch {
+            // Ignore
+          }
+          try {
+            queryClient.clear();
+          } catch {
+            // Ignore
+          }
           set({ isAuthenticated: false, isLoading: false, user: null, profile: null, membership: null });
         } else {
           // On transient network or server connection issues, do not immediately kick out the user

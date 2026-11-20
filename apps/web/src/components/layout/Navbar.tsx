@@ -50,78 +50,28 @@ export const Navbar: React.FC = () => {
             /* During initial session hydration, keep controls clean without flickering premature state */
             <div className="w-24 h-8 bg-slate-100/80 rounded-full animate-pulse" />
           ) : isAuthenticated ? (
-            <>
-              {/* Profile link for desktop (lg and above) */}
-              <div className="hidden lg:flex items-center gap-2">
-                {profile ? (
-                  <Link
-                    to="/profile/edit"
-                    title="Edit your profile details"
-                    className="flex items-center gap-2 pl-2 pr-3 py-1.5 rounded-full hover:bg-slate-100 border border-slate-200 transition-colors"
-                  >
-                    {(() => {
-                      const primaryPhoto = profile.photos?.find((p) => p.isPrimary) || profile.photos?.[0];
-                      const primaryPhotoUrl = primaryPhoto?.originalUrl || primaryPhoto?.url;
-                      return primaryPhotoUrl ? (
-                        <img
-                          src={primaryPhotoUrl}
-                          alt={profile.displayName}
-                          className="w-7 h-7 rounded-full object-cover border border-brand-200"
-                        />
-                      ) : (
-                        <div className="w-7 h-7 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center text-xs font-bold">
-                          {profile.displayName?.[0] || <User className="w-4 h-4" />}
-                        </div>
-                      );
-                    })()}
-                    <span className="text-sm font-medium text-slate-800 max-w-[100px] truncate">
-                      {profile.displayName}
-                    </span>
-                  </Link>
-                ) : isOnboardingPage ? (
-                  <div className="flex items-center gap-2 pl-3 pr-3.5 py-1.5 rounded-full bg-brand-50 border border-brand-200 text-brand-700 text-xs font-bold select-none">
-                    <span className="w-2 h-2 rounded-full bg-brand-500 animate-pulse" />
-                    <span>Completing Profile</span>
-                  </div>
-                ) : null}
-                {!isOnboardingPage && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      logout();
-                      navigate("/");
-                    }}
-                    title="Log out"
-                    className="p-2 text-slate-500 hover:text-slate-800 rounded-lg hover:bg-slate-100 cursor-pointer"
-                  >
-                    <LogOut className="w-4 h-4" />
-                  </button>
-                )}
+            /* Hamburger Button visible at all times across mobile, tablet, and desktop */
+            !isOnboardingPage && (
+              <div className="flex items-center">
+                <button
+                  type="button"
+                  onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                  aria-label="Toggle navigation menu"
+                  className="p-2 text-slate-600 hover:text-slate-900 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
+                >
+                  {isMobileMenuOpen ? (
+                    <X className="w-6 h-6 text-slate-900" />
+                  ) : (
+                    <Menu className="w-6 h-6 text-slate-900" />
+                  )}
+                </button>
               </div>
-
-              {/* Hamburger Button (Mobile & Tablet: < lg) - hidden on /onboarding page */}
-              {!isOnboardingPage && (
-                <div className="lg:hidden flex items-center">
-                  <button
-                    type="button"
-                    onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                    aria-label="Toggle navigation menu"
-                    className="p-2 text-slate-600 hover:text-slate-900 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
-                  >
-                    {isMobileMenuOpen ? (
-                      <X className="w-6 h-6 text-slate-900" />
-                    ) : (
-                      <Menu className="w-6 h-6 text-slate-900" />
-                    )}
-                  </button>
-                </div>
-              )}
-            </>
+            )
           ) : (
             <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={openLoginModal}
+                onClick={() => openLoginModal("signin")}
                 className="flex items-center gap-2 pl-2 pr-3.5 py-1.5 rounded-full hover:bg-slate-100 border border-slate-200 transition-colors cursor-pointer"
               >
                 <div className="w-7 h-7 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center text-xs font-bold">
@@ -136,12 +86,12 @@ export const Navbar: React.FC = () => {
         </div>
       </div>
 
-      {/* Right-edge full-height Drawer Menu (< lg) rendered via Portal */}
+      {/* Right-edge full-height Drawer Menu rendered via Portal */}
       {isAuthenticated && !isOnboardingPage && isMobileMenuOpen && typeof document !== "undefined" &&
         createPortal(
           <div
             onClick={closeMobileMenu}
-            className="lg:hidden fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-xs transition-opacity animate-fade-in flex justify-end"
+            className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-xs transition-opacity animate-fade-in flex justify-end"
           >
             <div
               onClick={(e) => e.stopPropagation()}
@@ -219,15 +169,15 @@ export const Navbar: React.FC = () => {
                       },
                     },
                     {
-                      label: "Partner Preferences",
+                      label: "Looking For (Preferences)",
                       icon: Heart,
                       onClick: () => {
                         closeMobileMenu();
-                        navigate("/profile/edit#partner-preferences");
+                        navigate("/partner-preferences");
                       },
                     },
                     {
-                      label: "Safety Center",
+                      label: "Privacy Safeguards",
                       icon: ShieldCheck,
                       onClick: () => {
                         closeMobileMenu();

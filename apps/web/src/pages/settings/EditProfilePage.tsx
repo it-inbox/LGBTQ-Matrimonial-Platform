@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useAuthStore } from "../../stores/auth.store";
 import { api } from "../../lib/api";
 import {
@@ -22,13 +22,24 @@ import {
   Trash2,
   GraduationCap,
   Star,
+  Lock,
+  ChevronDown,
+  Search,
 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { allCountries } from "../../data/countries";
-import { getStatesForCountry, getCitiesForState } from "../../data/locations";
-import { Input } from "../../components/ui/Input";
-import { Select } from "../../components/ui/Select";
-import { Button } from "../../components/ui/Button";
+import { getStatesForCountry, getCitiesForState, getCitiesForCountry } from "../../data/locations";
+import { Input, Select, Button, SelectableChip, ChoiceCard, AlertBanner, SectionCard } from "../../components/ui";
+import { AgeRangeSlider } from "../../components/common/AgeRangeSlider";
+import {
+  DEGREE_OPTIONS,
+  getDegreesForQualification,
+  ANNUAL_INCOME_OPTIONS,
+  PET_OPTIONS,
+  CHILDREN_OPTIONS,
+  OUTNESS_OPTIONS,
+  MARITAL_STATUS_OPTIONS,
+} from "@everpride/shared";
 
 const TOP_LANGUAGES = [
   "Amharic",
@@ -148,9 +159,9 @@ export interface SectionTab {
 const SECTION_TABS: SectionTab[] = [
   {
     id: "demographics",
-    label: "About & Demographics",
+    label: "About You",
     icon: User,
-    description: "Name, height, location & languages",
+    description: "Basic personal details and location",
   },
   {
     id: "identity",
@@ -165,14 +176,20 @@ const SECTION_TABS: SectionTab[] = [
     description: "Legal & marital background",
   },
   {
-    id: "education-work",
-    label: "Education & Work",
+    id: "education",
+    label: "Education Details",
+    icon: GraduationCap,
+    description: "Degrees, institutions & study fields",
+  },
+  {
+    id: "work",
+    label: "Career",
     icon: Briefcase,
-    description: "Degrees, sector & profession",
+    description: "Industry sector & job title",
   },
   {
     id: "bio",
-    label: "Bio / About You",
+    label: "Bio",
     icon: AlignLeft,
     description: "Personal story & life goals",
   },
@@ -183,22 +200,10 @@ const SECTION_TABS: SectionTab[] = [
     description: "Diet, drinking, smoking & hobbies",
   },
   {
-    id: "partner-preferences",
-    label: "Looking For",
-    icon: Heart,
-    description: "Partner preferences & filters",
-  },
-  {
     id: "photos",
-    label: "Pictures & Gallery",
+    label: "Your Pictures",
     icon: Camera,
     description: "Manage photos & primary picture",
-  },
-  {
-    id: "privacy",
-    label: "Privacy & Visibility",
-    icon: Shield,
-    description: "Photo privacy & visibility controls",
   },
 ];
 
@@ -222,12 +227,28 @@ export const EditProfilePage: React.FC = () => {
     return window.location.hash.replace("#", "") || "demographics";
   });
 
+  const [langDropdownOpen, setLangDropdownOpen] = useState(false);
+  const [langSearch, setLangSearch] = useState("");
+  const langDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (langDropdownRef.current && !langDropdownRef.current.contains(event.target as Node)) {
+        setLangDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   const [formData, setFormData] = useState({
-    // Step 1: About You & Demographics
+    // Step 1: About You
     displayName: "",
     dateOfBirth: "",
     heightCm: 170,
     nationality: "India",
+    originCountry: "",
+    originCity: "",
     country: "India",
     state: "",
     city: "",
@@ -256,6 +277,7 @@ export const EditProfilePage: React.FC = () => {
     }>,
     sector: "Private / IT",
     profession: "",
+    annualIncome: "",
 
     // Photos
     photos: [] as string[],
@@ -267,6 +289,8 @@ export const EditProfilePage: React.FC = () => {
     diet: "Vegetarian",
     drinking: "Non-drinker",
     smoking: "Non-smoker",
+    pets: "",
+    children: "",
     hobbies: [] as string[],
 
     // Privacy Safeguards
@@ -293,6 +317,8 @@ export const EditProfilePage: React.FC = () => {
           : "",
         heightCm: (profile as any).heightCm || 170,
         nationality: nationalityVal,
+        originCountry: (profile as any).originCountry || "",
+        originCity: (profile as any).originCity || "",
         country: (profile as any).country || nationalityVal || "India",
         state: profile.state || "",
         city: profile.city || "",
@@ -331,6 +357,7 @@ export const EditProfilePage: React.FC = () => {
           ],
         sector: (profile as any).sector || "Private / IT",
         profession: (profile as any).profession || "",
+        annualIncome: (profile as any).annualIncome || "",
 
         photos: photoUrls,
 
@@ -339,6 +366,8 @@ export const EditProfilePage: React.FC = () => {
         diet: (profile as any).diet || "Vegetarian",
         drinking: (profile as any).drinking || "Non-drinker",
         smoking: (profile as any).smoking || "Non-smoker",
+        pets: (profile as any).pets || "",
+        children: (profile as any).children || "",
         hobbies: (profile as any).hobbies || [],
 
         photoVisibility: (profile as any).photoVisibility || "MUTUAL_MATCHES_ONLY",
@@ -438,12 +467,19 @@ export const EditProfilePage: React.FC = () => {
   const handleUpdateEducation = (index: number, field: string, value: any) => {
     setFormData((prev) => {
       const updated = [...(prev.educations || [])];
-      updated[index] = { ...updated[index], [field]: value };
+      let newEntry = { ...updated[index], [field]: value };
+      if (field === "degree" && value !== updated[index]?.degree) {
+        const validDegrees = getDegreesForQualification(value);
+        if (newEntry.degreeName && !validDegrees.includes(newEntry.degreeName)) {
+          newEntry.degreeName = "";
+        }
+      }
+      updated[index] = newEntry;
       return {
         ...prev,
         educations: updated,
         education: updated[0]?.degree || prev.education,
-        degree: updated[0]?.major || prev.degree,
+        degree: updated[0]?.degreeName || updated[0]?.major || prev.degree,
       };
     });
   };
@@ -543,12 +579,6 @@ export const EditProfilePage: React.FC = () => {
       showToast("error", msg);
       return;
     }
-    if (formData.minAge > formData.maxAge) {
-      const msg = "Minimum partner age cannot be greater than maximum partner age.";
-      setError(msg);
-      showToast("error", msg);
-      return;
-    }
 
     setLoading(true);
     setError(null);
@@ -566,7 +596,9 @@ export const EditProfilePage: React.FC = () => {
         maritalStatus: formData.maritalStatus,
         city: formData.city.trim(),
         state: formData.state.trim(),
-        country: formData.country.trim() || formData.nationality.trim() || "India",
+        country: formData.country.trim() || "India",
+        originCountry: formData.originCountry.trim() || undefined,
+        originCity: formData.originCity.trim() || undefined,
         education: (formData.educations?.[0]?.degree || formData.education || "").trim() || undefined,
         degree: (formData.educations?.[0]?.degreeName || formData.educations?.[0]?.major || formData.degree || "").trim() || undefined,
         educations: (formData.educations || [])
@@ -581,20 +613,15 @@ export const EditProfilePage: React.FC = () => {
           })),
         sector: formData.sector.trim() || undefined,
         profession: formData.profession.trim() || undefined,
+        annualIncome: formData.annualIncome ? formData.annualIncome.trim() : undefined,
         bio: formData.bio.trim() || undefined,
         diet: formData.diet.trim() || undefined,
         drinking: formData.drinking || undefined,
         smoking: formData.smoking || undefined,
+        pets: formData.pets ? formData.pets.trim() : undefined,
+        children: formData.children ? formData.children.trim() : undefined,
         hobbies: formData.hobbies,
         photos: formData.photos,
-        photoVisibility: formData.photoVisibility,
-        ghostModeEnabled: formData.ghostModeEnabled,
-        partnerPreference: {
-          preferredGenders: formData.preferredGenders,
-          preferredOrientations: formData.preferredOrientations,
-          minAge: Number(formData.minAge),
-          maxAge: Number(formData.maxAge),
-        },
       };
 
       const res = await api.patch("/profiles/me", payload);
@@ -673,44 +700,35 @@ export const EditProfilePage: React.FC = () => {
             </div>
             <div>
               <h1 className="text-2xl font-black text-slate-900 tracking-tight">Edit Your Profile</h1>
-              <p className="text-xs text-slate-500">
-                Manage your personal demographics, authentic identity, marital background, career, and lifestyle.
-              </p>
             </div>
           </div>
 
           {success && (
-            <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-xs font-semibold text-emerald-800 flex items-center gap-2">
-              <Check className="w-4 h-4 text-emerald-600" />
-              <span>All changes and preferences have been updated successfully!</span>
-            </div>
+            <AlertBanner
+              variant="success"
+              message="All changes and preferences have been updated successfully!"
+              onClose={() => setSuccess(false)}
+            />
           )}
 
           {error && (
-            <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-xs font-semibold text-rose-800">
-              {error}
-            </div>
+            <AlertBanner
+              variant="error"
+              message={error}
+              onClose={() => setError(null)}
+            />
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* CARD 1: ABOUT YOU & DEMOGRAPHICS */}
-            <div id="demographics" className="scroll-mt-24 bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-7">
-              <div className="flex items-center gap-2.5 mb-5 pb-3 border-b border-slate-100">
-                <div className="w-7 h-7 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center">
-                  <User className="w-4 h-4" />
-                </div>
-                <div>
-                  <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
-                    About You & Demographics
-                  </h2>
-                  <p className="text-[11px] text-slate-400">Basic personal information and location</p>
-                </div>
-              </div>
-
-              <div className="space-y-4">
+          <form onSubmit={handleSubmit} className="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-6 sm:p-8 space-y-10">
+            {/* SECTION 1: ABOUT YOU & */}
+            <section id="demographics" className="space-y-6">
+              <h2 className="text-base font-bold text-rose-600 uppercase tracking-wider">
+                About You
+              </h2>
+              <div className="space-y-7">
                 <div>
                   <Input
-                    label="Name / Display Alias *"
+                    label="NAME *"
                     type="text"
                     required
                     value={formData.displayName}
@@ -719,349 +737,473 @@ export const EditProfilePage: React.FC = () => {
                   />
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Input
-                    label="Height (cm)"
-                    type="number"
-                    value={formData.heightCm}
-                    onChange={(e) => handleChange("heightCm", parseInt(e.target.value) || 170)}
-                  />
-
-                  {/* Read-only verification details (Date of Birth & Religion are permanent) */}
-                  <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200">
-                    <div className="text-xs">
-                      <span className="block font-bold text-slate-500 uppercase tracking-wider text-[10px]">
-                        Verified DOB & Beliefs
+                {/* Row 2: Non-updatable Demographics (DOB, Height, Religion) */}
+                <div className="space-y-4">
+                  {/* DOB (Not updatable) */}
+                  <div className="p-3 bg-slate-50/80 rounded-xl border border-slate-200/80 flex flex-col justify-between">
+                    <div className="flex items-center justify-between gap-1 mb-1.5">
+                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
+                        <Lock className="w-3 h-3 text-slate-400" /> Date of Birth
                       </span>
-                      <p className="text-slate-700 font-medium text-xs mt-0.5">
-                        {formData.dateOfBirth
-                          ? new Date(formData.dateOfBirth).toLocaleDateString(undefined, {
-                              year: "numeric",
-                              month: "short",
-                              day: "numeric",
-                            })
-                          : "Set on signup"}{" "}
-                        {formData.religion ? `• ${formData.religion}` : ""}
-                      </p>
                     </div>
-                  </div>
-                </div>
-
-                {/* Nationality & State */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Select
-                    label="Nationality"
-                    value={formData.nationality}
-                    onChange={(e) => {
-                      const newNat = e.target.value;
-                      handleChange("nationality", newNat);
-                      if (newNat) {
-                        handleChange("country", newNat);
-                        handleChange("state", "");
-                        handleChange("city", "");
-                      }
-                    }}
-                  >
-                    <option value="">Select Country</option>
-                    {allCountries.map((c) => (
-                      <option key={c.code} value={c.name}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </Select>
-
-                  <Select
-                    label="State / Province *"
-                    value={formData.state}
-                    disabled={!formData.nationality}
-                    onChange={(e) => {
-                      handleChange("state", e.target.value);
-                      handleChange("city", "");
-                    }}
-                  >
-                    <option value="">{formData.nationality ? "Select State" : "Select Nationality First"}</option>
-                    {formData.nationality &&
-                      getStatesForCountry(formData.nationality).map((st) => (
-                        <option key={st} value={st}>
-                          {st}
-                        </option>
-                      ))}
-                  </Select>
-                </div>
-
-                {/* City */}
-                <div>
-                  <Select
-                    label="City *"
-                    value={formData.city}
-                    disabled={!formData.state}
-                    onChange={(e) => handleChange("city", e.target.value)}
-                  >
-                    <option value="">{formData.state ? "Select City" : "Select State First"}</option>
-                    {formData.nationality &&
-                      formData.state &&
-                      getCitiesForState(formData.nationality, formData.state).map((ct) => (
-                        <option key={ct} value={ct}>
-                          {ct}
-                        </option>
-                      ))}
-                  </Select>
-                </div>
-
-                {/* Languages Spoken (Alphabetical Top 50 Chips) */}
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider">
-                      Languages Spoken
-                    </label>
-                    <span className="text-[11px] text-slate-400">
-                      {formData.languagesSpoken.length} selected
-                    </span>
-                  </div>
-                  <div className="flex flex-wrap gap-2 p-2 border border-slate-200 rounded-xl bg-slate-50/50">
-                    {TOP_LANGUAGES.map((lang) => {
-                      const selected = formData.languagesSpoken.includes(lang);
-                      return (
-                        <button
-                          type="button"
-                          key={lang}
-                          onClick={() => toggleArrayItem("languagesSpoken", lang)}
-                          className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all cursor-pointer ${selected
-                            ? "bg-brand-600 text-white border-brand-600 shadow-sm"
-                            : "bg-white text-slate-700 border-slate-200 hover:border-slate-300"
-                            }`}
-                        >
-                          {lang}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* CARD 2: IDENTITY */}
-            <div id="identity" className="scroll-mt-24 bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-7">
-              <div className="flex items-center gap-2.5 mb-5 pb-3 border-b border-slate-100">
-                <div className="w-7 h-7 rounded-lg bg-pink-50 text-pink-600 flex items-center justify-center">
-                  <Sparkles className="w-4 h-4" />
-                </div>
-                <div>
-                  <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
-                    Identity
-                  </h2>
-                  <p className="text-[11px] text-slate-400">Affirm your authentic gender, sexual orientation, and outness</p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Select
-                  label="Gender Identity *"
-                  value={formData.gender}
-                  onChange={(e) => handleChange("gender", e.target.value)}
-                >
-                  <option value="MAN">Man</option>
-                  <option value="WOMAN">Woman</option>
-                  <option value="NON_BINARY">Non-Binary</option>
-                  <option value="TRANS_MAN">Trans Man</option>
-                  <option value="TRANS_WOMAN">Trans Woman</option>
-                  <option value="GENDERQUEER">Genderqueer</option>
-                  <option value="AGENDER">Agender</option>
-                  <option value="OTHER">Other</option>
-                </Select>
-
-                <Select
-                  label="Orientation *"
-                  value={formData.orientation}
-                  onChange={(e) => handleChange("orientation", e.target.value)}
-                >
-                  <option value="GAY">Gay</option>
-                  <option value="LESBIAN">Lesbian</option>
-                  <option value="BISEXUAL">Bisexual</option>
-                  <option value="PANSEXUAL">Pansexual</option>
-                  <option value="QUEER">Queer</option>
-                  <option value="ASEXUAL">Asexual</option>
-                  <option value="DEMISEXUAL">Demisexual</option>
-                  <option value="OTHER">Other</option>
-                </Select>
-
-                <Input
-                  label="Pronouns"
-                  placeholder="e.g. they/them, she/her, he/him"
-                  value={formData.pronouns}
-                  onChange={(e) => handleChange("pronouns", e.target.value)}
-                />
-
-                <Select
-                  label="Outness Status *"
-                  value={formData.outnessStatus}
-                  onChange={(e) => handleChange("outnessStatus", e.target.value)}
-                >
-                  <option value="DISCREET_NOT_OUT">Discreet / Not out</option>
-                  <option value="OUT_TO_SELECT_FEW">Out to select few friends</option>
-                  <option value="OUT_TO_ALL">Openly out</option>
-                </Select>
-              </div>
-            </div>
-
-            {/* CARD 3: MARITAL STATUS */}
-            <div id="marital-status" className="scroll-mt-24 bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-7">
-              <div className="flex items-center gap-2.5 mb-5 pb-3 border-b border-slate-100">
-                <div className="w-7 h-7 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
-                  <Heart className="w-4 h-4" />
-                </div>
-                <div>
-                  <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
-                    Marital Status
-                  </h2>
-                  <p className="text-[11px] text-slate-400">Your current legal and marital background</p>
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                {[
-                  { id: "Never Married", desc: "Single, never legally or ritually married." },
-                  { id: "Divorced", desc: "Previously married, legally separated/divorced." },
-                  { id: "Widowed", desc: "Spouse has passed away." },
-                  { id: "Awaiting Divorce", desc: "Divorce proceedings currently underway." },
-                  { id: "Annulled", desc: "Previous marriage was officially annulled." },
-                ].map((status) => (
-                  <label
-                    key={status.id}
-                    onClick={() => handleChange("maritalStatus", status.id)}
-                    className={`block p-3.5 rounded-xl border cursor-pointer transition-all ${formData.maritalStatus === status.id
-                      ? "border-brand-500 bg-brand-50/50 shadow-sm"
-                      : "border-slate-200 hover:border-slate-300"
-                      }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-bold text-slate-900">{status.id}</span>
-                      {formData.maritalStatus === status.id && (
-                        <div className="w-5 h-5 rounded-full bg-brand-600 text-white flex items-center justify-center">
-                          <Check className="w-3.5 h-3.5" />
-                        </div>
-                      )}
-                    </div>
-                    <p className="text-xs text-slate-500 mt-0.5">{status.desc}</p>
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            {/* CARD 4: EDUCATION & WORK */}
-            <div id="education-work" className="scroll-mt-24 bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-7">
-              <div className="flex items-center gap-2.5 mb-5 pb-3 border-b border-slate-100">
-                <div className="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
-                  <Briefcase className="w-4 h-4" />
-                </div>
-                <div>
-                  <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
-                    Education & Work
-                  </h2>
-                  <p className="text-[11px] text-slate-400">Academic background and career profession</p>
-                </div>
-              </div>
-
-              {/* Qualifications & Degrees (Multiple) */}
-              <div className="space-y-3 mb-5">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                      Educational Qualifications
-                    </label>
-                    <p className="text-[11px] text-slate-400">
-                      Add degrees, diplomas, and institutions attended
+                    <p className="text-xs font-semibold text-slate-800">
+                      {formData.dateOfBirth
+                        ? new Date(formData.dateOfBirth).toLocaleDateString(undefined, {
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
+                        })
+                        : "Set on signup"}
                     </p>
                   </div>
-                  <button
-                    type="button"
-                    onClick={handleAddEducation}
-                    className="px-3 py-1.5 text-xs font-bold text-brand-600 bg-brand-50 hover:bg-brand-100 rounded-xl border border-brand-200 flex items-center gap-1.5 transition-colors cursor-pointer"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>Add Qualification</span>
-                  </button>
+
+                  {/* Height (Not updatable) */}
+                  <div className="p-3 bg-slate-50/80 rounded-xl border border-slate-200/80 flex flex-col justify-between">
+                    <div className="flex items-center justify-between gap-1 mb-1.5">
+                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
+                        <Lock className="w-3 h-3 text-slate-400" /> Height
+                      </span>
+                    </div>
+                    <p className="text-xs font-semibold text-slate-800">
+                      {formData.heightCm
+                        ? `${formData.heightCm} cm (${Math.floor(formData.heightCm / 30.48)}'${Math.round(
+                          (formData.heightCm % 30.48) / 2.54
+                        )}")`
+                        : "Not specified"}
+                    </p>
+                  </div>
+
+                  {/* Religion / Belief (Not updatable) */}
+                  <div className="p-3 bg-slate-50/80 rounded-xl border border-slate-200/80 flex flex-col justify-between">
+                    <div className="flex items-center justify-between gap-1 mb-1.5">
+                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
+                        <Lock className="w-3 h-3 text-slate-400" /> Religion
+                      </span>
+                    </div>
+                    <p className="text-xs font-semibold text-slate-800">
+                      {formData.religion || "Not specified"}
+                    </p>
+                  </div>
                 </div>
 
-                <div className="space-y-3">
+                {/* Current Residence: Country | State / Province | City */}
+                <div className="pt-2">
+                  <span className="text-sm font-extrabold text-slate-800 uppercase tracking-wider block mb-3">
+                    Current Residence
+                  </span>
+                  <div className="space-y-4">
+                    <Select
+                      label="COUNTRY *"
+                      value={formData.country}
+                      onChange={(e) => {
+                        const newCountry = e.target.value;
+                        handleChange("country", newCountry);
+                        handleChange("state", "");
+                        handleChange("city", "");
+                      }}
+                    >
+                      <option value="">Select Country</option>
+                      {allCountries.map((c) => (
+                        <option key={c.code} value={c.name}>
+                          {c.name}
+                        </option>
+                      ))}
+                    </Select>
+
+                    <Select
+                      label="STATE *"
+                      value={formData.state}
+                      disabled={!formData.country}
+                      onChange={(e) => {
+                        handleChange("state", e.target.value);
+                        handleChange("city", "");
+                      }}
+                    >
+                      <option value="">{formData.country ? "Select State" : "Select Country First"}</option>
+                      {formData.country &&
+                        getStatesForCountry(formData.country).map((st) => (
+                          <option key={st} value={st}>
+                            {st}
+                          </option>
+                        ))}
+                    </Select>
+
+                    <Select
+                      label="CITY *"
+                      value={formData.city}
+                      disabled={!formData.state}
+                      onChange={(e) => handleChange("city", e.target.value)}
+                    >
+                      <option value="">{formData.state ? "Select City" : "Select State First"}</option>
+                      {formData.country &&
+                        formData.state &&
+                        getCitiesForState(formData.country, formData.state).map((ct) => (
+                          <option key={ct} value={ct}>
+                            {ct}
+                          </option>
+                        ))}
+                    </Select>
+                  </div>
+                </div>
+
+                {/* Origin & Citizenship: Nationality | Origin Country | Hometown */}
+                <div className="pt-2 border-t border-slate-100">
+                  <span className="text-sm font-extrabold text-slate-800 uppercase tracking-wider block mb-3">
+                    Origin & Citizenship
+                  </span>
+                  <div className="space-y-4">
+                    <Select
+                      label="NATIONALITY / CITIZENSHIP *"
+                      value={formData.nationality}
+                      onChange={(e) => handleChange("nationality", e.target.value)}
+                    >
+                      <option value="">Select Nationality</option>
+                      {allCountries.map((c) => (
+                        <option key={c.code} value={c.name}>
+                          {c.name}
+                        </option>
+                      ))}
+                    </Select>
+
+                    <Select
+                      label="COUNTRY OF ORIGIN"
+                      value={formData.originCountry}
+                      onChange={(e) => handleChange("originCountry", e.target.value)}
+                    >
+                      <option value="">Select Country of Origin</option>
+                      {allCountries.map((c) => (
+                        <option key={c.code} value={c.name}>
+                          {c.name}
+                        </option>
+                      ))}
+                    </Select>
+
+                    <Select
+                      label="HOMETOWN"
+                      value={formData.originCity}
+                      disabled={!formData.originCountry && !formData.nationality}
+                      onChange={(e) => handleChange("originCity", e.target.value)}
+                    >
+                      <option value="">
+                        {formData.originCountry || formData.nationality
+                          ? "Select Hometown"
+                          : "Select Country of Origin or Nationality First"}
+                      </option>
+                      {(formData.originCountry || formData.nationality) &&
+                        getCitiesForCountry(formData.originCountry || formData.nationality).map((ct) => (
+                          <option key={ct} value={ct}>
+                            {ct}
+                          </option>
+                        ))}
+                    </Select>
+                  </div>
+                </div>
+
+                {/* Row 4: Languages Spoken (Dropdown Multi-Select) */}
+                <div ref={langDropdownRef} className="relative">
+                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                    Languages
+                  </label>
+
+                  <div
+                    onClick={() => setLangDropdownOpen(!langDropdownOpen)}
+                    className="w-full min-h-[44px] px-3.5 py-2 bg-white border border-slate-200 rounded-xl cursor-pointer hover:border-slate-300 transition-all flex items-center justify-between gap-2 shadow-xs"
+                  >
+                    <div className="flex flex-wrap items-center gap-1.5 flex-1 min-w-0">
+                      {formData.languagesSpoken.length === 0 ? (
+                        <span className="text-xs text-slate-400">Select languages spoken...</span>
+                      ) : (
+                        formData.languagesSpoken.map((lang) => (
+                          <span
+                            key={lang}
+                            className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-brand-50 text-brand-700 border border-brand-200"
+                          >
+                            {lang}
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleArrayItem("languagesSpoken", lang);
+                              }}
+                              className="text-brand-500 hover:text-brand-800 cursor-pointer"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </span>
+                        ))
+                      )}
+                    </div>
+                    <ChevronDown
+                      className={`w-4 h-4 text-slate-400 shrink-0 transition-transform ${langDropdownOpen ? "rotate-180" : ""
+                        }`}
+                    />
+                  </div>
+
+                  {langDropdownOpen && (
+                    <div className="absolute z-20 mt-1.5 w-full bg-white border border-slate-200 rounded-xl shadow-lg p-2 space-y-2 animate-in fade-in zoom-in-95 duration-100">
+                      <div className="relative">
+                        <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                        <input
+                          type="text"
+                          placeholder="Search languages..."
+                          value={langSearch}
+                          onChange={(e) => setLangSearch(e.target.value)}
+                          className="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:border-brand-500"
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      </div>
+
+                      <div className="max-h-52 overflow-y-auto space-y-0.5 pr-1">
+                        {TOP_LANGUAGES.filter((l) =>
+                          l.toLowerCase().includes(langSearch.toLowerCase())
+                        ).map((lang) => {
+                          const isSelected = formData.languagesSpoken.includes(lang);
+                          return (
+                            <button
+                              key={lang}
+                              type="button"
+                              onClick={() => toggleArrayItem("languagesSpoken", lang)}
+                              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-colors text-left cursor-pointer ${isSelected
+                                ? "bg-brand-50 text-brand-700 font-semibold"
+                                : "text-slate-700 hover:bg-slate-50"
+                                }`}
+                            >
+                              <span>{lang}</span>
+                              {isSelected && <Check className="w-3.5 h-3.5 text-brand-600 shrink-0" />}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </section>
+
+            <div className="border-t border-slate-100" />
+
+            {/* SECTION 2: IDENTITY */}
+            <section id="identity" className="space-y-6">
+              <h2 className="text-base font-bold text-rose-600 uppercase tracking-wider">
+                Identity
+              </h2>
+              <div className="space-y-7">
+                {/* Gender Identity (Inline Pill Chips) */}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
+                    Gender Identity *
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {[
+                      { id: "MAN", label: "Man" },
+                      { id: "WOMAN", label: "Woman" },
+                      { id: "NON_BINARY", label: "Non-Binary" },
+                      { id: "TRANS_MAN", label: "Trans Man" },
+                      { id: "TRANS_WOMAN", label: "Trans Woman" },
+                      { id: "GENDERQUEER", label: "Genderqueer" },
+                      { id: "AGENDER", label: "Agender" },
+                      { id: "OTHER", label: "Other" },
+                    ].map((g) => (
+                      <SelectableChip
+                        key={g.id}
+                        selected={formData.gender === g.id}
+                        shape="rect"
+                        onClick={() => handleChange("gender", g.id)}
+                      >
+                        {g.label}
+                      </SelectableChip>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Orientation (Inline Pill Chips) */}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
+                    Orientation *
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {[
+                      { id: "GAY", label: "Gay" },
+                      { id: "LESBIAN", label: "Lesbian" },
+                      { id: "BISEXUAL", label: "Bisexual" },
+                      { id: "PANSEXUAL", label: "Pansexual" },
+                      { id: "QUEER", label: "Queer" },
+                      { id: "ASEXUAL", label: "Asexual" },
+                      { id: "DEMISEXUAL", label: "Demisexual" },
+                      { id: "OTHER", label: "Other" },
+                    ].map((o) => (
+                      <SelectableChip
+                        key={o.id}
+                        selected={formData.orientation === o.id}
+                        shape="rect"
+                        onClick={() => handleChange("orientation", o.id)}
+                      >
+                        {o.label}
+                      </SelectableChip>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Pronouns (Input) */}
+                <div className="max-w-md">
+                  <Input
+                    label="PRONOUNS"
+                    placeholder="e.g. they/them, she/her, he/him"
+                    value={formData.pronouns}
+                    onChange={(e) => handleChange("pronouns", e.target.value)}
+                  />
+                </div>
+
+                {/* Outness Status (Styled like Dietary/Drinking/Smoking) */}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
+                    Are you out of the closet? *
+                  </label>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                    {OUTNESS_OPTIONS.map((st) => (
+                      <button
+                        type="button"
+                        key={st.id}
+                        onClick={() => handleChange("outnessStatus", st.id)}
+                        className={`py-2 px-3 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${formData.outnessStatus === st.id
+                          ? "bg-brand-600 text-white border-brand-600 shadow-sm"
+                          : "bg-slate-50 text-slate-700 border-slate-200 hover:border-slate-300"
+                          }`}
+                      >
+                        {st.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <div className="border-t border-slate-100" />
+
+            {/* SECTION 3: MARITAL STATUS */}
+            <section id="marital-status" className="space-y-4">
+              <h2 className="text-base font-bold text-rose-600 uppercase tracking-wider">
+                Marital Status
+              </h2>
+              <div className="space-y-3">
+                {MARITAL_STATUS_OPTIONS.map((status) => (
+                  <ChoiceCard
+                    key={status.id}
+                    selected={formData.maritalStatus === status.id}
+                    title={status.id}
+                    onClick={() => handleChange("maritalStatus", status.id)}
+                  />
+                ))}
+              </div>
+            </section>
+
+            <div className="border-t border-slate-100" />
+
+            {/* SECTION 4: EDUCATION (Separated) */}
+            <section id="education" className="space-y-6">
+              <h2 className="text-base font-bold text-rose-600 uppercase tracking-wider">
+                Education Details
+              </h2>
+              {/* Qualifications & Degrees (Multiple) */}
+              <div className="space-y-6">
+                <div className="space-y-5">
                   {(formData.educations || []).map((edu, idx) => (
                     <div
                       key={idx}
-                      className="p-4 rounded-2xl border border-slate-200 bg-slate-50/60 space-y-3 relative group"
+                      className="p-5 rounded-2xl border border-slate-200 bg-slate-50/60 space-y-5 relative group"
                     >
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-                          <GraduationCap className="w-4 h-4 text-brand-600" />
-                          Qualification #{idx + 1}
-                        </span>
-                        {formData.educations.length > 1 && (
+                      {formData.educations.length > 1 && (
+                        <div className="flex items-center justify-end">
                           <button
                             type="button"
                             onClick={() => handleRemoveEducation(idx)}
-                            title="Remove this qualification"
+                            title="Remove qualification"
                             className="p-1 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition-colors cursor-pointer"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
-                        )}
+                        </div>
+                      )}
+
+                      {/* Qualification Level (Inline Selectable Pill Chips) */}
+                      <div>
+                        <div className="flex flex-wrap gap-2">
+                          {[
+                            "Doctorate / Ph.D",
+                            "Master's Degree",
+                            "Bachelor's Degree",
+                            "Diploma",
+                            "High School",
+                            "Other",
+                          ].map((q) => (
+                            <SelectableChip
+                              key={q}
+                              selected={edu.degree === q}
+                              shape="rect"
+                              onClick={() => handleUpdateEducation(idx, "degree", q)}
+                            >
+                              {q}
+                            </SelectableChip>
+                          ))}
+                        </div>
                       </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div>
-                          <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">
-                            Qualification <span className="text-rose-500">*</span>
-                          </label>
-                          <select
-                            value={edu.degree}
-                            onChange={(e) => handleUpdateEducation(idx, "degree", e.target.value)}
-                            className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:border-brand-500 font-medium"
-                          >
-                            <option value="Doctorate / Ph.D">Doctorate / Ph.D</option>
-                            <option value="Master's Degree">Master's Degree</option>
-                            <option value="Bachelor's Degree">Bachelor's Degree</option>
-                            <option value="Diploma">Diploma</option>
-                            <option value="High School">High School</option>
-                            <option value="Other">Other</option>
-                          </select>
-                        </div>
-
-                        <div>
-                          <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">
-                            Institute <span className="text-rose-500">*</span>
-                          </label>
-                          <input
-                            type="text"
-                            placeholder="e.g. Stanford University, IIT Delhi"
-                            value={edu.institution}
-                            onChange={(e) => handleUpdateEducation(idx, "institution", e.target.value)}
-                            className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:border-brand-500"
-                          />
-                        </div>
-
+                      <div className="space-y-3">
                         {edu.degree !== "High School" && (
-                          <div className="sm:col-span-2">
-                            <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">
-                              Degree <span className="text-rose-500">*</span>
-                            </label>
-                            <input
-                              type="text"
-                              placeholder="e.g. B.Tech, B.Sc, B.Com, MBA, M.Tech, MBBS, Ph.D"
-                              value={edu.degreeName || ""}
-                              onChange={(e) => handleUpdateEducation(idx, "degreeName", e.target.value)}
-                              className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:border-brand-500"
-                            />
-                          </div>
+                          <>
+                            <div>
+                              <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">
+                                Degree <span className="text-rose-500">*</span>
+                              </label>
+                              <select
+                                value={edu.degreeName || ""}
+                                onChange={(e) => handleUpdateEducation(idx, "degreeName", e.target.value)}
+                                className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:border-brand-500 font-medium"
+                              >
+                                <option value="">Select Degree</option>
+                                {getDegreesForQualification(edu.degree).map((d) => (
+                                  <option key={d} value={d}>
+                                    {d}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+
+                            <div>
+                              <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">
+                                field of study
+                              </label>
+                              <input
+                                type="text"
+                                placeholder="e.g. Computer Science, Economics, Fine Arts"
+                                value={edu.major || ""}
+                                onChange={(e) => handleUpdateEducation(idx, "major", e.target.value)}
+                                className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:border-brand-500"
+                              />
+                            </div>
+                          </>
                         )}
 
-                        <div className="sm:col-span-2">
+                        <div>
                           <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">
-                            Major / Field of Study (Optional)
+                            {edu.degree === "High School"
+                              ? "School"
+                              : edu.degree === "Diploma" || edu.degree === "Other"
+                                ? "INSTITUTION"
+                                : "University"}{" "}
+                            <span className="text-rose-500">*</span>
                           </label>
                           <input
                             type="text"
-                            placeholder="e.g. Computer Science, Economics, Graphic Design"
-                            value={edu.major || ""}
-                            onChange={(e) => handleUpdateEducation(idx, "major", e.target.value)}
+                            placeholder={
+                              edu.degree === "High School"
+                                ? "e.g. DPS, St. Xavier's, City High School"
+                                : edu.degree === "Diploma" || edu.degree === "Other"
+                                  ? "e.g. National Institute of Design, Tech Academy"
+                                  : "e.g. Stanford University, Delhi University"
+                            }
+                            value={edu.institution}
+                            onChange={(e) => handleUpdateEducation(idx, "institution", e.target.value)}
                             className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:border-brand-500"
                           />
                         </div>
@@ -1069,50 +1211,96 @@ export const EditProfilePage: React.FC = () => {
                     </div>
                   ))}
                 </div>
-              </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-slate-100">
-
-                <Select
-                  label="Sector of Work"
-                  value={formData.sector}
-                  onChange={(e) => handleChange("sector", e.target.value)}
-                >
-                  <option value="">Select</option>
-                  <option value="Private / IT">Technology & IT</option>
-                  <option value="Finance & Banking">Finance & Banking</option>
-                  <option value="Healthcare & Medicine">Healthcare & Medicine</option>
-                  <option value="Education & Academia">Education & Academia</option>
-                  <option value="Government / PSU">Government / Public Sector</option>
-                  <option value="Business / Entrepreneur">Business / Entrepreneur</option>
-                  <option value="Media & Creative">Media, Design & Creative</option>
-                  <option value="Legal & Law">Legal & Law</option>
-                  <option value="Other">Other</option>
-                </Select>
-
-                <Input
-                  label="Job Title"
-                  placeholder="e.g. Senior Product Designer, Architect"
-                  value={formData.profession}
-                  onChange={(e) => handleChange("profession", e.target.value)}
-                />
-              </div>
-            </div>
-
-            {/* CARD 5: ABOUT YOU (BIO) */}
-            <div id="bio" className="scroll-mt-24 bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-7">
-              <div className="flex items-center gap-2.5 mb-5 pb-3 border-b border-slate-100">
-                <div className="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
-                  <AlignLeft className="w-4 h-4" />
+                {/* + Add Qualification Button (Below qualification cards) */}
+                <div className="pt-1">
+                  <button
+                    type="button"
+                    onClick={handleAddEducation}
+                    className="px-4 py-2 text-xs font-bold text-brand-600 bg-brand-50 hover:bg-brand-100 rounded-xl border border-brand-200 flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Add Qualification</span>
+                  </button>
                 </div>
+              </div>
+            </section>
+
+            <div className="border-t border-slate-100" />
+
+            {/* SECTION 5: CAREER (Separated) */}
+            <section id="work" className="space-y-6">
+              <h2 className="text-base font-bold text-rose-600 uppercase tracking-wider">
+                Career
+              </h2>
+              <div className="space-y-7">
+                {/* Sector of Work (Inline Selectable Pill Chips) */}
                 <div>
-                  <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
-                    About You (Bio)
-                  </h2>
-                  <p className="text-[11px] text-slate-400">Share your story, values, and what you hope to build</p>
+                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
+                    Sector of Work
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {[
+                      { id: "Private / IT", label: "Technology & IT" },
+                      { id: "Finance & Banking", label: "Finance & Banking" },
+                      { id: "Healthcare & Medicine", label: "Healthcare & Medicine" },
+                      { id: "Education & Academia", label: "Education & Academia" },
+                      { id: "Government / PSU", label: "Government / PSU" },
+                      { id: "Business / Entrepreneur", label: "Business / Entrepreneur" },
+                      { id: "Media & Creative", label: "Media & Creative" },
+                      { id: "Legal & Law", label: "Legal & Law" },
+                      { id: "Other", label: "Other" },
+                    ].map((sec) => (
+                      <SelectableChip
+                        key={sec.id}
+                        selected={formData.sector === sec.id}
+                        shape="rect"
+                        onClick={() => handleChange("sector", sec.id)}
+                      >
+                        {sec.label}
+                      </SelectableChip>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Job Title */}
+                <div>
+                  <Input
+                    label="JOB TITLE"
+                    placeholder="e.g. Senior Product Designer, Architect"
+                    value={formData.profession}
+                    onChange={(e) => handleChange("profession", e.target.value)}
+                  />
+                </div>
+
+                {/* Annual Income */}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
+                    Annual Income
+                  </label>
+                  <select
+                    value={formData.annualIncome || ""}
+                    onChange={(e) => handleChange("annualIncome", e.target.value)}
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-500 font-medium"
+                  >
+                    <option value="">Select Annual Income (Optional)</option>
+                    {ANNUAL_INCOME_OPTIONS.map((opt) => (
+                      <option key={opt} value={opt}>
+                        {opt}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
+            </section>
 
+            <div className="border-t border-slate-100" />
+
+            {/* SECTION 6: BIO */}
+            <section id="bio" className="space-y-4">
+              <h2 className="text-base font-bold text-rose-600 uppercase tracking-wider">
+                Bio
+              </h2>
               <textarea
                 rows={4}
                 placeholder="Share your values, personality, passions, and what kind of life partner you hope to build a future with..."
@@ -1120,23 +1308,16 @@ export const EditProfilePage: React.FC = () => {
                 onChange={(e) => handleChange("bio", e.target.value)}
                 className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-500 leading-relaxed"
               />
-            </div>
+            </section>
 
-            {/* CARD 6: LIFESTYLE & HOBBIES */}
-            <div id="lifestyle" className="scroll-mt-24 bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-7">
-              <div className="flex items-center gap-2.5 mb-5 pb-3 border-b border-slate-100">
-                <div className="w-7 h-7 rounded-lg bg-orange-50 text-orange-600 flex items-center justify-center">
-                  <Coffee className="w-4 h-4" />
-                </div>
-                <div>
-                  <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
-                    Lifestyle & Interests
-                  </h2>
-                  <p className="text-[11px] text-slate-400">Dietary habits, drinking, smoking, and hobbies</p>
-                </div>
-              </div>
+            <div className="border-t border-slate-100" />
 
-              <div className="space-y-5">
+            {/* SECTION 7: LIFESTYLE & HOBBIES */}
+            <section id="lifestyle" className="space-y-6">
+              <h2 className="text-base font-bold text-rose-600 uppercase tracking-wider">
+                Lifestyle & Interests
+              </h2>
+              <div className="space-y-7">
                 {/* Dietary Preference */}
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
@@ -1212,9 +1393,47 @@ export const EditProfilePage: React.FC = () => {
                   </div>
                 </div>
 
+                {/* Pet Preferences */}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
+                    Pet Preferences
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {PET_OPTIONS.map((petOption) => (
+                      <SelectableChip
+                        key={petOption}
+                        selected={formData.pets === petOption}
+                        shape="rect"
+                        onClick={() => handleChange("pets", formData.pets === petOption ? "" : petOption)}
+                      >
+                        {petOption}
+                      </SelectableChip>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Children Preferences */}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
+                    Children Preferences
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {CHILDREN_OPTIONS.map((childOption) => (
+                      <SelectableChip
+                        key={childOption}
+                        selected={formData.children === childOption}
+                        shape="rect"
+                        onClick={() => handleChange("children", formData.children === childOption ? "" : childOption)}
+                      >
+                        {childOption}
+                      </SelectableChip>
+                    ))}
+                  </div>
+                </div>
+
                 {/* Hobbies / Interests */}
                 <div>
-                  <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center justify-between mb-2.5">
                     <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider">
                       Hobbies & Interests
                     </label>
@@ -1222,152 +1441,35 @@ export const EditProfilePage: React.FC = () => {
                       {formData.hobbies.length} selected
                     </span>
                   </div>
-                  <div className="flex flex-wrap gap-2 p-2 border border-slate-200 rounded-xl bg-slate-50/50">
-                    {HOBBIES_LIST.map((hobby) => {
-                      const selected = formData.hobbies.includes(hobby);
-                      return (
-                        <button
-                          type="button"
-                          key={hobby}
-                          onClick={() => toggleArrayItem("hobbies", hobby)}
-                          className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all cursor-pointer ${selected
-                            ? "bg-pink-600 text-white border-pink-600 shadow-sm"
-                            : "bg-white text-slate-700 border-slate-200 hover:border-slate-300"
-                            }`}
-                        >
-                          {hobby}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* CARD 7: LOOKING FOR (PARTNER PREFERENCES) */}
-            <div id="partner-preferences" className="scroll-mt-24 bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-7">
-              <div className="flex items-center gap-2.5 mb-5 pb-3 border-b border-slate-100">
-                <div className="w-7 h-7 rounded-lg bg-pink-50 text-pink-600 flex items-center justify-center">
-                  <Heart className="w-4 h-4" />
-                </div>
-                <div>
-                  <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
-                    Looking For (Partner Preferences)
-                  </h2>
-                  <p className="text-[11px] text-slate-400">Filter and discover matches matching your preferences</p>
-                </div>
-              </div>
-
-              <div className="space-y-5">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
-                    Preferred Gender(s)
-                  </label>
                   <div className="flex flex-wrap gap-2">
-                    {[
-                      { id: "MAN", label: "Man" },
-                      { id: "WOMAN", label: "Woman" },
-                      { id: "NON_BINARY", label: "Non-Binary" },
-                      { id: "TRANS_MAN", label: "Trans Man" },
-                      { id: "TRANS_WOMAN", label: "Trans Woman" },
-                      { id: "GENDERQUEER", label: "Genderqueer" },
-                      { id: "AGENDER", label: "Agender" },
-                      { id: "OTHER", label: "Other" },
-                    ].map((item) => {
-                      const selected = formData.preferredGenders.includes(item.id);
-                      return (
-                        <button
-                          type="button"
-                          key={item.id}
-                          onClick={() => toggleArrayItem("preferredGenders", item.id)}
-                          className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all cursor-pointer ${selected
-                            ? "bg-brand-600 text-white border-brand-600 shadow-sm"
-                            : "bg-slate-50 text-slate-700 border-slate-200 hover:border-slate-300"
-                            }`}
-                        >
-                          {item.label}
-                        </button>
-                      );
-                    })}
+                    {HOBBIES_LIST.map((hobby) => (
+                      <SelectableChip
+                        key={hobby}
+                        selected={formData.hobbies.includes(hobby)}
+                        shape="pill"
+                        onClick={() => toggleArrayItem("hobbies", hobby)}
+                      >
+                        {hobby}
+                      </SelectableChip>
+                    ))}
                   </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
-                    Preferred Orientation(s)
-                  </label>
-                  <div className="flex flex-wrap gap-2">
-                    {[
-                      { id: "GAY", label: "Gay" },
-                      { id: "LESBIAN", label: "Lesbian" },
-                      { id: "BISEXUAL", label: "Bisexual" },
-                      { id: "PANSEXUAL", label: "Pansexual" },
-                      { id: "QUEER", label: "Queer" },
-                      { id: "ASEXUAL", label: "Asexual" },
-                      { id: "DEMISEXUAL", label: "Demisexual" },
-                      { id: "OTHER", label: "Other" },
-                    ].map((item) => {
-                      const selected = formData.preferredOrientations.includes(item.id);
-                      return (
-                        <button
-                          type="button"
-                          key={item.id}
-                          onClick={() => toggleArrayItem("preferredOrientations", item.id)}
-                          className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all cursor-pointer ${selected
-                            ? "bg-pink-600 text-white border-pink-600 shadow-sm"
-                            : "bg-slate-50 text-slate-700 border-slate-200 hover:border-slate-300"
-                            }`}
-                        >
-                          {item.label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <Input
-                    label="Min Partner Age"
-                    type="number"
-                    min={18}
-                    max={80}
-                    value={formData.minAge}
-                    onChange={(e) => handleChange("minAge", parseInt(e.target.value) || 18)}
-                  />
-                  <Input
-                    label="Max Partner Age"
-                    type="number"
-                    min={18}
-                    max={90}
-                    value={formData.maxAge}
-                    onChange={(e) => handleChange("maxAge", parseInt(e.target.value) || 50)}
-                  />
                 </div>
               </div>
-            </div>
+            </section>
 
-            {/* CARD 8: PICTURES & GALLERY */}
-            <div id="photos" className="scroll-mt-24 bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-7">
-              <div className="flex items-center justify-between pb-3 mb-5 border-b border-slate-100">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-7 h-7 rounded-lg bg-pink-50 text-brand-600 flex items-center justify-center">
-                    <Camera className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
-                      Profile Pictures & Gallery
-                    </h2>
-                    <p className="text-[11px] text-slate-400">
-                      Add up to 6 pictures. Your primary photo appears as your main display avatar.
-                    </p>
-                  </div>
-                </div>
+            <div className="border-t border-slate-100" />
+
+            {/* SECTION 8: YOUR PICTURES */}
+            <section id="photos" className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-base font-bold text-rose-600 uppercase tracking-wider">
+                  Your Pictures
+                </h2>
                 <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-100 text-slate-600">
                   {formData.photos.length} / 6 Photos
                 </span>
               </div>
-
-              <div className="space-y-5">
+              <div className="space-y-6">
                 {/* Gallery Grid */}
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3.5">
                   {formData.photos.map((url, idx) => (
@@ -1446,68 +1548,7 @@ export const EditProfilePage: React.FC = () => {
                   </p>
                 </div>
               </div>
-            </div>
-
-            {/* CARD 9: PRIVACY SAFEGUARDS */}
-            <div id="privacy" className="scroll-mt-24 bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-7">
-              <div className="flex items-center gap-2.5 mb-5 pb-3 border-b border-slate-100">
-                <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                  <Shield className="w-4 h-4" />
-                </div>
-                <div>
-                  <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
-                    Privacy Safeguards & Visibility
-                  </h2>
-                  <p className="text-[11px] text-slate-400">Controls and visibility of your photos and identity on EverPride</p>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
-                    Photo Visibility Shield Setting
-                  </label>
-                  <div className="space-y-2.5">
-                    {[
-                      {
-                        id: "MUTUAL_MATCHES_ONLY",
-                        title: "Mutual Matches Only (Recommended)",
-                        desc: "Photos unblur automatically only after both members accept each other's interest.",
-                      },
-                      {
-                        id: "REQUEST_REQUIRED",
-                        title: "Require My Approval",
-                        desc: "Your photos remain blurred with a lock icon. Members must request access, and you decide who can view.",
-                      },
-                      {
-                        id: "ALL_MEMBERS",
-                        title: "Visible to All Members",
-                        desc: "Photos are visible to any signed-in verified member of EverPride.",
-                      },
-                    ].map((tier) => (
-                      <label
-                        key={tier.id}
-                        onClick={() => handleChange("photoVisibility", tier.id)}
-                        className={`block p-3.5 rounded-xl border cursor-pointer transition-all ${formData.photoVisibility === tier.id
-                          ? "border-brand-500 bg-brand-50/50"
-                          : "border-slate-200 hover:border-slate-300"
-                          }`}
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-bold text-slate-900">{tier.title}</span>
-                          {formData.photoVisibility === tier.id && (
-                            <div className="w-5 h-5 rounded-full bg-brand-600 text-white flex items-center justify-center">
-                              <Check className="w-3.5 h-3.5" />
-                            </div>
-                          )}
-                        </div>
-                        <p className="text-xs text-slate-500 mt-0.5">{tier.desc}</p>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
+            </section>
 
             {/* Sticky Submit Button */}
             <div className="sticky bottom-4 bg-white/95 backdrop-blur-md p-4 rounded-2xl border border-slate-200/80 shadow-lg flex items-center justify-between">

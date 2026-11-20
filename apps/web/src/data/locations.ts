@@ -70,3 +70,16 @@ export const getCitiesForState = (countryName: string, stateName: string): strin
 
   return uniqueCities.length > 0 ? [...uniqueCities, "Other"] : ["Major City", "Other"];
 };
+
+export const getCitiesForCountry = (countryName: string): string[] => {
+  if (!countryName) return [];
+  const countryIso = getCountryIso(countryName);
+  if (!countryIso) return ["Other"];
+
+  const rawCities = City.getCitiesOfCountry(countryIso) || [];
+  const uniqueCities = Array.from(new Set(rawCities.map((c) => c.name).filter(Boolean)))
+    .filter((c) => c !== "Other")
+    .sort((a, b) => a.localeCompare(b));
+
+  return uniqueCities.length > 0 ? [...uniqueCities, "Other"] : ["Major City", "Other"];
+};

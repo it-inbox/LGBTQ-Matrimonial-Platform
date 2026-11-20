@@ -9,6 +9,7 @@ import { OnboardingWizard } from "./pages/onboarding/OnboardingWizard";
 import { DiscoveryFeedPage } from "./pages/matches/DiscoveryFeedPage";
 import { MatchesPage } from "./pages/matches/MatchesPage";
 import { PrivacySettingsPage } from "./pages/settings/PrivacySettingsPage";
+import { PartnerPreferencesPage } from "./pages/settings/PartnerPreferencesPage";
 import { EditProfilePage } from "./pages/settings/EditProfilePage";
 import { InterestsActivityPage } from "./pages/interests/InterestsActivityPage";
 import { UnblurActivityPage } from "./pages/unblur/UnblurActivityPage";
@@ -118,6 +119,15 @@ export function App() {
                       </ProtectedRoute>
                     }
                   />
+                  <Route
+                    path="/partner-preferences"
+                    element={
+                      <ProtectedRoute requireProfile={true}>
+                        <PartnerPreferencesPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route path="/preferences" element={<Navigate to="/partner-preferences" replace />} />
                   <Route
                     path="/discover"
                     element={

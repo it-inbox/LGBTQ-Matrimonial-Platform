@@ -43,11 +43,10 @@ export const ActivitySidebar: React.FC<ActivitySidebarProps> = ({ activeTab }) =
         {/* Profile Header Section */}
         <div className="p-4 flex items-center gap-3.5">
           <div className="relative shrink-0">
-            <div className={`w-14 h-14 rounded-full p-0.5 shadow-sm overflow-hidden ${
-              isPaidMember
+            <div className={`w-14 h-14 rounded-full p-0.5 shadow-sm overflow-hidden ${isPaidMember
                 ? "bg-gradient-to-tr from-amber-400 via-rose-500 to-amber-500 ring-2 ring-amber-400/40"
                 : "bg-gradient-to-tr from-brand-600 to-pink-500"
-            }`}>
+              }`}>
               {primaryPhotoUrl ? (
                 <img
                   src={primaryPhotoUrl}
@@ -94,11 +93,10 @@ export const ActivitySidebar: React.FC<ActivitySidebarProps> = ({ activeTab }) =
         <nav className="divide-y divide-slate-100/80">
           <Link
             to="/discover"
-            className={`flex items-center justify-between px-4 py-3.5 text-xs font-semibold transition-all ${
-              location.pathname === "/discover"
+            className={`flex items-center justify-between px-4 py-3.5 text-xs font-semibold transition-all ${location.pathname === "/discover"
                 ? "text-brand-600 bg-brand-50/70 font-bold"
                 : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
-            }`}
+              }`}
           >
             <span>Discover</span>
             <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
@@ -106,11 +104,10 @@ export const ActivitySidebar: React.FC<ActivitySidebarProps> = ({ activeTab }) =
 
           <Link
             to="/matches"
-            className={`flex items-center justify-between px-4 py-3.5 text-xs font-semibold transition-all ${
-              activeTab === "matches" || location.pathname === "/matches"
+            className={`flex items-center justify-between px-4 py-3.5 text-xs font-semibold transition-all ${activeTab === "matches" || location.pathname === "/matches"
                 ? "text-brand-600 bg-brand-50/70 font-bold"
                 : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
-            }`}
+              }`}
           >
             <div className="flex items-center gap-2">
               <span>Matches</span>
@@ -125,11 +122,10 @@ export const ActivitySidebar: React.FC<ActivitySidebarProps> = ({ activeTab }) =
 
           <Link
             to="/messages"
-            className={`flex items-center justify-between px-4 py-3.5 text-xs font-semibold transition-all ${
-              activeTab === "messenger" || location.pathname.startsWith("/messages")
+            className={`flex items-center justify-between px-4 py-3.5 text-xs font-semibold transition-all ${activeTab === "messenger" || location.pathname.startsWith("/messages")
                 ? "text-brand-600 bg-brand-50/70 font-bold"
                 : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
-            }`}
+              }`}
           >
             <div className="flex items-center gap-2">
               <span>Connect</span>
@@ -144,12 +140,11 @@ export const ActivitySidebar: React.FC<ActivitySidebarProps> = ({ activeTab }) =
 
           <Link
             to="/interests/received"
-            className={`flex items-center justify-between px-4 py-3.5 text-xs font-semibold transition-all ${
-              (location.pathname.startsWith("/interests") || location.pathname.startsWith("/interest")) &&
-              !location.pathname.startsWith("/unblur")
+            className={`flex items-center justify-between px-4 py-3.5 text-xs font-semibold transition-all ${(location.pathname.startsWith("/interests") || location.pathname.startsWith("/interest")) &&
+                !location.pathname.startsWith("/unblur")
                 ? "text-brand-600 bg-brand-50/70 font-bold"
                 : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
-            }`}
+              }`}
           >
             <div className="flex items-center gap-2">
               <span>Interests</span>
@@ -164,11 +159,10 @@ export const ActivitySidebar: React.FC<ActivitySidebarProps> = ({ activeTab }) =
 
           <Link
             to="/unblur/received"
-            className={`flex items-center justify-between px-4 py-3.5 text-xs font-semibold transition-all ${
-              location.pathname.startsWith("/unblur") || location.pathname.startsWith("/photo-access")
+            className={`flex items-center justify-between px-4 py-3.5 text-xs font-semibold transition-all ${location.pathname.startsWith("/unblur") || location.pathname.startsWith("/photo-access")
                 ? "text-brand-600 bg-brand-50/70 font-bold"
                 : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
-            }`}
+              }`}
           >
             <span>Unblur Requests</span>
             <ChevronRight className="w-3.5 h-3.5 text-slate-400" />

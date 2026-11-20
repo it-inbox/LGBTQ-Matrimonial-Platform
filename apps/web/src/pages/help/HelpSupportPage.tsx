@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ActivitySidebar } from "../../components/layout/ActivitySidebar";
+import { FilterPills } from "../../components/ui";
 import { useAuthStore } from "../../stores/auth.store";
 import {
   HelpCircle,
@@ -250,28 +251,18 @@ export const HelpSupportPage: React.FC = () => {
                 </span>
               </div>
 
-              <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-                {[
-                  { id: "all" as const, label: "All Questions" },
-                  { id: "privacy" as const, label: "Privacy & Photos" },
-                  { id: "membership" as const, label: "Membership & Billing" },
-                  { id: "matching" as const, label: "Matches & Interests" },
-                  { id: "safety" as const, label: "Safety & Reporting" },
-                ].map((cat) => (
-                  <button
-                    key={cat.id}
-                    type="button"
-                    onClick={() => setSelectedCategory(cat.id)}
-                    className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
-                      selectedCategory === cat.id
-                        ? "bg-rose-600 text-white shadow-xs"
-                        : "bg-white text-slate-600 border border-slate-200 hover:border-slate-300"
-                    }`}
-                  >
-                    {cat.label}
-                  </button>
-                ))}
-              </div>
+              <FilterPills
+                shape="rect"
+                items={[
+                  { id: "all", label: "All Questions" },
+                  { id: "privacy", label: "Privacy & Photos" },
+                  { id: "membership", label: "Membership & Billing" },
+                  { id: "matching", label: "Matches & Interests" },
+                  { id: "safety", label: "Safety & Reporting" },
+                ]}
+                selectedId={selectedCategory}
+                onChange={(id) => setSelectedCategory(id as any)}
+              />
 
               {/* FAQ Accordion List */}
               <div className="bg-white rounded-3xl border border-slate-200/90 shadow-xs divide-y divide-slate-100 overflow-hidden">

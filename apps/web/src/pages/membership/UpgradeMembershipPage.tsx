@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ActivitySidebar } from "../../components/layout/ActivitySidebar";
+import { Button } from "../../components/ui";
 import { useAuthStore } from "../../stores/auth.store";
 import { api } from "../../lib/api";
 import {
@@ -221,22 +222,20 @@ export const UpgradeMembershipPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setTab("self-service")}
-                  className={`py-2.5 rounded-xl transition-all cursor-pointer ${
-                    tab === "self-service"
+                  className={`py-2.5 rounded-xl transition-all cursor-pointer ${tab === "self-service"
                       ? "bg-white text-slate-900 shadow-xs border border-rose-200/70 text-rose-600"
                       : "text-slate-600 hover:text-slate-900"
-                  }`}
+                    }`}
                 >
                   Self-Service
                 </button>
                 <button
                   type="button"
                   onClick={() => setTab("assisted")}
-                  className={`py-2.5 rounded-xl transition-all cursor-pointer ${
-                    tab === "assisted"
+                  className={`py-2.5 rounded-xl transition-all cursor-pointer ${tab === "assisted"
                       ? "bg-white text-slate-900 shadow-xs border border-rose-200/70 text-rose-600"
                       : "text-slate-600 hover:text-slate-900"
-                  }`}
+                    }`}
                 >
                   Assisted
                 </button>
@@ -287,21 +286,19 @@ export const UpgradeMembershipPage: React.FC = () => {
                       {/* Plan: Pro */}
                       <div
                         onClick={() => setSelectedPlan("pro")}
-                        className={`col-span-3 sm:col-span-3 p-2.5 sm:p-3 rounded-2xl border transition-all cursor-pointer flex flex-col items-center ${
-                          selectedPlan === "pro"
+                        className={`col-span-3 sm:col-span-3 p-2.5 sm:p-3 rounded-2xl border transition-all cursor-pointer flex flex-col items-center ${selectedPlan === "pro"
                             ? "bg-rose-50/60 border-rose-500 shadow-sm"
                             : "bg-white border-slate-200/90 hover:border-slate-300"
-                        }`}
+                          }`}
                       >
                         <div className="text-center w-full space-y-1.5 pt-1 h-13 flex flex-col items-center justify-start">
                           <div className="font-black text-slate-900 text-xs sm:text-sm">Pro</div>
                           <div className="flex justify-center">
                             <div
-                              className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                                selectedPlan === "pro"
+                              className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${selectedPlan === "pro"
                                   ? "border-rose-600 bg-white"
                                   : "border-slate-300"
-                              }`}
+                                }`}
                             >
                               {selectedPlan === "pro" && (
                                 <div className="w-2 h-2 rounded-full bg-rose-600" />
@@ -322,21 +319,19 @@ export const UpgradeMembershipPage: React.FC = () => {
                       {/* Plan: Pro Max (Recommended / Selected by default) */}
                       <div
                         onClick={() => setSelectedPlan("pro-max")}
-                        className={`col-span-3 sm:col-span-3 p-2.5 sm:p-3 rounded-2xl border transition-all cursor-pointer flex flex-col items-center relative ${
-                          selectedPlan === "pro-max"
+                        className={`col-span-3 sm:col-span-3 p-2.5 sm:p-3 rounded-2xl border transition-all cursor-pointer flex flex-col items-center relative ${selectedPlan === "pro-max"
                             ? "bg-rose-50/70 border-rose-500 shadow-md ring-2 ring-rose-500/20"
                             : "bg-white border-slate-200/90 hover:border-slate-300"
-                        }`}
+                          }`}
                       >
                         <div className="text-center w-full space-y-1.5 pt-1 h-13 flex flex-col items-center justify-start">
                           <div className="font-black text-slate-900 text-xs sm:text-sm">Pro Max</div>
                           <div className="flex justify-center">
                             <div
-                              className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                                selectedPlan === "pro-max"
+                              className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${selectedPlan === "pro-max"
                                   ? "border-rose-600 bg-white"
                                   : "border-slate-300"
-                              }`}
+                                }`}
                             >
                               {selectedPlan === "pro-max" && (
                                 <div className="w-2 h-2 rounded-full bg-rose-600" />
@@ -357,11 +352,10 @@ export const UpgradeMembershipPage: React.FC = () => {
                       {/* Plan: Pro Supreme (Top Seller) */}
                       <div
                         onClick={() => setSelectedPlan("pro-supreme")}
-                        className={`col-span-3 sm:col-span-3 p-2.5 sm:p-3 rounded-2xl border transition-all cursor-pointer flex flex-col items-center relative ${
-                          selectedPlan === "pro-supreme"
+                        className={`col-span-3 sm:col-span-3 p-2.5 sm:p-3 rounded-2xl border transition-all cursor-pointer flex flex-col items-center relative ${selectedPlan === "pro-supreme"
                             ? "bg-rose-50/60 border-rose-500 shadow-sm"
                             : "bg-white border-slate-200/90 hover:border-slate-300"
-                        }`}
+                          }`}
                       >
                         {/* Top Seller Badge */}
                         <span className="absolute -top-2.5 px-2 py-0.5 rounded-md bg-emerald-600 text-white font-extrabold text-[9px] uppercase tracking-wider shadow-2xs whitespace-nowrap">
@@ -373,11 +367,10 @@ export const UpgradeMembershipPage: React.FC = () => {
                           </div>
                           <div className="flex justify-center">
                             <div
-                              className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                                selectedPlan === "pro-supreme"
+                              className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${selectedPlan === "pro-supreme"
                                   ? "border-rose-600 bg-white"
                                   : "border-slate-300"
-                              }`}
+                                }`}
                             >
                               {selectedPlan === "pro-supreme" && (
                                 <div className="w-2 h-2 rounded-full bg-rose-600" />
@@ -399,224 +392,224 @@ export const UpgradeMembershipPage: React.FC = () => {
 
                   {/* Offer divider */}
                   <div className="relative flex items-center justify-center py-2">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-slate-200/90" />
-                </div>
-                <span className="relative px-3 bg-white text-[11px] font-black text-rose-600 tracking-wider uppercase">
-                  FLAT 65% Off <span className="text-slate-700">ON ALL PLANS</span>
-                </span>
-              </div>
+                    <div className="absolute inset-0 flex items-center">
+                      <div className="w-full border-t border-slate-200/90" />
+                    </div>
+                    <span className="relative px-3 bg-white text-[11px] font-black text-rose-600 tracking-wider uppercase">
+                      FLAT 65% Off <span className="text-slate-700">ON ALL PLANS</span>
+                    </span>
+                  </div>
 
-              {/* Duration Options */}
-              <div className="grid grid-cols-3 gap-2.5">
-                {[
-                  { id: "1-month" as const, label: "1 month" },
-                  { id: "3-months" as const, label: "3 months" },
-                  { id: "till-marriage" as const, label: "Till Marriage" },
-                ].map((item) => {
-                  const isSelected = selfDuration === item.id;
-                  const priceInfo = selfPrices[selectedPlan][item.id];
-                  return (
-                    <button
-                      key={item.id}
-                      type="button"
-                      onClick={() => setSelfDuration(item.id)}
-                      className={`p-3 rounded-2xl border text-left transition-all cursor-pointer relative flex flex-col justify-between ${
-                        isSelected
-                          ? "border-rose-600 bg-white ring-1 ring-rose-500 shadow-xs"
-                          : "border-slate-200 bg-white hover:border-slate-300"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs font-semibold text-slate-600">
-                          {item.label}
-                        </span>
-                        <div
-                          className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                            isSelected ? "border-rose-600 bg-white" : "border-slate-300"
-                          }`}
+                  {/* Duration Options */}
+                  <div className="grid grid-cols-3 gap-2.5">
+                    {[
+                      { id: "1-month" as const, label: "1 month" },
+                      { id: "3-months" as const, label: "3 months" },
+                      { id: "till-marriage" as const, label: "Till Marriage" },
+                    ].map((item) => {
+                      const isSelected = selfDuration === item.id;
+                      const priceInfo = selfPrices[selectedPlan][item.id];
+                      return (
+                        <button
+                          key={item.id}
+                          type="button"
+                          onClick={() => setSelfDuration(item.id)}
+                          className={`p-3 rounded-2xl border text-left transition-all cursor-pointer relative flex flex-col justify-between ${isSelected
+                              ? "border-rose-600 bg-white ring-1 ring-rose-500 shadow-xs"
+                              : "border-slate-200 bg-white hover:border-slate-300"
+                            }`}
                         >
-                          {isSelected && <div className="w-2 h-2 rounded-full bg-rose-600" />}
-                        </div>
-                      </div>
-                      <div>
-                        <div className="text-base sm:text-lg font-black text-slate-900">
-                          {priceInfo.price}
-                        </div>
-                        <div className="text-[11px] text-slate-400 line-through">
-                          {priceInfo.orig}
-                        </div>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* CTA Button */}
-              <div className="space-y-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() =>
-                    handleInitiatePayment(
-                      selectedPlan,
-                      selfDuration,
-                      currentSelfPrice.price,
-                      planTitles[selectedPlan]
-                    )
-                  }
-                  className="w-full py-3.5 px-4 rounded-2xl bg-[#e12a4c] hover:bg-[#c9203e] text-white font-extrabold text-sm sm:text-base shadow-md shadow-rose-600/20 transition-all cursor-pointer text-center block"
-                >
-                  Get {planTitles[selectedPlan]} now
-                </button>
-                <p className="text-center text-xs font-semibold text-slate-500">
-                  Recurring payment, cancel anytime
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* TAB 2: ASSISTED (Premier Lite) */}
-          {tab === "assisted" && (
-            <div className="space-y-6 animate-fade-in">
-              <div className="text-center pt-2">
-                <h2 className="text-2xl font-black text-slate-900 tracking-tight">
-                  Premier Lite
-                </h2>
-              </div>
-
-              {/* Assisted Features Bullet List */}
-              <div className="bg-slate-50/70 border border-slate-200/80 rounded-2xl p-4 sm:p-5 space-y-4">
-                <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center shrink-0 mt-0.5">
-                    <Sparkles className="w-3.5 h-3.5" />
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-xs font-semibold text-slate-600">
+                              {item.label}
+                            </span>
+                            <div
+                              className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${isSelected ? "border-rose-600 bg-white" : "border-slate-300"
+                                }`}
+                            >
+                              {isSelected && <div className="w-2 h-2 rounded-full bg-rose-600" />}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-base sm:text-lg font-black text-slate-900">
+                              {priceInfo.price}
+                            </div>
+                            <div className="text-[11px] text-slate-400 line-through">
+                              {priceInfo.orig}
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })}
                   </div>
-                  <p className="text-xs sm:text-sm font-semibold text-slate-800">
-                    Benefits of Top Seller + unlimited matches daily
-                  </p>
-                </div>
 
-                <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-rose-100 text-rose-700 flex items-center justify-center shrink-0 mt-0.5">
-                    <ShieldCheck className="w-3.5 h-3.5" />
-                  </div>
-                  <div className="space-y-2">
-                    <p className="text-xs sm:text-sm font-semibold text-slate-800">
-                      Dedicated relationship manager to help you:
+                  {/* CTA Button */}
+                  <div className="space-y-2 pt-2">
+                    <Button
+                      type="button"
+                      variant="gradient"
+                      size="lg"
+                      className="w-full py-4 text-sm sm:text-base rounded-2xl"
+                      onClick={() =>
+                        handleInitiatePayment(
+                          selectedPlan,
+                          selfDuration,
+                          currentSelfPrice.price,
+                          planTitles[selectedPlan]
+                        )
+                      }
+                    >
+                      Get {planTitles[selectedPlan]} now
+                    </Button>
+                    <p className="text-center text-xs font-semibold text-slate-500">
+                      Recurring payment, cancel anytime
                     </p>
-                    <ul className="text-xs text-slate-600 space-y-1.5 list-disc pl-5">
-                      <li>Enhance your profile</li>
-                      <li>Find most relevant & serious matches</li>
-                      <li>Get additional info of the match & background</li>
-                      <li>With 3 times faster matching</li>
-                      <li>Set up unlimited meetings with profiles</li>
-                    </ul>
                   </div>
                 </div>
+              )}
 
-                {/* Actions row: Request Call Back & Know more */}
-                <div className="flex items-center gap-4 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setRequestCallbackSent(false);
-                      setIsHelpModalOpen(true);
-                    }}
-                    className="py-2 px-4 rounded-xl border border-rose-500 text-rose-600 font-extrabold text-xs hover:bg-rose-50 transition-colors cursor-pointer"
-                  >
-                    Request Call Back
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => alert("A dedicated relationship consultant will be assigned to guide your matrimony journey with verified inquiries.")}
-                    className="text-xs font-bold text-rose-600 hover:text-rose-700 flex items-center gap-1 cursor-pointer"
-                  >
-                    <span>Know more</span>
-                    <ChevronRight className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </div>
+              {/* TAB 2: ASSISTED (Premier Lite) */}
+              {tab === "assisted" && (
+                <div className="space-y-6 animate-fade-in">
+                  <div className="text-center pt-2">
+                    <h2 className="text-2xl font-black text-slate-900 tracking-tight">
+                      Premier Lite
+                    </h2>
+                  </div>
 
-              {/* Offer divider */}
-              <div className="relative flex items-center justify-center py-1">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-slate-200/90" />
-                </div>
-                <span className="relative px-3 bg-white text-[11px] font-black text-rose-600 tracking-wider uppercase">
-                  FLAT 65% Off <span className="text-slate-700">ON ALL PLANS</span>
-                </span>
-              </div>
+                  {/* Assisted Features Bullet List */}
+                  <div className="bg-slate-50/70 border border-slate-200/80 rounded-2xl p-4 sm:p-5 space-y-4">
+                    <div className="flex items-start gap-3">
+                      <div className="w-6 h-6 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center shrink-0 mt-0.5">
+                        <Sparkles className="w-3.5 h-3.5" />
+                      </div>
+                      <p className="text-xs sm:text-sm font-semibold text-slate-800">
+                        Benefits of Top Seller + unlimited matches daily
+                      </p>
+                    </div>
 
-              {/* Assisted Duration options */}
-              <div className="grid grid-cols-3 gap-2.5">
-                {[
-                  { id: "3-months" as const, label: "3 months" },
-                  { id: "6-months" as const, label: "6 months" },
-                  { id: "12-months" as const, label: "12 months" },
-                ].map((item) => {
-                  const isSelected = assistedDuration === item.id;
-                  const priceInfo = assistedPrices[item.id];
-                  return (
-                    <button
-                      key={item.id}
-                      type="button"
-                      onClick={() => setAssistedDuration(item.id)}
-                      className={`p-3 rounded-2xl border text-left transition-all cursor-pointer relative flex flex-col justify-between ${
-                        isSelected
-                          ? "border-rose-600 bg-white ring-1 ring-rose-500 shadow-xs"
-                          : "border-slate-200 bg-white hover:border-slate-300"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs font-semibold text-slate-600">
-                          {item.label}
-                        </span>
-                        <div
-                          className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                            isSelected ? "border-rose-600 bg-white" : "border-slate-300"
-                          }`}
+                    <div className="flex items-start gap-3">
+                      <div className="w-6 h-6 rounded-full bg-rose-100 text-rose-700 flex items-center justify-center shrink-0 mt-0.5">
+                        <ShieldCheck className="w-3.5 h-3.5" />
+                      </div>
+                      <div className="space-y-2">
+                        <p className="text-xs sm:text-sm font-semibold text-slate-800">
+                          Dedicated relationship manager to help you:
+                        </p>
+                        <ul className="text-xs text-slate-600 space-y-1.5 list-disc pl-5">
+                          <li>Enhance your profile</li>
+                          <li>Find most relevant & serious matches</li>
+                          <li>Get additional info of the match & background</li>
+                          <li>With 3 times faster matching</li>
+                          <li>Set up unlimited meetings with profiles</li>
+                        </ul>
+                      </div>
+                    </div>
+
+                    {/* Actions row: Request Call Back & Know more */}
+                    <div className="flex items-center gap-4 pt-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setRequestCallbackSent(false);
+                          setIsHelpModalOpen(true);
+                        }}
+                        className="py-2 px-4 rounded-xl border border-rose-500 text-rose-600 font-extrabold text-xs hover:bg-rose-50 transition-colors cursor-pointer"
+                      >
+                        Request Call Back
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => alert("A dedicated relationship consultant will be assigned to guide your matrimony journey with verified inquiries.")}
+                        className="text-xs font-bold text-rose-600 hover:text-rose-700 flex items-center gap-1 cursor-pointer"
+                      >
+                        <span>Know more</span>
+                        <ChevronRight className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Offer divider */}
+                  <div className="relative flex items-center justify-center py-1">
+                    <div className="absolute inset-0 flex items-center">
+                      <div className="w-full border-t border-slate-200/90" />
+                    </div>
+                    <span className="relative px-3 bg-white text-[11px] font-black text-rose-600 tracking-wider uppercase">
+                      FLAT 65% Off <span className="text-slate-700">ON ALL PLANS</span>
+                    </span>
+                  </div>
+
+                  {/* Assisted Duration options */}
+                  <div className="grid grid-cols-3 gap-2.5">
+                    {[
+                      { id: "3-months" as const, label: "3 months" },
+                      { id: "6-months" as const, label: "6 months" },
+                      { id: "12-months" as const, label: "12 months" },
+                    ].map((item) => {
+                      const isSelected = assistedDuration === item.id;
+                      const priceInfo = assistedPrices[item.id];
+                      return (
+                        <button
+                          key={item.id}
+                          type="button"
+                          onClick={() => setAssistedDuration(item.id)}
+                          className={`p-3 rounded-2xl border text-left transition-all cursor-pointer relative flex flex-col justify-between ${isSelected
+                              ? "border-rose-600 bg-white ring-1 ring-rose-500 shadow-xs"
+                              : "border-slate-200 bg-white hover:border-slate-300"
+                            }`}
                         >
-                          {isSelected && <div className="w-2 h-2 rounded-full bg-rose-600" />}
-                        </div>
-                      </div>
-                      <div>
-                        <div className="text-base sm:text-lg font-black text-slate-900">
-                          {priceInfo.price}
-                        </div>
-                        <div className="text-[11px] text-slate-400 line-through">
-                          {priceInfo.orig}
-                        </div>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-xs font-semibold text-slate-600">
+                              {item.label}
+                            </span>
+                            <div
+                              className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${isSelected ? "border-rose-600 bg-white" : "border-slate-300"
+                                }`}
+                            >
+                              {isSelected && <div className="w-2 h-2 rounded-full bg-rose-600" />}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-base sm:text-lg font-black text-slate-900">
+                              {priceInfo.price}
+                            </div>
+                            <div className="text-[11px] text-slate-400 line-through">
+                              {priceInfo.orig}
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
 
-              {/* CTA Button */}
-              <div className="space-y-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() =>
-                    handleInitiatePayment(
-                      "premier-lite",
-                      assistedDuration,
-                      assistedPrices[assistedDuration].price,
-                      "Premier Lite (Assisted)"
-                    )
-                  }
-                  className="w-full py-3.5 px-4 rounded-2xl bg-[#e12a4c] hover:bg-[#c9203e] text-white font-extrabold text-sm sm:text-base shadow-md shadow-rose-600/20 transition-all cursor-pointer text-center block"
-                >
-                  Get Premier Lite now
-                </button>
-                <p className="text-center text-xs font-semibold text-slate-500">
-                  Recurring payment, cancel anytime
-                </p>
-              </div>
+                  {/* CTA Button */}
+                  <div className="space-y-2 pt-2">
+                    <Button
+                      type="button"
+                      variant="gradient"
+                      size="lg"
+                      className="w-full py-4 text-sm sm:text-base rounded-2xl"
+                      onClick={() =>
+                        handleInitiatePayment(
+                          "premier-lite",
+                          assistedDuration,
+                          assistedPrices[assistedDuration].price,
+                          "Premier Lite (Assisted)"
+                        )
+                      }
+                    >
+                      Get Premier Lite now
+                    </Button>
+                    <p className="text-center text-xs font-semibold text-slate-500">
+                      Recurring payment, cancel anytime
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
-          )}
-        </div>
+          </div>
+        </main>
       </div>
-    </main>
-  </div>
 
       {/* HELP / CONTACT SALES MODAL */}
       {isHelpModalOpen && (

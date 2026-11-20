@@ -14,8 +14,7 @@ import {
   XCircle,
   RotateCcw,
 } from "lucide-react";
-import { Badge } from "../../components/ui/Badge";
-import { Modal } from "../../components/ui/Modal";
+import { Badge, Modal, FilterPills } from "../../components/ui";
 
 interface InterestsActivityPageProps {
   initialTab?: "received" | "sent";
@@ -140,27 +139,20 @@ export const InterestsActivityPage: React.FC<InterestsActivityPageProps> = ({
             <InterestsHeader activeTab={currentTab} />
 
             {/* Quick Status Segmented Filters */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none text-xs">
-              {(["ALL", "PENDING", "ACCEPTED", "DECLINED"] as const).map((filter) => {
+            <FilterPills
+              items={(["ALL", "PENDING", "ACCEPTED", "DECLINED"] as const).map((filter) => {
                 const count = (rawList || []).filter((item: any) =>
                   filter === "ALL" ? true : item.status === filter
                 ).length;
-                const isSelected = statusFilter === filter;
-                return (
-                  <button
-                    key={filter}
-                    type="button"
-                    onClick={() => setStatusFilter(filter)}
-                    className={`px-3 py-1.5 rounded-full font-semibold shrink-0 cursor-pointer transition-colors ${isSelected
-                        ? "bg-slate-900 text-white shadow-2xs"
-                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                      }`}
-                  >
-                    {filter === "ALL" ? "All Interests" : filter.charAt(0) + filter.slice(1).toLowerCase()} ({count})
-                  </button>
-                );
+                return {
+                  id: filter,
+                  label: filter === "ALL" ? "All Interests" : filter.charAt(0) + filter.slice(1).toLowerCase(),
+                  count,
+                };
               })}
-            </div>
+              selectedId={statusFilter}
+              onChange={(id) => setStatusFilter(id as any)}
+            />
           </div>
 
           {/* User Cards List: Only cards scrollable, extends to the bottom */}

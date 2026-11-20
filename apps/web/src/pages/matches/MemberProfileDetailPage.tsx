@@ -33,6 +33,7 @@ import {
 import { Button } from "../../components/ui/Button";
 import { Badge } from "../../components/ui/Badge";
 import { Modal } from "../../components/ui/Modal";
+import { ProfileAvatarWithShield } from "../../components/ui/ProfileAvatarWithShield";
 
 export const MemberProfileDetailPage: React.FC = () => {
   const { userId } = useParams<{ userId: string }>();
@@ -261,7 +262,7 @@ export const MemberProfileDetailPage: React.FC = () => {
   const photoAccessIsRevoked = profile.interaction?.photoAccessIsRevoked;
 
   // Partner Preferences criteria match helpers
-  const pref = profile.partnerPreference;
+  const pref = profile.partnerPreference || profile.partnerPreferences;
 
   return (
     <div className="h-full flex flex-col bg-slate-50 overflow-hidden relative">
@@ -280,7 +281,7 @@ export const MemberProfileDetailPage: React.FC = () => {
           <ActivitySidebar />
 
           {/* Profile Detail Content Area: independently scrollable */}
-          <main className="flex-1 min-w-0 flex flex-col h-full overflow-hidden">
+          <main className="flex-1 min-w-0 flex flex-col h-full overflow-hidden max-w-3xl mx-auto w-full">
             {/* Blocked Member Alert Card: Positioned above the Back / Title / Unblock bar */}
             {!isOwn && isBlockedByMe && (
               <div className="bg-rose-50/90 rounded-2xl border border-rose-200/90 p-3.5 sm:p-4 mb-3 shadow-xs flex flex-wrap items-center justify-between gap-3 shrink-0 animate-fade-in">
@@ -372,27 +373,15 @@ export const MemberProfileDetailPage: React.FC = () => {
             {/* Profile Cards Container: Only profile cards scrollable */}
             <div className="flex-1 overflow-y-auto pr-2 sm:pr-3 space-y-4 pb-28">
               {/* HERO CARD: FULL-WIDTH PHOTO CAROUSEL & BIO OVERLAY */}
-              <div className="relative rounded-3xl overflow-hidden bg-slate-900 text-white shadow-md border border-slate-200/50 aspect-[4/5] sm:aspect-[4/4.5] flex flex-col justify-between">
-                {/* Main Photo Display */}
-                <div className="absolute inset-0 z-0 bg-slate-900">
-                  {currentPhoto?.url ? (
-                    <img
-                      src={currentPhoto.url}
-                      alt={profile.displayName}
-                      className={`w-full h-full object-cover object-top transition-all duration-300 ${isBlurred ? "filter blur-2xl scale-110" : ""
-                        }`}
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-tr from-brand-600 to-pink-500 text-white font-extrabold text-6xl">
-                      {profile.displayName?.slice(0, 2).toUpperCase()}
-                    </div>
-                  )}
-                  {/* Ambient vignette gradient */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/30 to-slate-950/40" />
-                </div>
-
-                {/* Top Info Bar inside Photo */}
-                <div className="relative z-10 p-4 flex items-center justify-between">
+              <ProfileAvatarWithShield
+                variant="hero"
+                photoUrl={currentPhoto?.url}
+                displayName={profile.displayName}
+                isBlurred={isBlurred}
+                photoCount={photos.length}
+                activePhotoIndex={activePhotoIdx + 1}
+                className="w-full aspect-[4/3] sm:aspect-[16/10] max-h-[380px] sm:max-h-[420px]"
+                topContent={
                   <div className="flex items-center gap-2">
                     <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/90 text-white backdrop-blur-md flex items-center gap-1 shadow-sm">
                       <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
@@ -405,146 +394,128 @@ export const MemberProfileDetailPage: React.FC = () => {
                       </span>
                     )}
                   </div>
-
-                  {/* Photo Counter */}
-                  {photos.length > 1 && (
-                    <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-black/50 text-white/90 backdrop-blur-md border border-white/10">
-                      {activePhotoIdx + 1} / {photos.length}
+                }
+                shieldContent={
+                  photoAccessStatus === "PENDING" ? (
+                    <span className="inline-block px-3 py-1.5 rounded-xl bg-amber-500/20 text-amber-300 font-semibold text-xs border border-amber-500/30">
+                      Access Request Pending
                     </span>
-                  )}
-                </div>
-
-                {/* Blur Protection Centered Banner */}
-                {isBlurred && (
-                  <div className="relative z-10 m-auto p-5 text-center max-w-xs bg-slate-950/70 backdrop-blur-md rounded-2xl border border-white/10 shadow-xl">
-                    <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center mx-auto mb-2 text-white">
-                      <Lock className="w-5 h-5" />
-                    </div>
-                    <h2 className="text-sm font-bold text-white">Photo Shield Active</h2>
-                    <p className="text-[11px] text-slate-300 mt-1 mb-3">
-                      {profile.displayName} maintains private photos. Send a request to view clear original pictures.
-                    </p>
-                    {photoAccessStatus === "PENDING" ? (
+                  ) : photoAccessStatus === "ACCEPTED" ? (
+                    photoAccessIsHidden ? (
                       <span className="inline-block px-3 py-1.5 rounded-xl bg-amber-500/20 text-amber-300 font-semibold text-xs border border-amber-500/30">
-                        Access Request Pending
+                        Access temporarily revoked
                       </span>
-                    ) : photoAccessStatus === "ACCEPTED" ? (
-                      photoAccessIsHidden ? (
-                        <span className="inline-block px-3 py-1.5 rounded-xl bg-amber-500/20 text-amber-300 font-semibold text-xs border border-amber-500/30">
-                          Access temporarily revoked
-                        </span>
-                      ) : (
-                        <span className="inline-block px-3 py-1.5 rounded-xl bg-emerald-500/20 text-emerald-300 font-semibold text-xs border border-emerald-500/30">
-                          Access Approved
-                        </span>
-                      )
-                    ) : photoAccessIsRevoked ? (
-                      <div className="space-y-2">
-                        <span className="inline-block px-3 py-1.5 rounded-xl bg-rose-500/20 text-rose-300 font-semibold text-xs border border-rose-500/30">
-                          Access Revoked
-                        </span>
-                        <div>
+                    ) : (
+                      <span className="inline-block px-3 py-1.5 rounded-xl bg-emerald-500/20 text-emerald-300 font-semibold text-xs border border-emerald-500/30">
+                        Access Approved
+                      </span>
+                    )
+                  ) : photoAccessIsRevoked ? (
+                    <div className="space-y-2">
+                      <span className="inline-block px-3 py-1.5 rounded-xl bg-rose-500/20 text-rose-300 font-semibold text-xs border border-rose-500/30">
+                        Access Revoked
+                      </span>
+                      <div>
+                        <button
+                          type="button"
+                          onClick={() => setIsPhotoModalOpen(true)}
+                          className="px-4 py-2 rounded-xl bg-white text-slate-900 font-bold text-xs hover:bg-slate-100 transition-colors shadow-sm cursor-pointer"
+                        >
+                          Request Photo Access Again
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setIsPhotoModalOpen(true)}
+                      className="px-4 py-2 rounded-xl bg-white text-slate-900 font-bold text-xs hover:bg-slate-100 transition-colors shadow-sm cursor-pointer"
+                    >
+                      Request Photo Access
+                    </button>
+                  )
+                }
+                bottomContent={
+                  <div className="p-5 pt-8">
+                    <div className="flex items-end justify-between gap-3">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+                            {profile.displayName}
+                          </h2>
+                          {age && <span className="text-2xl font-bold text-white/90">, {age}</span>}
+                          {profile.pronouns && (
+                            <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-white/20 text-white/90 backdrop-blur-xs">
+                              {profile.pronouns}
+                            </span>
+                          )}
+                        </div>
+
+                        <p className="text-xs font-bold text-brand-300 flex items-center gap-1.5">
+                          <span>{profile.gender?.replace(/_/g, " ")}</span>
+                          <span>•</span>
+                          <span>{profile.orientation}</span>
+                          <span>•</span>
+                          <span>{profile.outnessStatus?.replace(/_/g, " ")}</span>
+                        </p>
+
+                        <p className="text-xs text-slate-300 flex items-center gap-1 mt-0.5">
+                          <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                          <span>{profile.city}, {profile.state}, {profile.country}</span>
+                        </p>
+                      </div>
+
+                      {/* Prev / Next photo buttons on desktop/mobile */}
+                      {photos.length > 1 && (
+                        <div className="flex items-center gap-1.5 shrink-0 bg-black/40 backdrop-blur-md p-1 rounded-full border border-white/10">
                           <button
                             type="button"
-                            onClick={() => setIsPhotoModalOpen(true)}
-                            className="px-4 py-2 rounded-xl bg-white text-slate-900 font-bold text-xs hover:bg-slate-100 transition-colors shadow-sm cursor-pointer"
+                            onClick={() =>
+                              setActivePhotoIdx((prev) => (prev > 0 ? prev - 1 : photos.length - 1))
+                            }
+                            className="w-7 h-7 rounded-full bg-white/20 hover:bg-white/40 flex items-center justify-center text-white transition-colors cursor-pointer"
                           >
-                            Request Photo Access Again
+                            <ChevronLeft className="w-4 h-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setActivePhotoIdx((prev) => (prev < photos.length - 1 ? prev + 1 : 0))
+                            }
+                            className="w-7 h-7 rounded-full bg-white/20 hover:bg-white/40 flex items-center justify-center text-white transition-colors cursor-pointer"
+                          >
+                            <ChevronRight className="w-4 h-4" />
                           </button>
                         </div>
-                      </div>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => setIsPhotoModalOpen(true)}
-                        className="px-4 py-2 rounded-xl bg-white text-slate-900 font-bold text-xs hover:bg-slate-100 transition-colors shadow-sm cursor-pointer"
-                      >
-                        Request Photo Access
-                      </button>
-                    )}
-                  </div>
-                )}
-
-                {/* Bottom Hero Overlay: Name, Identity, Key Badges */}
-                <div className="relative z-10 p-5 pt-8">
-                  <div className="flex items-end justify-between gap-3">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-                          {profile.displayName}
-                        </h2>
-                        {age && <span className="text-2xl font-bold text-white/90">, {age}</span>}
-                        {profile.pronouns && (
-                          <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-white/20 text-white/90 backdrop-blur-xs">
-                            {profile.pronouns}
-                          </span>
-                        )}
-                      </div>
-
-                      <p className="text-xs font-bold text-brand-300 flex items-center gap-1.5">
-                        <span>{profile.gender?.replace(/_/g, " ")}</span>
-                        <span>•</span>
-                        <span>{profile.orientation}</span>
-                        <span>•</span>
-                        <span>{profile.outnessStatus?.replace(/_/g, " ")}</span>
-                      </p>
-
-                      <p className="text-xs text-slate-300 flex items-center gap-1 mt-0.5">
-                        <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                        <span>{profile.city}, {profile.state}, {profile.country}</span>
-                      </p>
+                      )}
                     </div>
 
-                    {/* Prev / Next photo buttons on desktop/mobile */}
+                    {/* Photo thumbnails strip */}
                     {photos.length > 1 && (
-                      <div className="flex items-center gap-1.5 shrink-0 bg-black/40 backdrop-blur-md p-1 rounded-full border border-white/10">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setActivePhotoIdx((prev) => (prev > 0 ? prev - 1 : photos.length - 1))
-                          }
-                          className="w-7 h-7 rounded-full bg-white/20 hover:bg-white/40 flex items-center justify-center text-white transition-colors cursor-pointer"
-                        >
-                          <ChevronLeft className="w-4 h-4" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setActivePhotoIdx((prev) => (prev < photos.length - 1 ? prev + 1 : 0))
-                          }
-                          className="w-7 h-7 rounded-full bg-white/20 hover:bg-white/40 flex items-center justify-center text-white transition-colors cursor-pointer"
-                        >
-                          <ChevronRight className="w-4 h-4" />
-                        </button>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Photo thumbnails strip */}
-                  {photos.length > 1 && (
-                    <div className="flex items-center gap-2 mt-3 pt-3 border-t border-white/10 overflow-x-auto pb-1">
-                      {photos.map((p: any, idx: number) => (
-                        <button
-                          key={p.id || idx}
-                          type="button"
-                          onClick={() => setActivePhotoIdx(idx)}
-                          className={`relative w-12 h-12 rounded-xl overflow-hidden shrink-0 border-2 transition-all cursor-pointer ${activePhotoIdx === idx
+                      <div className="flex items-center gap-2 mt-3 pt-3 border-t border-white/10 overflow-x-auto pb-1">
+                        {photos.map((p: any, idx: number) => (
+                          <button
+                            key={p.id || idx}
+                            type="button"
+                            onClick={() => setActivePhotoIdx(idx)}
+                            className={`relative w-12 h-12 rounded-xl overflow-hidden shrink-0 border-2 transition-all cursor-pointer ${activePhotoIdx === idx
                               ? "border-brand-500 scale-105 shadow-md"
                               : "border-transparent opacity-60 hover:opacity-90"
-                            }`}
-                        >
-                          <img
-                            src={p.url || p.originalUrl}
-                            alt={`Thumbnail ${idx + 1}`}
-                            className={`w-full h-full object-cover ${p.isBlurred ? "filter blur-sm" : ""
                               }`}
-                          />
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
+                          >
+                            <img
+                              src={p.url || p.originalUrl}
+                              alt={`Thumbnail ${idx + 1}`}
+                              className={`w-full h-full object-cover ${p.isBlurred ? "filter blur-sm" : ""
+                                }`}
+                            />
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                }
+              />
 
               {/* INTERACTION ACTION BAR / BANNER */}
               {!isOwn && !isBlockedByMe && (
@@ -639,282 +610,251 @@ export const MemberProfileDetailPage: React.FC = () => {
                 )
               )}
 
-              {/* SECTION 1: ABOUT ME & PERSONAL BIO */}
-              <div className="bg-white rounded-3xl border border-slate-200/90 p-6 shadow-xs space-y-4">
-                <div className="flex items-center gap-2 pb-3 border-b border-slate-100">
-                  <div className="w-7 h-7 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center">
-                    <Smile className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
-                      About {profile.displayName}
-                    </h2>
-                    <p className="text-[11px] text-slate-400">Authentic story & personal values</p>
-                  </div>
-                </div>
+              {/* UNIFIED PROFILE DETAILS SECTION */}
+              <div className="bg-white rounded-3xl border border-slate-200/90 p-6 sm:p-8 shadow-xs space-y-8">
+                {/* SECTION 1: ABOUT ME & PERSONAL BIO */}
+                <div className="space-y-4">
+                  <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
+                    About {profile.displayName}
+                  </h2>
 
-                <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-line font-normal">
-                  {profile.bio || "No biography shared yet. Connect and initiate a conversation to get to know them!"}
-                </p>
+                  <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-line font-normal">
+                    {profile.bio || "No biography shared yet. Connect and initiate a conversation to get to know them!"}
+                  </p>
 
-                {/* Quick Demographics Grid */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-2">
-                  <div className="p-3 bg-slate-50/80 rounded-2xl border border-slate-100">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-0.5">
-                      Height
-                    </span>
-                    <span className="text-xs font-bold text-slate-800">
-                      {profile.heightCm
-                        ? `${Math.floor(profile.heightCm / 30.48)}ft ${Math.round(
-                          (profile.heightCm % 30.48) / 2.54
-                        )}in (${profile.heightCm} cm)`
-                        : "Not specified"}
-                    </span>
-                  </div>
-
-                  <div className="p-3 bg-slate-50/80 rounded-2xl border border-slate-100">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-0.5">
-                      Marital Status
-                    </span>
-                    <span className="text-xs font-bold text-slate-800">
-                      {profile.maritalStatus || "Never Married"}
-                    </span>
-                  </div>
-
-                  <div className="p-3 bg-slate-50/80 rounded-2xl border border-slate-100">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-0.5">
-                      Religion & Beliefs
-                    </span>
-                    <span className="text-xs font-bold text-slate-800">
-                      {profile.religion || "Not Specified"}
-                    </span>
-                  </div>
-
-                  <div className="p-3 bg-slate-50/80 rounded-2xl border border-slate-100">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-0.5">
-                      Mother Tongue
-                    </span>
-                    <span className="text-xs font-bold text-slate-800">
-                      {profile.motherTongue || "English"}
-                    </span>
-                  </div>
-
-                  <div className="p-3 bg-slate-50/80 rounded-2xl border border-slate-100">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-0.5">
-                      Nationality
-                    </span>
-                    <span className="text-xs font-bold text-slate-800">
-                      {profile.nationality || "Indian"}
-                    </span>
-                  </div>
-
-                  <div className="p-3 bg-slate-50/80 rounded-2xl border border-slate-100">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-0.5">
-                      Languages Spoken
-                    </span>
-                    <span className="text-xs font-bold text-slate-800 truncate block">
-                      {profile.languagesSpoken?.length > 0
-                        ? profile.languagesSpoken.join(", ")
-                        : "English"}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* SECTION 2: CAREER & EDUCATION */}
-              <div className="bg-white rounded-3xl border border-slate-200/90 p-6 shadow-xs space-y-4">
-                <div className="flex items-center gap-2 pb-3 border-b border-slate-100">
-                  <div className="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
-                    <Briefcase className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
-                      Education & Career
-                    </h2>
-                    <p className="text-[11px] text-slate-400">Professional background & achievements</p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                  <div className="flex items-start gap-3 p-3.5 bg-slate-50/80 rounded-2xl border border-slate-100 sm:col-span-2">
-                    <GraduationCap className="w-5 h-5 text-indigo-500 shrink-0 mt-0.5" />
-                    <div className="flex-1">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
-                        Education & Qualifications
-                      </span>
-                      {profile.educations && profile.educations.length > 0 ? (
-                        <div className="space-y-2 mt-1">
-                          {profile.educations.map((edu: any, i: number) => {
-                            const displayTitle = edu.degreeName || edu.degree;
-                            const hasDistinctQual = edu.qualification && edu.qualification !== displayTitle;
-                            return (
-                              <div key={i} className="text-xs">
-                                <span className="font-bold text-slate-900">{displayTitle}</span>
-                                {hasDistinctQual && (
-                                  <span className="text-slate-500 font-medium text-[11px]"> ({edu.qualification})</span>
-                                )}
-                                {edu.major && <span className="text-slate-600 font-medium"> in {edu.major}</span>}
-                                {edu.institution && (
-                                  <p className="text-[11px] text-slate-500 font-medium flex items-center gap-1 mt-0.5">
-                                    <span>🏛️</span> {edu.institution}
-                                  </p>
-                                )}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      ) : (
-                        <div>
-                          <span className="text-xs font-bold text-slate-800">
-                            {profile.education || "Graduate"}
-                          </span>
-                          {profile.degree && (
-                            <p className="text-[11px] text-slate-500 mt-0.5">{profile.degree}</p>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-3 p-3.5 bg-slate-50/80 rounded-2xl border border-slate-100">
-                    <Briefcase className="w-5 h-5 text-indigo-500 shrink-0 mt-0.5" />
-                    <div>
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
-                        Profession & Sector
-                      </span>
-                      <span className="text-xs font-bold text-slate-800">
-                        {profile.profession || "Working Professional"}
-                      </span>
-                      {profile.sector && (
-                        <p className="text-[11px] text-slate-500 mt-0.5">{profile.sector}</p>
-                      )}
-                    </div>
-                  </div>
-
-                  {profile.company && (
-                    <div className="p-3.5 bg-slate-50/80 rounded-2xl border border-slate-100 sm:col-span-2">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
-                        Company / Organization
-                      </span>
-                      <span className="text-xs font-bold text-slate-800">
-                        {profile.company}
+                  {/* Basic Details List (Two left-aligned columns matching reference) */}
+                  <div className="divide-y divide-slate-100 pt-1">
+                    <div className="py-2.5 flex items-baseline">
+                      <span className="w-48 sm:w-60 text-xs text-slate-500 font-medium shrink-0">Height</span>
+                      <span className="text-xs font-semibold text-slate-800">
+                        {profile.heightCm
+                          ? `${Math.floor(profile.heightCm / 30.48)}ft ${Math.round(
+                            (profile.heightCm % 30.48) / 2.54
+                          )}in (${profile.heightCm} cm)`
+                          : "Not specified"}
                       </span>
                     </div>
-                  )}
 
-                  {profile.annualIncome && (
-                    <div className="p-3.5 bg-slate-50/80 rounded-2xl border border-slate-100 sm:col-span-2">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
-                        Annual Compensation / Income Range
-                      </span>
-                      <span className="text-xs font-bold text-slate-800">
-                        {profile.annualIncome}
+                    <div className="py-2.5 flex items-baseline">
+                      <span className="w-48 sm:w-60 text-xs text-slate-500 font-medium shrink-0">Marital Status</span>
+                      <span className="text-xs font-semibold text-slate-800">
+                        {profile.maritalStatus || "Never Married"}
                       </span>
                     </div>
-                  )}
-                </div>
-              </div>
 
-              {/* SECTION 3: LIFESTYLE & INTERESTS */}
-              <div className="bg-white rounded-3xl border border-slate-200/90 p-6 shadow-xs space-y-4">
-                <div className="flex items-center gap-2 pb-3 border-b border-slate-100">
-                  <div className="w-7 h-7 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
-                    <Coffee className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
-                      Lifestyle & Habits
-                    </h2>
-                    <p className="text-[11px] text-slate-400">Diet, living habits & personal passions</p>
-                  </div>
-                </div>
+                    <div className="py-2.5 flex items-baseline">
+                      <span className="w-48 sm:w-60 text-xs text-slate-500 font-medium shrink-0">Religion</span>
+                      <span className="text-xs font-semibold text-slate-800">
+                        {profile.religion || "Not Specified"}
+                      </span>
+                    </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  <div className="p-3 bg-slate-50/80 rounded-2xl border border-slate-100 text-center">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-0.5">
-                      Diet
-                    </span>
-                    <span className="text-xs font-bold text-slate-800">{profile.diet || "Omnivore"}</span>
-                  </div>
-                  <div className="p-3 bg-slate-50/80 rounded-2xl border border-slate-100 text-center">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-0.5">
-                      Drinking
-                    </span>
-                    <span className="text-xs font-bold text-slate-800">{profile.drinking || "Socially"}</span>
-                  </div>
-                  <div className="p-3 bg-slate-50/80 rounded-2xl border border-slate-100 text-center">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-0.5">
-                      Smoking
-                    </span>
-                    <span className="text-xs font-bold text-slate-800">{profile.smoking || "Non-smoker"}</span>
-                  </div>
-                  <div className="p-3 bg-slate-50/80 rounded-2xl border border-slate-100 text-center">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-0.5">
-                      Pets
-                    </span>
-                    <span className="text-xs font-bold text-slate-800">{profile.pets || "Pet friendly"}</span>
-                  </div>
-                </div>
+                    <div className="py-2.5 flex items-baseline">
+                      <span className="w-48 sm:w-60 text-xs text-slate-500 font-medium shrink-0">Mother Tongue</span>
+                      <span className="text-xs font-semibold text-slate-800">
+                        {profile.motherTongue || "English"}
+                      </span>
+                    </div>
 
-                {/* Hobbies list */}
-                {profile.hobbies && profile.hobbies.length > 0 && (
-                  <div className="pt-2">
-                    <span className="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-2">
-                      Hobbies & Passions
-                    </span>
-                    <div className="flex flex-wrap gap-1.5">
-                      {profile.hobbies.map((h: string) => (
-                        <span
-                          key={h}
-                          className="px-3 py-1 rounded-full text-xs font-semibold bg-brand-50 text-brand-700 border border-brand-200/60"
-                        >
-                          {h}
+                    <div className="py-2.5 flex items-baseline">
+                      <span className="w-48 sm:w-60 text-xs text-slate-500 font-medium shrink-0">Residing In</span>
+                      <span className="text-xs font-semibold text-slate-800">
+                        {[profile.city, profile.state, profile.country].filter(Boolean).join(", ") || "Not specified"}
+                      </span>
+                    </div>
+
+                    {(profile.originCountry || profile.originCity) && (
+                      <div className="py-2.5 flex items-baseline">
+                        <span className="w-48 sm:w-60 text-xs text-slate-500 font-medium shrink-0">Origin / Hometown</span>
+                        <span className="text-xs font-semibold text-slate-800">
+                          {[profile.originCity, profile.originCountry].filter(Boolean).join(", ")}
                         </span>
-                      ))}
+                      </div>
+                    )}
+
+                    <div className="py-2.5 flex items-baseline">
+                      <span className="w-48 sm:w-60 text-xs text-slate-500 font-medium shrink-0">Nationality / Citizenship</span>
+                      <span className="text-xs font-semibold text-slate-800">
+                        {profile.nationality || "Not specified"}
+                      </span>
+                    </div>
+
+                    <div className="py-2.5 flex items-baseline">
+                      <span className="w-48 sm:w-60 text-xs text-slate-500 font-medium shrink-0">Languages</span>
+                      <span className="text-xs font-semibold text-slate-800">
+                        {profile.languagesSpoken?.length > 0
+                          ? profile.languagesSpoken.join(", ")
+                          : "English"}
+                      </span>
                     </div>
                   </div>
-                )}
-              </div>
+                </div>
 
-              {/* SECTION 4: WHAT THEY ARE LOOKING FOR (PARTNER PREFERENCES) */}
-              {pref && (
-                <div className="bg-white rounded-3xl border border-slate-200/90 p-6 shadow-xs space-y-4">
-                  <div className="flex items-center gap-2 pb-3 border-b border-slate-100">
-                    <div className="w-7 h-7 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center">
-                      <Heart className="w-4 h-4" />
+                <div className="border-t border-slate-100" />
+
+                {/* SECTION 2: CAREER & EDUCATION */}
+                <div className="space-y-4">
+                  <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
+                    Education & Career
+                  </h2>
+
+                  <div className="divide-y divide-slate-100 pt-1">
+                    <div className="py-2.5 flex items-baseline">
+                      <span className="w-48 sm:w-60 text-xs text-slate-500 font-medium shrink-0">Education</span>
+                      <div className="min-w-0 flex-1">
+                        {profile.educations && profile.educations.length > 0 ? (
+                          <div className="space-y-1">
+                            {profile.educations.map((edu: any, i: number) => {
+                              const displayTitle = edu.degreeName || edu.degree;
+                              const hasDistinctQual = edu.qualification && edu.qualification !== displayTitle;
+                              return (
+                                <div key={i} className="text-xs">
+                                  <span className="font-semibold text-slate-800">{displayTitle}</span>
+                                  {hasDistinctQual && (
+                                    <span className="text-slate-500 font-medium text-[11px]"> ({edu.qualification})</span>
+                                  )}
+                                  {edu.major && <span className="text-slate-600 font-medium"> in {edu.major}</span>}
+                                  {edu.institution && (
+                                    <p className="text-[11px] text-slate-500 font-medium">
+                                      {edu.institution}
+                                    </p>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <div>
+                            <span className="text-xs font-semibold text-slate-800">
+                              {profile.education || "Graduate"}
+                            </span>
+                            {profile.degree && (
+                              <p className="text-[11px] text-slate-500">{profile.degree}</p>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    <div>
+
+                    <div className="py-2.5 flex items-baseline">
+                      <span className="w-48 sm:w-60 text-xs text-slate-500 font-medium shrink-0">Profession & Sector</span>
+                      <span className="text-xs font-semibold text-slate-800">
+                        {profile.profession || "Working Professional"}
+                        {profile.sector ? ` (${profile.sector})` : ""}
+                      </span>
+                    </div>
+
+                    {profile.company && (
+                      <div className="py-2.5 flex items-baseline">
+                        <span className="w-48 sm:w-60 text-xs text-slate-500 font-medium shrink-0">Company / Organization</span>
+                        <span className="text-xs font-semibold text-slate-800">
+                          {profile.company}
+                        </span>
+                      </div>
+                    )}
+
+                    {profile.annualIncome && (
+                      <div className="py-2.5 flex items-baseline">
+                        <span className="w-48 sm:w-60 text-xs text-slate-500 font-medium shrink-0">Annual Income</span>
+                        <span className="text-xs font-semibold text-slate-800">
+                          {profile.annualIncome}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="border-t border-slate-100" />
+
+                {/* SECTION 3: LIFESTYLE & HABITS */}
+                <div className="space-y-4">
+                  <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
+                    Lifestyle & Habits
+                  </h2>
+
+                  <div className="divide-y divide-slate-100 pt-1">
+                    <div className="py-2.5 flex items-baseline">
+                      <span className="w-48 sm:w-60 text-xs text-slate-500 font-medium shrink-0">Diet</span>
+                      <span className="text-xs font-semibold text-slate-800">{profile.diet || "Omnivore"}</span>
+                    </div>
+                    <div className="py-2.5 flex items-baseline">
+                      <span className="w-48 sm:w-60 text-xs text-slate-500 font-medium shrink-0">Drinking</span>
+                      <span className="text-xs font-semibold text-slate-800">{profile.drinking || "Socially"}</span>
+                    </div>
+                    <div className="py-2.5 flex items-baseline">
+                      <span className="w-48 sm:w-60 text-xs text-slate-500 font-medium shrink-0">Smoking</span>
+                      <span className="text-xs font-semibold text-slate-800">{profile.smoking || "Non-smoker"}</span>
+                    </div>
+                    <div className="py-2.5 flex items-baseline">
+                      <span className="w-48 sm:w-60 text-xs text-slate-500 font-medium shrink-0">Pets</span>
+                      <span className="text-xs font-semibold text-slate-800">{profile.pets || "Not specified"}</span>
+                    </div>
+                    {profile.children && (
+                      <div className="py-2.5 flex items-baseline">
+                        <span className="w-48 sm:w-60 text-xs text-slate-500 font-medium shrink-0">Children</span>
+                        <span className="text-xs font-semibold text-slate-800">{profile.children}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* SECTION 4: HOBBIES & PASSIONS (Separate Section) */}
+                {profile.hobbies && profile.hobbies.length > 0 && (
+                  <>
+                    <div className="border-t border-slate-100" />
+                    <div className="space-y-3">
+                      <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
+                        Hobbies & Passions
+                      </h2>
+                      <div className="flex flex-wrap gap-1.5 pt-1">
+                        {profile.hobbies.map((h: string) => (
+                          <span
+                            key={h}
+                            className="px-3 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200"
+                          >
+                            {h}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {/* SECTION 5: WHAT THEY ARE LOOKING FOR (PARTNER PREFERENCES) */}
+                {pref && (
+                  <>
+                    <div className="border-t border-slate-100" />
+                    <div className="space-y-4">
                       <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
                         Partner Preferences (What They Seek)
                       </h2>
-                      <p className="text-[11px] text-slate-400">Match requirements for lifelong compatibility</p>
-                    </div>
-                  </div>
 
-                  <div className="space-y-3 divide-y divide-slate-100 text-xs">
-                    <div className="flex items-center justify-between py-2">
-                      <span className="text-slate-500 font-medium">Looking For</span>
-                      <span className="font-bold text-slate-900">
-                        {pref.preferredGenders?.map((g: string) => g.replace(/_/g, " ")).join(", ") || "Any"}
-                      </span>
-                    </div>
+                      <div className="divide-y divide-slate-100 pt-1">
+                        <div className="py-2.5 flex items-baseline">
+                          <span className="w-48 sm:w-60 text-xs text-slate-500 font-medium shrink-0">Looking For</span>
+                          <span className="text-xs font-semibold text-slate-800">
+                            {pref.preferredGenders?.map((g: string) => g.replace(/_/g, " ")).join(", ") || "Any"}
+                          </span>
+                        </div>
 
-                    <div className="flex items-center justify-between py-2">
-                      <span className="text-slate-500 font-medium">Orientations</span>
-                      <span className="font-bold text-slate-900">
-                        {pref.preferredOrientations?.join(", ") || "Any"}
-                      </span>
-                    </div>
+                        <div className="py-2.5 flex items-baseline">
+                          <span className="w-48 sm:w-60 text-xs text-slate-500 font-medium shrink-0">Orientations</span>
+                          <span className="text-xs font-semibold text-slate-800">
+                            {pref.preferredOrientations?.join(", ") || "Any"}
+                          </span>
+                        </div>
 
-                    <div className="flex items-center justify-between py-2">
-                      <span className="text-slate-500 font-medium">Age Range</span>
-                      <span className="font-bold text-slate-900">
-                        {pref.minAge} to {pref.maxAge} Years
-                      </span>
+                        <div className="py-2.5 flex items-baseline">
+                          <span className="w-48 sm:w-60 text-xs text-slate-500 font-medium shrink-0">Age Range</span>
+                          <span className="text-xs font-semibold text-slate-800">
+                            {pref.minAge} to {pref.maxAge} Years
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
-              )}
+                  </>
+                )}
+              </div>
             </div>
           </main>
         </div>

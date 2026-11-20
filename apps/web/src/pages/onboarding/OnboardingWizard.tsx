@@ -34,6 +34,9 @@ import {
   OUTNESS_OPTIONS,
   MARITAL_STATUS_OPTIONS,
   QUALIFICATION_OPTIONS,
+  DEGREE_OPTIONS,
+  DEGREE_OPTIONS_BY_QUALIFICATION,
+  getDegreesForQualification,
   SECTOR_OPTIONS,
   RELIGION_OPTIONS,
   LANGUAGE_OPTIONS,
@@ -42,10 +45,15 @@ import {
   DRINKING_OPTIONS,
   SMOKING_OPTIONS,
   PHOTO_VISIBILITY_OPTIONS,
+  ANNUAL_INCOME_OPTIONS,
+  PET_OPTIONS,
+  CHILDREN_OPTIONS,
 } from "@everpride/shared";
 import { SearchableSelect } from "../../components/common/SearchableSelect";
 import { MultiSearchableSelect } from "../../components/common/MultiSearchableSelect";
-import { getStatesForCountry, getCitiesForState } from "../../data/locations";
+import { AgeRangeSlider } from "../../components/common/AgeRangeSlider";
+import { SelectableChip, ChoiceCard, AlertBanner } from "../../components/ui";
+import { getStatesForCountry, getCitiesForState, getCitiesForCountry } from "../../data/locations";
 
 export interface EducationEntry {
   qualification?: string;
@@ -60,10 +68,12 @@ export interface OnboardingFormData {
   displayName: string;
   dateOfBirth: string;
   heightCm: number;
-  nationality: string;
   country: string;
   state: string;
   city: string;
+  nationality: string;
+  originCountry?: string;
+  originCity?: string;
   religion: string;
   languagesSpoken: string[];
   gender: string;
@@ -83,6 +93,8 @@ export interface OnboardingFormData {
   diet: string;
   drinking: string;
   smoking: string;
+  pets?: string;
+  children?: string;
   hobbies: string[];
   ghostModeEnabled: boolean;
   preferredGenders: string[];
@@ -104,6 +116,8 @@ export const OnboardingWizard: React.FC = () => {
     dateOfBirth: "2000-01-01",
     heightCm: 170,
     nationality: "",
+    originCountry: "",
+    originCity: "",
     country: "",
     state: "",
     city: "",
@@ -144,6 +158,8 @@ export const OnboardingWizard: React.FC = () => {
     diet: "Vegetarian",
     drinking: "Non-drinker",
     smoking: "Non-smoker",
+    pets: "",
+    children: "",
     hobbies: [],
 
     // Privacy (retained from system)
@@ -181,14 +197,19 @@ export const OnboardingWizard: React.FC = () => {
     return initialFormData;
   });
 
-  // Step initialized from localStorage if present
+  // Step initialized from localStorage if present.
+  // If user came via "Let's Begin" (has saved hero preferences), skip Step 1 (Looking For) and start directly at Step 2!
   const [step, setStep] = useState<number>(() => {
     try {
       const key = user?.id ? `everpride_onboarding_step_${user.id}` : "everpride_onboarding_step";
       const savedStep = localStorage.getItem(key);
       if (savedStep) {
         const parsed = parseInt(savedStep, 10);
-        if (parsed >= 1 && parsed <= 9) return parsed;
+        if (parsed >= 1 && parsed <= 10) return parsed;
+      }
+      const heroPref = localStorage.getItem("everpride_hero_preferences");
+      if (heroPref) {
+        return 2; // Jump straight to About You
       }
     } catch { }
     return 1;
@@ -229,19 +250,25 @@ export const OnboardingWizard: React.FC = () => {
     } catch { }
   }, [storageKey]);
 
-  const totalSteps = 9;
-  const progressPercent = Math.round((step / totalSteps) * 100);
+  // Track whether the user selected preferences on the landing page ("Let's Begin" flow)
+  const hasLandingPreferences = Boolean(localStorage.getItem("everpride_hero_preferences"));
+  const minStep = hasLandingPreferences ? 2 : 1;
+  const totalSteps = 10;
+  const effectiveTotalSteps = hasLandingPreferences ? 9 : 10;
+  const effectiveCurrentStep = hasLandingPreferences ? step - 1 : step;
+  const progressPercent = Math.round((effectiveCurrentStep / effectiveTotalSteps) * 100);
 
   const stepTitles = [
+    "Looking For (Preferences)",
     "About You",
     "Identity",
     "Marital Status",
-    "Education",
-    "Work & Career",
-    "Photo Privacy Shield",
-    "Upload Photos",
-    "Bio / About You",
-    "More About You (Lifestyle)",
+    "Education Details",
+    "Career",
+    "Picture Privacy Settings",
+    "Your Pictures",
+    "Bio",
+    "Lifestyle & Interests",
   ];
 
   const handleChange = (field: string, value: any) => {
@@ -274,13 +301,20 @@ export const OnboardingWizard: React.FC = () => {
   const handleUpdateEducation = (index: number, field: keyof EducationEntry, value: any) => {
     setFormData((prev) => {
       const updated = [...(prev.educations || [])];
-      updated[index] = { ...updated[index], [field]: value };
+      let newEntry = { ...updated[index], [field]: value };
+      if (field === "degree" && value !== updated[index]?.degree) {
+        const validDegrees = getDegreesForQualification(value);
+        if (newEntry.degreeName && !validDegrees.includes(newEntry.degreeName)) {
+          newEntry.degreeName = "";
+        }
+      }
+      updated[index] = newEntry;
       return {
         ...prev,
         educations: updated,
         // Sync primary education/degree for cards & preview
         education: updated[0]?.degree || prev.education,
-        degree: updated[0]?.major || prev.degree,
+        degree: updated[0]?.degreeName || updated[0]?.major || prev.degree,
       };
     });
   };
@@ -292,7 +326,7 @@ export const OnboardingWizard: React.FC = () => {
         ...prev,
         educations: updated,
         education: updated[0]?.degree || "",
-        degree: updated[0]?.major || "",
+        degree: updated[0]?.degreeName || updated[0]?.major || "",
       };
     });
   };
@@ -301,8 +335,24 @@ export const OnboardingWizard: React.FC = () => {
   const validateCurrentStep = (): boolean => {
     setError(null);
 
-    // Step 1: About You
+    // Step 1: Looking For (Partner Preferences)
     if (step === 1) {
+      if (!formData.preferredGenders || formData.preferredGenders.length === 0) {
+        setError("Please select at least one preferred gender.");
+        return false;
+      }
+      if (!formData.preferredOrientations || formData.preferredOrientations.length === 0) {
+        setError("Please select at least one preferred orientation.");
+        return false;
+      }
+      if (formData.minAge > formData.maxAge) {
+        setError("Minimum age cannot be greater than maximum age.");
+        return false;
+      }
+    }
+
+    // Step 2: About You
+    if (step === 2) {
       if (!formData.displayName.trim() || formData.displayName.trim().length < 2) {
         setError("Display Name is required (at least 2 characters).");
         return false;
@@ -323,14 +373,18 @@ export const OnboardingWizard: React.FC = () => {
         setError("You must be at least 18 years old to create a profile.");
         return false;
       }
+      if (!formData.country.trim()) {
+        setError("Please select your Country of Residence.");
+        return false;
+      }
       if (!formData.state.trim() || !formData.city.trim()) {
         setError("Please select your State and City.");
         return false;
       }
     }
 
-    // Step 2: Identity
-    if (step === 2) {
+    // Step 3: Identity
+    if (step === 3) {
       if (!formData.gender) {
         setError("Please select your Gender Identity.");
         return false;
@@ -345,16 +399,16 @@ export const OnboardingWizard: React.FC = () => {
       }
     }
 
-    // Step 6: Photo Privacy Shield Setting (defaults to MUTUAL_MATCHES_ONLY)
-    if (step === 6) {
+    // Step 7: Photo Privacy Shield Setting (defaults to MUTUAL_MATCHES_ONLY)
+    if (step === 7) {
       if (!formData.photoVisibility) {
         setError("Please select a Photo Privacy Shield setting.");
         return false;
       }
     }
 
-    // Step 7: Upload Photos (optional to skip, but must be valid if uploaded)
-    if (step === 7) {
+    // Step 8: Upload Photos (optional to skip, but must be valid if uploaded)
+    if (step === 8) {
       // Photo uploading can be optional or populated
     }
 
@@ -374,7 +428,7 @@ export const OnboardingWizard: React.FC = () => {
 
   const handleBack = () => {
     setError(null);
-    if (step > 1) {
+    if (step > minStep) {
       setStep(step - 1);
     }
   };
@@ -460,6 +514,8 @@ export const OnboardingWizard: React.FC = () => {
         city: formData.city.trim(),
         state: formData.state.trim(),
         country: formData.country.trim() || "India",
+        originCountry: formData.originCountry?.trim() || undefined,
+        originCity: formData.originCity?.trim() || undefined,
         education: (formData.educations?.[0]?.degree || formData.education || "").trim() || undefined,
         degree: (formData.educations?.[0]?.degreeName || formData.educations?.[0]?.major || formData.degree || "").trim() || undefined,
         educations: (formData.educations || [])
@@ -474,12 +530,14 @@ export const OnboardingWizard: React.FC = () => {
           })),
         sector: formData.sector.trim() || undefined,
         profession: formData.profession.trim() || undefined,
-        annualIncome: undefined,
+        annualIncome: formData.annualIncome ? formData.annualIncome.trim() : undefined,
         photos: formData.photos,
         bio: formData.bio.trim() || undefined,
         diet: formData.diet.trim() || undefined,
         drinking: formData.drinking || undefined,
         smoking: formData.smoking || undefined,
+        pets: formData.pets ? formData.pets.trim() : undefined,
+        children: formData.children ? formData.children.trim() : undefined,
         hobbies: formData.hobbies,
         photoVisibility: formData.photoVisibility,
         ghostModeEnabled: formData.ghostModeEnabled,
@@ -513,7 +571,7 @@ export const OnboardingWizard: React.FC = () => {
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
-              STEP {step} OF {totalSteps}
+              STEP {effectiveCurrentStep} OF {effectiveTotalSteps}
             </span>
             <span className="text-slate-300">•</span>
             <span className="text-xs font-extrabold text-brand-600 truncate max-w-[220px] sm:max-w-none">
@@ -537,28 +595,111 @@ export const OnboardingWizard: React.FC = () => {
 
       <div className="bg-white rounded-3xl border border-slate-200 shadow-xl shadow-slate-100/80 p-6 sm:p-8">
         {error && (
-          <div className="mb-6 p-4 rounded-xl bg-rose-50 border border-rose-200 text-xs font-medium text-rose-700 flex items-start gap-2 animate-shake">
-            <span className="font-bold">Error:</span>
-            <span>{error}</span>
+          <AlertBanner
+            variant="error"
+            message={error}
+            onClose={() => setError(null)}
+            className="mb-6 animate-shake"
+          />
+        )}
+
+        {/* ── STEP 1: LOOKING FOR (PARTNER PREFERENCES) ── */}
+        {step === 1 && (
+          <div className="space-y-8">
+            <div className="pb-2">
+              <h2 className="text-xl sm:text-2xl font-black text-rose-600 tracking-tight">Looking For (Preferences)</h2>
+            </div>
+
+            {/* Preferred Genders */}
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                  PREFERRED GENDER(S) <span className="text-rose-500">*</span>
+                </label>
+                <span className="text-[11px] text-slate-400">
+                  {formData.preferredGenders.length} selected
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {GENDER_OPTIONS.map((g) => {
+                  const selected = formData.preferredGenders.includes(g.value);
+                  return (
+                    <SelectableChip
+                      key={g.value}
+                      selected={selected}
+                      shape="rect"
+                      onClick={() => {
+                        const current = formData.preferredGenders;
+                        const next = current.includes(g.value)
+                          ? current.filter((x) => x !== g.value)
+                          : [...current, g.value];
+                        handleChange("preferredGenders", next);
+                      }}
+                    >
+                      {g.label}
+                    </SelectableChip>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Preferred Orientations */}
+            <div className="pt-2 border-t border-slate-100">
+              <div className="flex items-center justify-between mb-3">
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                  PREFERRED ORIENTATION(S) <span className="text-rose-500">*</span>
+                </label>
+                <span className="text-[11px] text-slate-400">
+                  {formData.preferredOrientations.length} selected
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {ORIENTATION_OPTIONS.map((o) => {
+                  const selected = formData.preferredOrientations.includes(o.value);
+                  return (
+                    <SelectableChip
+                      key={o.value}
+                      selected={selected}
+                      shape="rect"
+                      onClick={() => {
+                        const current = formData.preferredOrientations;
+                        const next = current.includes(o.value)
+                          ? current.filter((x) => x !== o.value)
+                          : [...current, o.value];
+                        handleChange("preferredOrientations", next);
+                      }}
+                    >
+                      {o.label}
+                    </SelectableChip>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Partner Age Range Slider */}
+            <div className="pt-2 border-t border-slate-100">
+              <AgeRangeSlider
+                minAge={formData.minAge}
+                maxAge={formData.maxAge}
+                onChange={(min, max) => {
+                  handleChange("minAge", min);
+                  handleChange("maxAge", max);
+                }}
+              />
+            </div>
           </div>
         )}
 
-        {/* ── STEP 1: ABOUT YOU ── */}
-        {step === 1 && (
-          <div className="space-y-6">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-brand-100 text-brand-600 flex items-center justify-center">
-                <User className="w-5 h-5" />
-              </div>
-              <div>
-                <h2 className="text-xl font-black text-slate-900">About You</h2>
-                <p className="text-xs text-slate-500">Basic personal information to establish your profile.</p>
-              </div>
+        {/* ── STEP 2: ABOUT YOU ── */}
+        {step === 2 && (
+          <div className="space-y-8">
+            <div className="pb-2">
+              <h2 className="text-xl sm:text-2xl font-black text-rose-600 tracking-tight">About You</h2>
             </div>
 
             {/* Name */}
             <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
                 NAME <span className="text-rose-500">*</span>
               </label>
               <input
@@ -568,113 +709,153 @@ export const OnboardingWizard: React.FC = () => {
                 onChange={(e) => handleChange("displayName", e.target.value)}
                 className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-500"
               />
-              <p className="text-[11px] text-slate-400 mt-1">
+              <p className="text-[11px] text-slate-400 mt-1.5">
                 Note: You do not need to use your legal name. You may use your chosen name or alias.
               </p>
             </div>
 
-            {/* DOB & Height */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                  DATE OF BIRTH <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  type="date"
-                  required
-                  value={formData.dateOfBirth}
-                  onChange={(e) => handleChange("dateOfBirth", e.target.value)}
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                  HEIGHT (CM)
-                </label>
-                <input
-                  type="number"
-                  value={formData.heightCm}
-                  onChange={(e) => handleChange("heightCm", parseInt(e.target.value) || 170)}
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-500"
-                />
-              </div>
+            {/* DOB */}
+            <div className="pt-2 border-t border-slate-100">
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                DATE OF BIRTH <span className="text-rose-500">*</span>
+              </label>
+              <input
+                type="date"
+                required
+                value={formData.dateOfBirth}
+                onChange={(e) => handleChange("dateOfBirth", e.target.value)}
+                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-500"
+              />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <SearchableSelect
-                label="NATIONALITY"
-                value={formData.nationality}
-                options={ALL_COUNTRIES.map((c) => ({ label: c.name, value: c.name }))}
-                placeholder="Search & select country..."
-                onChange={(newNat) => {
-                  handleChange("nationality", newNat);
-                  if (newNat) {
-                    handleChange("country", newNat);
+            {/* Height */}
+            <div className="pt-2 border-t border-slate-100">
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                HEIGHT (CM)
+              </label>
+              <input
+                type="number"
+                value={formData.heightCm}
+                onChange={(e) => handleChange("heightCm", parseInt(e.target.value) || 170)}
+                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-500"
+              />
+            </div>
+
+            {/* Current Residence Section */}
+            <div className="pt-2 border-t border-slate-100">
+              <span className="text-sm font-extrabold text-slate-800 uppercase tracking-wider block mb-4">
+                Current Residence
+              </span>
+              <div className="space-y-4">
+                <SearchableSelect
+                  label="COUNTRY"
+                  required
+                  value={formData.country}
+                  options={ALL_COUNTRIES.map((c) => ({ label: c.name, value: c.name }))}
+                  placeholder="Select country..."
+                  onChange={(newCountry) => {
+                    handleChange("country", newCountry);
                     handleChange("state", "");
                     handleChange("city", "");
+                  }}
+                />
+
+                <SearchableSelect
+                  label="STATE"
+                  required
+                  disabled={!formData.country}
+                  disabledMessage="Select Country First"
+                  value={formData.state}
+                  options={
+                    formData.country
+                      ? getStatesForCountry(formData.country)
+                      : []
                   }
-                }}
-              />
+                  placeholder="Select state..."
+                  onChange={(newState) => {
+                    handleChange("state", newState);
+                    handleChange("city", "");
+                  }}
+                />
 
-              <SearchableSelect
-                label="STATE / PROVINCE"
-                required
-                disabled={!formData.nationality}
-                disabledMessage="Select Nationality First"
-                value={formData.state}
-                options={
-                  formData.nationality
-                    ? getStatesForCountry(formData.nationality)
-                    : []
-                }
-                placeholder="Search & select state..."
-                onChange={(newState) => {
-                  handleChange("state", newState);
-                  handleChange("city", "");
-                }}
-              />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <SearchableSelect
-                label="CITY"
-                required
-                disabled={!formData.state}
-                disabledMessage="Select State First"
-                value={formData.city}
-                options={
-                  formData.nationality && formData.state
-                    ? getCitiesForState(formData.nationality, formData.state)
-                    : []
-                }
-                placeholder="Search & select city..."
-                onChange={(newCity) => handleChange("city", newCity)}
-              />
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                  RELIGION / BELIEF
-                </label>
-                <select
-                  value={formData.religion}
-                  onChange={(e) => handleChange("religion", e.target.value)}
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-500"
-                >
-                  <option value="">Select</option>
-                  {RELIGION_OPTIONS.map((rel) => (
-                    <option key={rel} value={rel}>
-                      {rel}
-                    </option>
-                  ))}
-                </select>
+                <SearchableSelect
+                  label="CITY"
+                  required
+                  disabled={!formData.state}
+                  disabledMessage="Select State First"
+                  value={formData.city}
+                  options={
+                    formData.country && formData.state
+                      ? getCitiesForState(formData.country, formData.state)
+                      : []
+                  }
+                  placeholder="Select city..."
+                  onChange={(newCity) => handleChange("city", newCity)}
+                />
               </div>
             </div>
 
-            {/* Languages Spoken (Can select multiple) */}
-            <div>
+            {/* Origin & Demographics Section */}
+            <div className="pt-2 border-t border-slate-100">
+              <span className="text-sm font-extrabold text-slate-800 uppercase tracking-wider block mb-4">
+                Origin & Citizenship
+              </span>
+              <div className="space-y-4">
+                <SearchableSelect
+                  label="NATIONALITY / CITIZENSHIP"
+                  value={formData.nationality}
+                  options={ALL_COUNTRIES.map((c) => ({ label: c.name, value: c.name }))}
+                  placeholder="Select nationality..."
+                  onChange={(newNat) => handleChange("nationality", newNat)}
+                />
+
+                <SearchableSelect
+                  label="COUNTRY OF ORIGIN"
+                  value={formData.originCountry || ""}
+                  options={ALL_COUNTRIES.map((c) => ({ label: c.name, value: c.name }))}
+                  placeholder="Select origin country..."
+                  onChange={(newOrig) => handleChange("originCountry", newOrig)}
+                />
+
+                <SearchableSelect
+                  label="HOMETOWN"
+                  value={formData.originCity || ""}
+                  disabled={!formData.originCountry && !formData.nationality}
+                  disabledMessage="Select Country of Origin or Nationality First"
+                  options={
+                    (formData.originCountry || formData.nationality)
+                      ? getCitiesForCountry(formData.originCountry || formData.nationality)
+                      : []
+                  }
+                  placeholder="Select hometown..."
+                  onChange={(newCity) => handleChange("originCity", newCity)}
+                />
+              </div>
+            </div>
+
+            {/* Religion */}
+            <div className="pt-2 border-t border-slate-100">
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                RELIGION
+              </label>
+              <select
+                value={formData.religion}
+                onChange={(e) => handleChange("religion", e.target.value)}
+                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-500"
+              >
+                <option value="">Select</option>
+                {RELIGION_OPTIONS.map((rel) => (
+                  <option key={rel} value={rel}>
+                    {rel}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Languages */}
+            <div className="pt-2 border-t border-slate-100">
               <MultiSearchableSelect
-                label="LANGUAGES SPOKEN (CAN SELECT MULTIPLE)"
+                label="LANGUAGES"
                 values={formData.languagesSpoken}
                 options={LANGUAGE_OPTIONS}
                 placeholder="Search & select languages..."
@@ -684,19 +865,11 @@ export const OnboardingWizard: React.FC = () => {
           </div>
         )}
 
-        {/* ── STEP 2: IDENTITY ── */}
-        {step === 2 && (
-          <div className="space-y-6">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-pink-100 text-pink-600 flex items-center justify-center">
-                <Sparkles className="w-5 h-5" />
-              </div>
-              <div>
-                <h2 className="text-xl font-black text-slate-900">Identity</h2>
-                <p className="text-xs text-slate-500">
-                  Affirm your authentic gender identity, sexual orientation, and outness.
-                </p>
-              </div>
+        {/* ── STEP 3: IDENTITY ── */}
+        {step === 3 && (
+          <div className="space-y-8">
+            <div>
+              <h2 className="text-xl sm:text-2xl font-black text-rose-600 tracking-tight">Identity</h2>
             </div>
 
             {/* Gender Identity */}
@@ -708,18 +881,14 @@ export const OnboardingWizard: React.FC = () => {
                 {GENDER_OPTIONS.map((g) => {
                   const selected = formData.gender === g.value;
                   return (
-                    <button
-                      type="button"
+                    <SelectableChip
                       key={g.value}
+                      selected={selected}
+                      shape="rect"
                       onClick={() => handleChange("gender", g.value)}
-                      className={`px-3.5 py-2 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
-                        selected
-                          ? "bg-brand-600 text-white border-brand-600 shadow-xs"
-                          : "bg-white text-slate-700 border-slate-200 hover:border-slate-300"
-                      }`}
                     >
                       {g.label}
-                    </button>
+                    </SelectableChip>
                   );
                 })}
               </div>
@@ -734,18 +903,14 @@ export const OnboardingWizard: React.FC = () => {
                 {ORIENTATION_OPTIONS.map((o) => {
                   const selected = formData.orientation === o.value;
                   return (
-                    <button
-                      type="button"
+                    <SelectableChip
                       key={o.value}
+                      selected={selected}
+                      shape="rect"
                       onClick={() => handleChange("orientation", o.value)}
-                      className={`px-3.5 py-2 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
-                        selected
-                          ? "bg-brand-600 text-white border-brand-600 shadow-xs"
-                          : "bg-white text-slate-700 border-slate-200 hover:border-slate-300"
-                      }`}
                     >
                       {o.label}
-                    </button>
+                    </SelectableChip>
                   );
                 })}
               </div>
@@ -768,7 +933,7 @@ export const OnboardingWizard: React.FC = () => {
             {/* Outness Status */}
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-                OUTNESS STATUS <span className="text-rose-500">*</span>
+                ARE YOU OUT OF THE CLOSET <span className="text-rose-500">*</span>
               </label>
               <div className="space-y-2">
                 {OUTNESS_OPTIONS.map((out) => {
@@ -778,11 +943,10 @@ export const OnboardingWizard: React.FC = () => {
                       type="button"
                       key={out.id}
                       onClick={() => handleChange("outnessStatus", out.id)}
-                      className={`w-full p-3 rounded-xl border text-left flex items-center justify-between transition-all cursor-pointer ${
-                        selected
-                          ? "bg-rose-50/70 border-rose-500 text-rose-700 font-bold"
-                          : "bg-slate-50 border-slate-200 text-slate-700 hover:border-slate-300 font-medium"
-                      }`}
+                      className={`w-full p-3 rounded-xl border text-left flex items-center justify-between transition-all cursor-pointer ${selected
+                        ? "bg-rose-50/70 border-rose-500 text-rose-700 font-bold"
+                        : "bg-slate-50 border-slate-200 text-slate-700 hover:border-slate-300 font-medium"
+                        }`}
                     >
                       <span className="text-xs">{out.label}</span>
                       {selected && <Check className="w-4 h-4 text-rose-600 shrink-0" />}
@@ -794,213 +958,177 @@ export const OnboardingWizard: React.FC = () => {
           </div>
         )}
 
-        {/* ── STEP 3: MARITAL STATUS ── */}
-        {step === 3 && (
-          <div className="space-y-6">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center">
-                <Heart className="w-5 h-5" />
-              </div>
-              <div>
-                <h2 className="text-xl font-black text-slate-900">Marital Status</h2>
-                <p className="text-xs text-slate-500">Your current legal/marital background.</p>
-              </div>
+        {/* ── STEP 4: MARITAL STATUS ── */}
+        {step === 4 && (
+          <div className="space-y-8">
+            <div>
+              <h2 className="text-xl sm:text-2xl font-black text-rose-600 tracking-tight">Marital Status</h2>
             </div>
 
             <div className="space-y-3">
               {MARITAL_STATUS_OPTIONS.map((status) => (
-                <label
+                <ChoiceCard
                   key={status.id}
+                  selected={formData.maritalStatus === status.id}
+                  title={status.id}
                   onClick={() => handleChange("maritalStatus", status.id)}
-                  className={`block p-4 rounded-xl border cursor-pointer transition-all ${formData.maritalStatus === status.id
-                    ? "border-brand-500 bg-brand-50/50 shadow-sm"
-                    : "border-slate-200 hover:border-slate-300"
-                    }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-bold text-slate-900">{status.id}</span>
-                    {formData.maritalStatus === status.id && (
-                      <div className="w-5 h-5 rounded-full bg-brand-600 text-white flex items-center justify-center">
-                        <Check className="w-3.5 h-3.5" />
-                      </div>
-                    )}
-                  </div>
-                  <p className="text-xs text-slate-500 mt-1">{status.desc}</p>
-                </label>
+                />
               ))}
             </div>
           </div>
         )}
 
-        {/* ── STEP 4: EDUCATION ── */}
-        {step === 4 && (
-          <div className="space-y-6">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-indigo-100 text-indigo-600 flex items-center justify-center">
-                <GraduationCap className="w-5 h-5" />
-              </div>
-              <div>
-                <h2 className="text-xl font-black text-slate-900">Education</h2>
-                <p className="text-xs text-slate-500">Your educational background, degrees, and institutions.</p>
-              </div>
+        {/* ── STEP 5: EDUCATION ── */}
+        {step === 5 && (
+          <div className="space-y-8">
+            <div>
+              <h2 className="text-xl sm:text-2xl font-black text-rose-600 tracking-tight">Education Details</h2>
             </div>
 
             {/* Qualifications & Degrees (Multiple) */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                    Educational Qualifications
-                  </label>
-                  <p className="text-[11px] text-slate-500">
-                    Add your degrees, certifications, and institutions attended.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleAddEducation}
-                  className="px-3 py-1.5 text-xs font-bold text-brand-600 bg-brand-50 hover:bg-brand-100 rounded-xl border border-brand-200 flex items-center gap-1.5 transition-colors cursor-pointer"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>Add Qualification</span>
-                </button>
-              </div>
-
+            <div className="space-y-4">
               <div className="space-y-3">
                 {(formData.educations || []).map((edu, idx) => (
                   <div
                     key={idx}
                     className="p-4 rounded-2xl border border-slate-200 bg-slate-50/60 space-y-3 relative group"
                   >
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-                        <GraduationCap className="w-4 h-4 text-brand-600" />
-                        Qualification #{idx + 1}
-                      </span>
-                      {formData.educations.length > 1 && (
+                    {formData.educations.length > 1 && (
+                      <div className="flex items-center justify-end">
                         <button
                           type="button"
                           onClick={() => handleRemoveEducation(idx)}
-                          title="Remove this qualification"
+                          title="Remove qualification"
                           className="p-1 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition-colors cursor-pointer"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
-                      )}
-                    </div>
+                      </div>
+                    )}
 
                     <div className="space-y-3">
                       <div>
-                        <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">
-                          QUALIFICATION LEVEL <span className="text-rose-500">*</span>
-                        </label>
-                        <div className="flex flex-wrap gap-1.5">
+                        <div className="flex flex-wrap gap-2">
                           {QUALIFICATION_OPTIONS.map((q) => {
                             const isSelected = edu.degree === q;
                             return (
-                              <button
+                              <SelectableChip
                                 key={q}
-                                type="button"
+                                selected={isSelected}
+                                shape="rect"
                                 onClick={() => handleUpdateEducation(idx, "degree", q)}
-                                className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
-                                  isSelected
-                                    ? "bg-brand-600 text-white border-brand-600 shadow-xs"
-                                    : "bg-white text-slate-700 border-slate-200 hover:border-slate-300"
-                                }`}
                               >
                                 {q}
-                              </button>
+                              </SelectableChip>
                             );
                           })}
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div className={edu.degree === "High School" ? "sm:col-span-2" : ""}>
+                      <div className="space-y-3">
+                        {edu.degree !== "High School" && (
+                          <>
+                            <div>
+                              <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">
+                                DEGREE <span className="text-rose-500">*</span>
+                              </label>
+                              <select
+                                value={edu.degreeName || ""}
+                                onChange={(e) => handleUpdateEducation(idx, "degreeName", e.target.value)}
+                                className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:border-brand-500 font-medium"
+                              >
+                                <option value="">Select Degree</option>
+                                {getDegreesForQualification(edu.degree).map((d) => (
+                                  <option key={d} value={d}>
+                                    {d}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+
+                            <div>
+                              <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">
+                                FIELD OF STUDY
+                              </label>
+                              <input
+                                type="text"
+                                placeholder="e.g. Computer Science, Economics, Fine Arts"
+                                value={edu.major || ""}
+                                onChange={(e) => handleUpdateEducation(idx, "major", e.target.value)}
+                                className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:border-brand-500"
+                              />
+                            </div>
+                          </>
+                        )}
+
+                        <div>
                           <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">
-                            INSTITUTION / SCHOOL <span className="text-rose-500">*</span>
+                            {edu.degree === "High School"
+                              ? "SCHOOL"
+                              : edu.degree === "Diploma" || edu.degree === "Other"
+                                ? "INSTITUTION"
+                                : "UNIVERSITY"}{" "}
+                            <span className="text-rose-500">*</span>
                           </label>
                           <input
                             type="text"
-                            placeholder="e.g. Stanford University, DPS, St. Xavier's"
+                            placeholder={
+                              edu.degree === "High School"
+                                ? "e.g. DPS, St. Xavier's, City High School"
+                                : edu.degree === "Diploma" || edu.degree === "Other"
+                                  ? "e.g. National Institute of Design, Tech Academy"
+                                  : "e.g. Stanford University, Delhi University"
+                            }
                             value={edu.institution}
                             onChange={(e) => handleUpdateEducation(idx, "institution", e.target.value)}
                             className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:border-brand-500"
                           />
                         </div>
-
-                        {edu.degree !== "High School" && (
-                          <div>
-                            <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">
-                              DEGREE NAME <span className="text-rose-500">*</span>
-                            </label>
-                            <input
-                              type="text"
-                              placeholder="e.g. B.Tech, B.Sc, MBA, MBBS"
-                              value={edu.degreeName || ""}
-                              onChange={(e) => handleUpdateEducation(idx, "degreeName", e.target.value)}
-                              className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:border-brand-500"
-                            />
-                          </div>
-                        )}
-
-                        {edu.degree !== "High School" && (
-                          <div className="sm:col-span-2">
-                            <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">
-                              MAJOR / FIELD OF STUDY (OPTIONAL)
-                            </label>
-                            <input
-                              type="text"
-                              placeholder="e.g. Computer Science, Economics, Graphic Design"
-                              value={edu.major || ""}
-                              onChange={(e) => handleUpdateEducation(idx, "major", e.target.value)}
-                              className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:border-brand-500"
-                            />
-                          </div>
-                        )}
                       </div>
                     </div>
                   </div>
                 ))}
               </div>
+
+              {/* + Add Qualification Button (Below qualification cards) */}
+              <div className="pt-1">
+                <button
+                  type="button"
+                  onClick={handleAddEducation}
+                  className="px-4 py-2 text-xs font-bold text-brand-600 bg-brand-50 hover:bg-brand-100 rounded-xl border border-brand-200 flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Add Qualification</span>
+                </button>
+              </div>
             </div>
           </div>
         )}
 
-        {/* ── STEP 5: WORK & CAREER ── */}
-        {step === 5 && (
-          <div className="space-y-6">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center">
-                <Briefcase className="w-5 h-5" />
-              </div>
-              <div>
-                <h2 className="text-xl font-black text-slate-900">Work & Career</h2>
-                <p className="text-xs text-slate-500">Your professional occupation and industry sector.</p>
-              </div>
+        {/* ── STEP 6: CAREER ── */}
+        {step === 6 && (
+          <div className="space-y-8">
+            <div>
+              <h2 className="text-xl sm:text-2xl font-black text-rose-600 tracking-tight">Career</h2>
             </div>
 
             <div className="space-y-4">
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-                  SECTOR OF WORK
+                  SECTOR
                 </label>
                 <div className="flex flex-wrap gap-2">
                   {SECTOR_OPTIONS.map((sec) => {
                     const selected = formData.sector === sec;
                     return (
-                      <button
-                        type="button"
+                      <SelectableChip
                         key={sec}
+                        selected={selected}
+                        shape="rect"
                         onClick={() => handleChange("sector", sec)}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
-                          selected
-                            ? "bg-brand-600 text-white border-brand-600 shadow-xs"
-                            : "bg-white text-slate-700 border-slate-200 hover:border-slate-300"
-                        }`}
                       >
                         {sec}
-                      </button>
+                      </SelectableChip>
                     );
                   })}
                 </div>
@@ -1008,7 +1136,7 @@ export const OnboardingWizard: React.FC = () => {
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                  JOB TITLE / PROFESSION
+                  JOB TITLE
                 </label>
                 <input
                   type="text"
@@ -1018,23 +1146,33 @@ export const OnboardingWizard: React.FC = () => {
                   className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-500"
                 />
               </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                  ANNUAL INCOME
+                </label>
+                <select
+                  value={formData.annualIncome || ""}
+                  onChange={(e) => handleChange("annualIncome", e.target.value)}
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-brand-500 font-medium"
+                >
+                  <option value="">Select Annual Income (Optional)</option>
+                  {ANNUAL_INCOME_OPTIONS.map((opt) => (
+                    <option key={opt} value={opt}>
+                      {opt}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
           </div>
         )}
 
-        {/* ── STEP 6: PHOTO PRIVACY SHIELD SETTING ── */}
-        {step === 6 && (
-          <div className="space-y-6">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-brand-100 text-brand-600 flex items-center justify-center">
-                <Shield className="w-5 h-5" />
-              </div>
-              <div>
-                <h2 className="text-xl font-black text-slate-900">Photo Privacy Shield</h2>
-                <p className="text-xs text-slate-500">
-                  You are in complete control of who can see your photos on EverPride.
-                </p>
-              </div>
+        {/* ── STEP 7: PICTURE PRIVACY SETTINGS ── */}
+        {step === 7 && (
+          <div className="space-y-8">
+            <div>
+              <h2 className="text-xl sm:text-2xl font-black text-rose-600 tracking-tight">Picture Privacy Settings</h2>
             </div>
 
             {/* Interactive Animated Simulation */}
@@ -1048,8 +1186,8 @@ export const OnboardingWizard: React.FC = () => {
                     src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80"
                     alt="Privacy Demo"
                     className={`w-full h-full object-cover transition-all duration-500 ease-in-out ${formData.photoVisibility === "ALL_MEMBERS"
-                        ? "blur-0 scale-100"
-                        : "blur-lg scale-110 brightness-75"
+                      ? "blur-0 scale-100"
+                      : "blur-lg scale-110 brightness-75"
                       }`}
                   />
 
@@ -1135,66 +1273,30 @@ export const OnboardingWizard: React.FC = () => {
                 const IconComponent = tier.icon;
                 const isSelected = formData.photoVisibility === tier.id;
                 return (
-                  <label
+                  <ChoiceCard
                     key={tier.id}
+                    selected={isSelected}
+                    title={tier.title}
+                    description={`${tier.desc} (${tier.example})`}
+                    icon={<IconComponent className="w-4 h-4" />}
+                    badge={
+                      <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md border ${tier.badgeColor}`}>
+                        {tier.badge}
+                      </span>
+                    }
                     onClick={() => handleChange("photoVisibility", tier.id)}
-                    className={`block p-3.5 rounded-2xl border cursor-pointer transition-all ${isSelected
-                        ? "border-brand-600 bg-brand-50/40 shadow-sm"
-                        : "border-slate-200 hover:border-slate-300 bg-white"
-                      }`}
-                  >
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div
-                          className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${isSelected
-                              ? "bg-brand-600 text-white"
-                              : "bg-slate-100 text-slate-600"
-                            }`}
-                        >
-                          <IconComponent className="w-4 h-4" />
-                        </div>
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs sm:text-sm font-bold text-slate-900">{tier.title}</span>
-                            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md border ${tier.badgeColor}`}>
-                              {tier.badge}
-                            </span>
-                          </div>
-                          <p className="text-[11px] text-slate-600 mt-0.5 leading-tight">
-                            {tier.desc} <span className="text-slate-400">({tier.example})</span>
-                          </p>
-                        </div>
-                      </div>
-
-                      <div
-                        className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${isSelected
-                            ? "border-brand-600 bg-brand-600 text-white"
-                            : "border-slate-300 bg-white"
-                          }`}
-                      >
-                        {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
-                      </div>
-                    </div>
-                  </label>
+                  />
                 );
               })}
             </div>
           </div>
         )}
 
-        {/* ── STEP 7: UPLOAD PHOTOS ── */}
-        {step === 7 && (
-          <div className="space-y-6">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
-                <Camera className="w-5 h-5" />
-              </div>
-              <div>
-                <h2 className="text-xl font-black text-slate-900">Upload Photos</h2>
-                <p className="text-xs text-slate-500">
-                  Add photos to your profile. They are protected by your chosen Privacy Shield.
-                </p>
-              </div>
+        {/* ── STEP 8: YOUR PICTURES ── */}
+        {step === 8 && (
+          <div className="space-y-8">
+            <div>
+              <h2 className="text-xl sm:text-2xl font-black text-rose-600 tracking-tight">Your Pictures</h2>
             </div>
 
             {/* Current Privacy Shield Status Indicator */}
@@ -1215,7 +1317,7 @@ export const OnboardingWizard: React.FC = () => {
               </div>
               <button
                 type="button"
-                onClick={() => setStep(6)}
+                onClick={() => setStep(7)}
                 className="text-xs font-bold text-brand-600 hover:text-brand-800 underline underline-offset-2 shrink-0 cursor-pointer"
               >
                 Change
@@ -1266,25 +1368,14 @@ export const OnboardingWizard: React.FC = () => {
           </div>
         )}
 
-        {/* ── STEP 8: BIO ── */}
-        {step === 8 && (
-          <div className="space-y-6">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-indigo-100 text-indigo-600 flex items-center justify-center">
-                <BookOpen className="w-5 h-5" />
-              </div>
-              <div>
-                <h2 className="text-xl font-black text-slate-900">Your Bio / About You</h2>
-                <p className="text-xs text-slate-500">
-                  Introduce yourself to prospective partners in your own words.
-                </p>
-              </div>
+        {/* ── STEP 9: BIO ── */}
+        {step === 9 && (
+          <div className="space-y-8">
+            <div>
+              <h2 className="text-xl sm:text-2xl font-black text-rose-600 tracking-tight">Bio</h2>
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                ABOUT ME
-              </label>
               <textarea
                 rows={6}
                 value={formData.bio}
@@ -1299,17 +1390,11 @@ export const OnboardingWizard: React.FC = () => {
           </div>
         )}
 
-        {/* ── STEP 9: MORE ABOUT YOU (LIFESTYLE) ── */}
-        {step === 9 && (
-          <div className="space-y-6">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-orange-100 text-orange-600 flex items-center justify-center">
-                <Coffee className="w-5 h-5" />
-              </div>
-              <div>
-                <h2 className="text-xl font-black text-slate-900">More About You (Lifestyle)</h2>
-                <p className="text-xs text-slate-500">Your dietary preferences, hobbies, and interests.</p>
-              </div>
+        {/* ── STEP 10: MORE ABOUT YOU (LIFESTYLE) ── */}
+        {step === 10 && (
+          <div className="space-y-8">
+            <div>
+              <h2 className="text-xl sm:text-2xl font-black text-rose-600 tracking-tight">Lifestyle & Interests</h2>
             </div>
 
             {/* Dietary Preferences */}
@@ -1319,17 +1404,14 @@ export const OnboardingWizard: React.FC = () => {
               </label>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                 {["Vegetarian", "Vegan", "Eggetarian", "Non-Vegetarian"].map((dietOption) => (
-                  <button
-                    type="button"
+                  <SelectableChip
                     key={dietOption}
+                    selected={formData.diet === dietOption}
+                    shape="rect"
                     onClick={() => handleChange("diet", dietOption)}
-                    className={`py-2 px-3 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${formData.diet === dietOption
-                      ? "bg-brand-600 text-white border-brand-600 shadow-sm"
-                      : "bg-slate-50 text-slate-700 border-slate-200 hover:border-slate-300"
-                      }`}
                   >
                     {dietOption}
-                  </button>
+                  </SelectableChip>
                 ))}
               </div>
             </div>
@@ -1345,17 +1427,14 @@ export const OnboardingWizard: React.FC = () => {
                   { id: "Socially", label: "Social drinker" },
                   { id: "Regularly", label: "Regularly" },
                 ].map((drinkOption) => (
-                  <button
-                    type="button"
+                  <SelectableChip
                     key={drinkOption.id}
+                    selected={formData.drinking === drinkOption.id}
+                    shape="rect"
                     onClick={() => handleChange("drinking", drinkOption.id)}
-                    className={`py-2 px-3 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${formData.drinking === drinkOption.id
-                      ? "bg-brand-600 text-white border-brand-600 shadow-sm"
-                      : "bg-slate-50 text-slate-700 border-slate-200 hover:border-slate-300"
-                      }`}
                   >
                     {drinkOption.label}
-                  </button>
+                  </SelectableChip>
                 ))}
               </div>
             </div>
@@ -1372,17 +1451,52 @@ export const OnboardingWizard: React.FC = () => {
                   { id: "Regularly", label: "Regularly" },
                   { id: "Trying to quit", label: "Trying to quit" },
                 ].map((smokeOption) => (
-                  <button
-                    type="button"
+                  <SelectableChip
                     key={smokeOption.id}
+                    selected={formData.smoking === smokeOption.id}
+                    shape="rect"
                     onClick={() => handleChange("smoking", smokeOption.id)}
-                    className={`py-2 px-3 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${formData.smoking === smokeOption.id
-                      ? "bg-brand-600 text-white border-brand-600 shadow-sm"
-                      : "bg-slate-50 text-slate-700 border-slate-200 hover:border-slate-300"
-                      }`}
                   >
                     {smokeOption.label}
-                  </button>
+                  </SelectableChip>
+                ))}
+              </div>
+            </div>
+
+            {/* Pet Preferences */}
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                PET PREFERENCES
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {PET_OPTIONS.map((petOption) => (
+                  <SelectableChip
+                    key={petOption}
+                    selected={formData.pets === petOption}
+                    shape="rect"
+                    onClick={() => handleChange("pets", formData.pets === petOption ? "" : petOption)}
+                  >
+                    {petOption}
+                  </SelectableChip>
+                ))}
+              </div>
+            </div>
+
+            {/* Children Preferences */}
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                CHILDREN PREFERENCES
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {CHILDREN_OPTIONS.map((childOption) => (
+                  <SelectableChip
+                    key={childOption}
+                    selected={formData.children === childOption}
+                    shape="rect"
+                    onClick={() => handleChange("children", formData.children === childOption ? "" : childOption)}
+                  >
+                    {childOption}
+                  </SelectableChip>
                 ))}
               </div>
             </div>
@@ -1407,17 +1521,14 @@ export const OnboardingWizard: React.FC = () => {
                 {HOBBY_OPTIONS.map((hobby) => {
                   const selected = formData.hobbies.includes(hobby);
                   return (
-                    <button
-                      type="button"
+                    <SelectableChip
                       key={hobby}
+                      selected={selected}
+                      shape="pill"
                       onClick={() => toggleArrayItem("hobbies", hobby)}
-                      className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all cursor-pointer ${selected
-                        ? "bg-brand-600 text-white border-brand-600 shadow-xs"
-                        : "bg-white text-slate-700 border-slate-200 hover:border-brand-300 hover:text-brand-600"
-                        }`}
                     >
                       {hobby}
-                    </button>
+                    </SelectableChip>
                   );
                 })}
               </div>
@@ -1428,7 +1539,7 @@ export const OnboardingWizard: React.FC = () => {
 
       {/* NAVIGATION CONTROLS (OUTSIDE CARD) */}
       <div className="flex items-center justify-between gap-3 mt-6">
-        {step > 1 ? (
+        {step > minStep ? (
           <button
             type="button"
             onClick={handleBack}

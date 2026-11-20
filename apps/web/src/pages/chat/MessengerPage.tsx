@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { MessageSquare, Search, Phone, ArrowRight } from "lucide-react";
 import { ActivitySidebar } from "../../components/layout/ActivitySidebar";
 import { ActiveChatView } from "../../components/chat/ActiveChatView";
+import { FilterPills, EmptyState } from "../../components/ui";
 import { api } from "../../lib/api";
 import { QUERY_KEYS } from "../../lib/queryKeys";
 import { useChatStore, ConversationItem } from "../../stores/chat.store";
@@ -90,22 +91,20 @@ export const MessengerPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setMainTab("messages")}
-                  className={`pb-1 relative cursor-pointer transition-colors ${
-                    mainTab === "messages"
+                  className={`pb-1 relative cursor-pointer transition-colors ${mainTab === "messages"
                       ? "text-slate-900 after:absolute after:bottom-[-9px] after:left-0 after:right-0 after:h-0.5 after:bg-rose-500"
                       : "text-slate-400 hover:text-slate-700"
-                  }`}
+                    }`}
                 >
                   Messages
                 </button>
                 <button
                   type="button"
                   onClick={() => setMainTab("calls")}
-                  className={`pb-1 relative cursor-pointer transition-colors ${
-                    mainTab === "calls"
+                  className={`pb-1 relative cursor-pointer transition-colors ${mainTab === "calls"
                       ? "text-slate-900 after:absolute after:bottom-[-9px] after:left-0 after:right-0 after:h-0.5 after:bg-rose-500"
                       : "text-slate-400 hover:text-slate-700"
-                  }`}
+                    }`}
                 >
                   Calls
                 </button>
@@ -113,202 +112,183 @@ export const MessengerPage: React.FC = () => {
 
               {/* Sub-Filters: All (Pill) | Unread (Pill) | Online (Pill) */}
               {mainTab === "messages" && (
-                <div className="flex items-center gap-2 overflow-x-auto pb-0.5 scrollbar-none text-xs">
-                  {(["all", "unread", "online"] as const).map((pill) => {
-                    const isSelected = filterPill === pill;
-                    return (
-                      <button
-                        key={pill}
-                        type="button"
-                        onClick={() => setFilterPill(pill)}
-                        className={`px-3 py-1.5 rounded-full font-semibold shrink-0 cursor-pointer transition-colors ${
-                          isSelected
-                            ? "bg-rose-50 border border-rose-500 text-rose-600 shadow-2xs"
-                            : "bg-slate-50 border border-slate-200 text-slate-600 hover:bg-slate-100"
-                        }`}
-                      >
-                        {pill.charAt(0).toUpperCase() + pill.slice(1)}
-                      </button>
-                    );
-                  })}
-                </div>
+                <FilterPills
+                  items={[
+                    { id: "all", label: "All" },
+                    { id: "unread", label: "Unread" },
+                    { id: "online", label: "Online" },
+                  ]}
+                  selectedId={filterPill}
+                  onChange={(id) => setFilterPill(id as any)}
+                />
               )}
             </div>
 
             {mainTab === "calls" ? (
-              <div className="flex-1 flex flex-col items-center justify-center p-8 text-center space-y-3 bg-slate-50/50">
-                <div className="w-14 h-14 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center shadow-xs">
-                  <Phone className="w-6 h-6" />
-                </div>
-                <h3 className="text-sm font-bold text-slate-900">No Call History</h3>
-                <p className="text-xs text-slate-500 max-w-xs leading-relaxed">
-                  Audio & video calls with your accepted matches will appear here.
-                </p>
+              <div className="flex-1 flex items-center justify-center bg-slate-50/50">
+                <EmptyState
+                  icon={<Phone className="w-6 h-6" />}
+                  title="No Call History"
+                  description="Audio & video calls with your accepted matches will appear here."
+                />
               </div>
             ) : (
-            <div className="flex-1 min-h-0 flex flex-col lg:flex-row overflow-hidden">
-              {/* Left Column: Conversation List */}
-              <div
-                className={`w-full lg:w-80 border-r border-slate-100 flex flex-col h-full overflow-hidden ${
-                  activeConversation ? "hidden lg:flex" : "flex"
-                }`}
-              >
-                {/* Search in conversations */}
-                <div className="p-3 border-b border-slate-100 shrink-0">
-                  <div className="relative">
-                    <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                    <input
-                      type="text"
-                      placeholder="Search conversations..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:outline-none focus:border-brand-500 text-slate-900 placeholder:text-slate-400"
-                    />
+              <div className="flex-1 min-h-0 flex flex-col lg:flex-row overflow-hidden">
+                {/* Left Column: Conversation List */}
+                <div
+                  className={`w-full lg:w-80 border-r border-slate-100 flex flex-col h-full overflow-hidden ${activeConversation ? "hidden lg:flex" : "flex"
+                    }`}
+                >
+                  {/* Search in conversations */}
+                  <div className="p-3 border-b border-slate-100 shrink-0">
+                    <div className="relative">
+                      <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                      <input
+                        type="text"
+                        placeholder="Search conversations..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:outline-none focus:border-brand-500 text-slate-900 placeholder:text-slate-400"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Conversation List Stream */}
+                  <div className="flex-1 overflow-y-auto divide-y divide-slate-100">
+                    {loadingConversations ? (
+                      <div className="p-4 space-y-3">
+                        {[1, 2, 3].map((i) => (
+                          <div key={i} className="flex items-center gap-3 animate-pulse">
+                            <div className="w-11 h-11 bg-slate-200 rounded-full" />
+                            <div className="flex-1 space-y-1.5">
+                              <div className="h-3.5 bg-slate-200 rounded w-24" />
+                              <div className="h-2.5 bg-slate-100 rounded w-36" />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : filteredConversations.length === 0 ? (
+                      /* Empty State styled identical to screenshot illustration */
+                      <div className="h-full flex flex-col items-center justify-center p-6 text-center space-y-3">
+                        <div className="w-20 h-16 bg-amber-50 rounded-2xl border border-amber-100 flex items-center justify-center p-2 shadow-xs">
+                          <div className="flex items-center gap-1 text-amber-500">
+                            <MessageSquare className="w-5 h-5" />
+                          </div>
+                        </div>
+                        <h3 className="text-sm font-bold text-slate-900">
+                          {filterPill === "online"
+                            ? "No one is online right now"
+                            : "No conversations found"}
+                        </h3>
+                        <p className="text-xs text-slate-500 max-w-xs leading-relaxed">
+                          {filterPill === "online"
+                            ? "Your online conversations will appear here when someone comes online."
+                            : "Accept mutual interests or start chatting with your matches."}
+                        </p>
+                        {filterPill !== "all" && (
+                          <button
+                            type="button"
+                            onClick={() => setFilterPill("all")}
+                            className="inline-flex items-center gap-1 text-xs font-bold text-brand-600 hover:text-brand-700 cursor-pointer pt-1"
+                          >
+                            <span>View All Messages</span>
+                            <ArrowRight className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+                    ) : (
+                      filteredConversations.map((conv) => {
+                        if (!conv || !conv.partner) return null;
+                        const partnerName = conv.partner.displayName || "Member";
+                        const isSelected = conv.id === activeConversationId;
+                        const isOnline =
+                          conv.partner.isOnline || (conv.partner.id ? onlineUserIds.has(conv.partner.id) : false);
+
+                        return (
+                          <button
+                            key={conv.id}
+                            type="button"
+                            onClick={() => setActiveConversationId(conv.id)}
+                            className={`w-full text-left p-3.5 flex items-center gap-3 transition-colors cursor-pointer ${isSelected
+                                ? "bg-rose-50/70"
+                                : "hover:bg-slate-50"
+                              }`}
+                          >
+                            <div className="relative shrink-0">
+                              <div className="w-11 h-11 rounded-full p-0.5 bg-gradient-to-tr from-brand-600 to-rose-400">
+                                {conv.partner.avatarUrl ? (
+                                  <img
+                                    src={conv.partner.avatarUrl}
+                                    alt={partnerName}
+                                    className="w-full h-full rounded-full object-cover"
+                                  />
+                                ) : (
+                                  <div className="w-full h-full rounded-full bg-slate-100 flex items-center justify-center text-slate-500 font-bold text-xs">
+                                    {partnerName.slice(0, 2).toUpperCase()}
+                                  </div>
+                                )}
+                              </div>
+                              {isOnline && (
+                                <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full" />
+                              )}
+                            </div>
+
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between mb-0.5">
+                                <h4 className="text-xs font-bold text-slate-900 truncate">
+                                  {partnerName}
+                                </h4>
+                                {conv.lastMessage && (
+                                  <span className="text-[10px] text-slate-400 shrink-0">
+                                    {new Date(conv.lastMessage.createdAt).toLocaleTimeString([], {
+                                      hour: "2-digit",
+                                      minute: "2-digit",
+                                    })}
+                                  </span>
+                                )}
+                              </div>
+
+                              <div className="flex items-center justify-between">
+                                <p className="text-xs text-slate-500 truncate max-w-[170px]">
+                                  {conv.lastMessage?.content || "Say hello..."}
+                                </p>
+                                {conv.unreadCount > 0 && (
+                                  <span className="w-4 h-4 rounded-full bg-rose-600 text-white text-[10px] font-bold flex items-center justify-center shrink-0">
+                                    {conv.unreadCount}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </button>
+                        );
+                      })
+                    )}
                   </div>
                 </div>
 
-                {/* Conversation List Stream */}
-                <div className="flex-1 overflow-y-auto divide-y divide-slate-100">
-                  {loadingConversations ? (
-                    <div className="p-4 space-y-3">
-                      {[1, 2, 3].map((i) => (
-                        <div key={i} className="flex items-center gap-3 animate-pulse">
-                          <div className="w-11 h-11 bg-slate-200 rounded-full" />
-                          <div className="flex-1 space-y-1.5">
-                            <div className="h-3.5 bg-slate-200 rounded w-24" />
-                            <div className="h-2.5 bg-slate-100 rounded w-36" />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : filteredConversations.length === 0 ? (
-                    /* Empty State styled identical to screenshot illustration */
-                    <div className="h-full flex flex-col items-center justify-center p-6 text-center space-y-3">
-                      <div className="w-20 h-16 bg-amber-50 rounded-2xl border border-amber-100 flex items-center justify-center p-2 shadow-xs">
-                        <div className="flex items-center gap-1 text-amber-500">
-                          <MessageSquare className="w-5 h-5" />
-                        </div>
-                      </div>
-                      <h3 className="text-sm font-bold text-slate-900">
-                        {filterPill === "online"
-                          ? "No one is online right now"
-                          : "No conversations found"}
-                      </h3>
-                      <p className="text-xs text-slate-500 max-w-xs leading-relaxed">
-                        {filterPill === "online"
-                          ? "Your online conversations will appear here when someone comes online."
-                          : "Accept mutual interests or start chatting with your matches."}
-                      </p>
-                      {filterPill !== "all" && (
-                        <button
-                          type="button"
-                          onClick={() => setFilterPill("all")}
-                          className="inline-flex items-center gap-1 text-xs font-bold text-brand-600 hover:text-brand-700 cursor-pointer pt-1"
-                        >
-                          <span>View All Messages</span>
-                          <ArrowRight className="w-3.5 h-3.5" />
-                        </button>
-                      )}
+                {/* Right Column: Active Thread / Select Conversation Placeholder */}
+                <div
+                  className={`flex-1 h-full min-h-0 ${activeConversation ? "flex" : "hidden lg:flex"
+                    }`}
+                >
+                  {activeConversation ? (
+                    <div className="flex-1 h-full min-h-0">
+                      <ActiveChatView
+                        conversation={activeConversation}
+                        onBack={() => setActiveConversationId(null)}
+                      />
                     </div>
                   ) : (
-                    filteredConversations.map((conv) => {
-                      if (!conv || !conv.partner) return null;
-                      const partnerName = conv.partner.displayName || "Member";
-                      const isSelected = conv.id === activeConversationId;
-                      const isOnline =
-                        conv.partner.isOnline || (conv.partner.id ? onlineUserIds.has(conv.partner.id) : false);
-
-                      return (
-                        <button
-                          key={conv.id}
-                          type="button"
-                          onClick={() => setActiveConversationId(conv.id)}
-                          className={`w-full text-left p-3.5 flex items-center gap-3 transition-colors cursor-pointer ${
-                            isSelected
-                              ? "bg-rose-50/70"
-                              : "hover:bg-slate-50"
-                          }`}
-                        >
-                          <div className="relative shrink-0">
-                            <div className="w-11 h-11 rounded-full p-0.5 bg-gradient-to-tr from-brand-600 to-rose-400">
-                              {conv.partner.avatarUrl ? (
-                                <img
-                                  src={conv.partner.avatarUrl}
-                                  alt={partnerName}
-                                  className="w-full h-full rounded-full object-cover"
-                                />
-                              ) : (
-                                <div className="w-full h-full rounded-full bg-slate-100 flex items-center justify-center text-slate-500 font-bold text-xs">
-                                  {partnerName.slice(0, 2).toUpperCase()}
-                                </div>
-                              )}
-                            </div>
-                            {isOnline && (
-                              <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full" />
-                            )}
-                          </div>
-
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between mb-0.5">
-                              <h4 className="text-xs font-bold text-slate-900 truncate">
-                                {partnerName}
-                              </h4>
-                              {conv.lastMessage && (
-                                <span className="text-[10px] text-slate-400 shrink-0">
-                                  {new Date(conv.lastMessage.createdAt).toLocaleTimeString([], {
-                                    hour: "2-digit",
-                                    minute: "2-digit",
-                                  })}
-                                </span>
-                              )}
-                            </div>
-
-                            <div className="flex items-center justify-between">
-                              <p className="text-xs text-slate-500 truncate max-w-[170px]">
-                                {conv.lastMessage?.content || "Say hello..."}
-                              </p>
-                              {conv.unreadCount > 0 && (
-                                <span className="w-4 h-4 rounded-full bg-rose-600 text-white text-[10px] font-bold flex items-center justify-center shrink-0">
-                                  {conv.unreadCount}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        </button>
-                      );
-                    })
+                    <div className="flex-1 h-full flex items-center justify-center bg-slate-50/50">
+                      <EmptyState
+                        icon={<MessageSquare className="w-6 h-6" />}
+                        title="Select a Conversation"
+                        description="Pick a conversation from the list to start chatting."
+                      />
+                    </div>
                   )}
                 </div>
               </div>
-
-              {/* Right Column: Active Thread / Select Conversation Placeholder */}
-              <div
-                className={`flex-1 h-full min-h-0 ${
-                  activeConversation ? "flex" : "hidden lg:flex"
-                }`}
-              >
-                {activeConversation ? (
-                  <div className="flex-1 h-full min-h-0">
-                    <ActiveChatView
-                      conversation={activeConversation}
-                      onBack={() => setActiveConversationId(null)}
-                    />
-                  </div>
-                ) : (
-                  <div className="flex-1 h-full flex flex-col items-center justify-center p-8 text-center bg-slate-50/50">
-                    <div className="w-16 h-16 rounded-3xl bg-white border border-slate-200/80 shadow-xs flex items-center justify-center text-brand-600 mb-3">
-                      <MessageSquare className="w-7 h-7" />
-                    </div>
-                    <h3 className="text-sm font-bold text-slate-900">
-                      Select a Conversation
-                    </h3>
-                    <p className="text-xs text-slate-500 max-w-xs mt-1">
-                      Pick a conversation from the list to start chatting.
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
             )}
           </div>
         </main>

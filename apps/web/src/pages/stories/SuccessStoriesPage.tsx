@@ -173,11 +173,10 @@ export const SuccessStoriesPage: React.FC = () => {
                     key={tag}
                     type="button"
                     onClick={() => setActiveFilter(tag)}
-                    className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
-                      activeFilter === tag
+                    className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${activeFilter === tag
                         ? "bg-rose-600 text-white shadow-xs"
                         : "bg-white text-slate-600 border border-slate-200 hover:border-slate-300"
-                    }`}
+                      }`}
                   >
                     {tag === "All" ? "All Couples" : tag}
                   </button>
@@ -200,7 +199,7 @@ export const SuccessStoriesPage: React.FC = () => {
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-black/20" />
-                    
+
                     <span className="absolute top-3.5 left-3.5 px-2.5 py-1 rounded-full bg-white/90 backdrop-blur-xs text-[10px] font-extrabold text-rose-600 uppercase tracking-wider shadow-xs">
                       {story.tag}
                     </span>

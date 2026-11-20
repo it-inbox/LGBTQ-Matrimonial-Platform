@@ -3,7 +3,7 @@ import { cn } from "../../lib/utils";
 import { Loader2 } from "lucide-react";
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "primary" | "secondary" | "outline" | "ghost" | "danger" | "emerald";
+  variant?: "primary" | "gradient" | "secondary" | "outline" | "ghost" | "danger" | "emerald";
   size?: "xs" | "sm" | "md" | "lg";
   isLoading?: boolean;
   icon?: React.ReactNode;
@@ -29,6 +29,8 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     const variantStyles = {
       primary:
         "bg-brand-600 text-white hover:bg-brand-700 shadow-sm hover:shadow-md hover:shadow-brand-600/15 border border-transparent",
+      gradient:
+        "bg-gradient-to-r from-brand-600 via-rose-600 to-rose-500 hover:from-brand-700 hover:to-rose-600 text-white shadow-md shadow-brand-500/20 hover:shadow-lg hover:shadow-brand-500/30 border border-transparent",
       secondary:
         "bg-zinc-100 text-zinc-800 hover:bg-zinc-200/90 hover:text-zinc-900 border border-transparent",
       outline:

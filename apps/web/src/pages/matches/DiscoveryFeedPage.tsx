@@ -23,8 +23,7 @@ import {
 } from "lucide-react";
 import { UniversalProfileCard } from "../../components/activity/UniversalProfileCard";
 import { allCountries } from "../../data/countries";
-import { Modal } from "../../components/ui/Modal";
-import { Button } from "../../components/ui/Button";
+import { Modal, Button, EmptyState } from "../../components/ui";
 
 const DISCOVERY_SESSION_STORAGE_KEY = "everpride_discovery_session_filters";
 
@@ -317,11 +316,10 @@ export const DiscoveryFeedPage: React.FC = () => {
               <button
                 type="button"
                 onClick={openFilterModal}
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full font-semibold shrink-0 shadow-xs cursor-pointer transition-colors ${
-                  activeFilterCount > 0
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full font-semibold shrink-0 shadow-xs cursor-pointer transition-colors ${activeFilterCount > 0
                     ? "bg-rose-600 text-white border border-rose-600"
                     : "bg-white border border-slate-200 hover:border-slate-300 text-slate-700"
-                }`}
+                  }`}
               >
                 <SlidersHorizontal className="w-3.5 h-3.5" />
                 <span>Filters</span>
@@ -337,11 +335,10 @@ export const DiscoveryFeedPage: React.FC = () => {
                   type="button"
                   key={pill}
                   onClick={() => setActiveQuickFilter(pill)}
-                  className={`px-3 py-1.5 rounded-full font-semibold shrink-0 cursor-pointer transition-colors ${
-                    activeQuickFilter === pill
+                  className={`px-3 py-1.5 rounded-full font-semibold shrink-0 cursor-pointer transition-colors ${activeQuickFilter === pill
                       ? "bg-slate-900 text-white"
                       : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                  }`}
+                    }`}
                 >
                   {pill}
                 </button>
@@ -380,102 +377,126 @@ export const DiscoveryFeedPage: React.FC = () => {
                   </div>
                 ))}
               </div>
-          ) : !filteredMatches || filteredMatches.length === 0 ? (
-            <div className="text-center py-20 bg-white rounded-2xl border border-slate-200/90 p-8 shadow-xs">
-              <Heart className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-              <h2 className="text-base font-bold text-slate-800">No matching profiles found</h2>
-              <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1">
-                Try loosening your filters or check back soon as more verified members complete onboarding.
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {filteredMatches.map((profile: any) => {
-                return (
-                  <UniversalProfileCard
-                    key={profile.id}
-                    profile={profile}
-                    userId={profile.userId || profile.id}
-                    badge="outness"
-                    headerStatusLeft={
-                      <span className="text-xs font-semibold text-slate-500">
-                        Active Today
-                      </span>
-                    }
-                    onRequestUnblur={() => {
-                      setActiveModalProfile(profile);
-                      setModalType("photo");
-                    }}
-                    actionsFooter={
-                      <>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setActiveModalProfile(profile);
-                            setModalType("interest");
-                          }}
-                          className="flex-1 flex items-center justify-center gap-1.5 py-2 px-1 text-rose-600 hover:bg-rose-100/60 transition-colors font-bold text-xs cursor-pointer group"
-                        >
-                          <Send className="w-3.5 h-3.5 text-rose-600 group-hover:scale-110 transition-transform" />
-                          <span>Interest</span>
-                        </button>
+            ) : !filteredMatches || filteredMatches.length === 0 ? (
+              <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs">
+                <EmptyState
+                  icon={<Heart className="w-7 h-7" />}
+                  title="No matching profiles found"
+                  description="Try loosening your filters or check back soon as more verified members complete onboarding."
+                  action={
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedNationalities([]);
+                        setSelectedReligions([]);
+                        setSelectedMaritalStatuses([]);
+                        setFilterAgeMin(18);
+                        setFilterAgeMax(60);
+                        setAppliedFilters({
+                          nationalities: [],
+                          religions: [],
+                          maritalStatuses: [],
+                          minAge: 18,
+                          maxAge: 60,
+                        });
+                        setCurrentPage(1);
+                        setActiveQuickFilter("all");
+                      }}
+                    >
+                      Reset Filters
+                    </Button>
+                  }
+                />
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {filteredMatches.map((profile: any) => {
+                  return (
+                    <UniversalProfileCard
+                      key={profile.id}
+                      profile={profile}
+                      userId={profile.userId || profile.id}
+                      badge="outness"
+                      headerStatusLeft={
+                        <span className="text-xs font-semibold text-slate-500">
+                          Active Today
+                        </span>
+                      }
+                      onRequestUnblur={() => {
+                        setActiveModalProfile(profile);
+                        setModalType("photo");
+                      }}
+                      actionsFooter={
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setActiveModalProfile(profile);
+                              setModalType("interest");
+                            }}
+                            className="flex-1 flex items-center justify-center gap-1.5 py-2 px-1 text-rose-600 hover:bg-rose-100/60 transition-colors font-bold text-xs cursor-pointer group"
+                          >
+                            <Send className="w-3.5 h-3.5 text-rose-600 group-hover:scale-110 transition-transform" />
+                            <span>Interest</span>
+                          </button>
 
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setIgnoredProfileIds((prev) => [...prev, profile.id]);
-                            setSuccessToast(`Ignored ${profile.displayName}`);
-                            setTimeout(() => setSuccessToast(null), 3000);
-                          }}
-                          className="flex-1 flex items-center justify-center gap-1.5 py-2 px-1 text-rose-600 hover:bg-rose-100/60 transition-colors font-bold text-xs cursor-pointer group"
-                        >
-                          <X className="w-3.5 h-3.5 text-rose-600 group-hover:scale-110 transition-transform" />
-                          <span>Ignore</span>
-                        </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIgnoredProfileIds((prev) => [...prev, profile.id]);
+                              setSuccessToast(`Ignored ${profile.displayName}`);
+                              setTimeout(() => setSuccessToast(null), 3000);
+                            }}
+                            className="flex-1 flex items-center justify-center gap-1.5 py-2 px-1 text-rose-600 hover:bg-rose-100/60 transition-colors font-bold text-xs cursor-pointer group"
+                          >
+                            <X className="w-3.5 h-3.5 text-rose-600 group-hover:scale-110 transition-transform" />
+                            <span>Ignore</span>
+                          </button>
 
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setActiveModalProfile(profile);
-                            setModalType("interest");
-                          }}
-                          className="flex-1 flex items-center justify-center gap-1.5 py-2 px-1 text-rose-600 hover:bg-rose-100/60 transition-colors font-bold text-xs cursor-pointer group"
-                        >
-                          <MessageSquare className="w-3.5 h-3.5 text-rose-600 group-hover:scale-110 transition-transform" />
-                          <span>Chat</span>
-                        </button>
-                      </>
-                    }
-                  />
-                );
-              })}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setActiveModalProfile(profile);
+                              setModalType("interest");
+                            }}
+                            className="flex-1 flex items-center justify-center gap-1.5 py-2 px-1 text-rose-600 hover:bg-rose-100/60 transition-colors font-bold text-xs cursor-pointer group"
+                          >
+                            <MessageSquare className="w-3.5 h-3.5 text-rose-600 group-hover:scale-110 transition-transform" />
+                            <span>Chat</span>
+                          </button>
+                        </>
+                      }
+                    />
+                  );
+                })}
 
-              {/* Feed Pagination Controls */}
-              {feedResult?.pagination && (feedResult.pagination.total > 20 || currentPage > 1) && (
-                <div className="flex items-center justify-between p-4 bg-white rounded-2xl border border-slate-200/90 shadow-xs mt-6 text-xs font-semibold">
-                  <button
-                    type="button"
-                    disabled={currentPage <= 1}
-                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                    className="px-4 py-2 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
-                  >
-                    Previous Page
-                  </button>
-                  <span className="text-slate-500">
-                    Page {feedResult.pagination.page} of {Math.ceil(feedResult.pagination.total / feedResult.pagination.limit)} ({feedResult.pagination.total} profiles)
-                  </span>
-                  <button
-                    type="button"
-                    disabled={!feedResult.pagination.hasMore}
-                    onClick={() => setCurrentPage((p) => p + 1)}
-                    className="px-4 py-2 rounded-xl bg-rose-600 text-white hover:bg-rose-700 disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
-                  >
-                    Next Page
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
+                {/* Feed Pagination Controls */}
+                {feedResult?.pagination && (feedResult.pagination.total > 20 || currentPage > 1) && (
+                  <div className="flex items-center justify-between p-4 bg-white rounded-2xl border border-slate-200/90 shadow-xs mt-6 text-xs font-semibold">
+                    <button
+                      type="button"
+                      disabled={currentPage <= 1}
+                      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                      className="px-4 py-2 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
+                    >
+                      Previous Page
+                    </button>
+                    <span className="text-slate-500">
+                      Page {feedResult.pagination.page} of {Math.ceil(feedResult.pagination.total / feedResult.pagination.limit)} ({feedResult.pagination.total} profiles)
+                    </span>
+                    <button
+                      type="button"
+                      disabled={!feedResult.pagination.hasMore}
+                      onClick={() => setCurrentPage((p) => p + 1)}
+                      className="px-4 py-2 rounded-xl bg-rose-600 text-white hover:bg-rose-700 disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
+                    >
+                      Next Page
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </main>
       </div>
@@ -654,11 +675,10 @@ export const DiscoveryFeedPage: React.FC = () => {
                                 toggleFilter(selectedNationalities, setSelectedNationalities, c.name);
                                 setNationalitySearchInput("");
                               }}
-                              className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-colors flex items-center justify-between cursor-pointer ${
-                                isSelected
+                              className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-colors flex items-center justify-between cursor-pointer ${isSelected
                                   ? "bg-rose-50 text-rose-700 font-bold"
                                   : "text-slate-700 hover:bg-slate-50"
-                              }`}
+                                }`}
                             >
                               <span>{c.name}</span>
                               {isSelected ? (
@@ -672,10 +692,10 @@ export const DiscoveryFeedPage: React.FC = () => {
                       {allCountries.filter((c) =>
                         c.name.toLowerCase().includes(nationalitySearchInput.toLowerCase())
                       ).length === 0 && (
-                        <div className="p-3 text-center text-xs text-slate-400">
-                          No nationality found matching "{nationalitySearchInput}"
-                        </div>
-                      )}
+                          <div className="p-3 text-center text-xs text-slate-400">
+                            No nationality found matching "{nationalitySearchInput}"
+                          </div>
+                        )}
                     </div>
                   )}
                 </div>
@@ -718,11 +738,10 @@ export const DiscoveryFeedPage: React.FC = () => {
                         key={rel}
                         type="button"
                         onClick={() => toggleFilter(selectedReligions, setSelectedReligions, rel)}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all cursor-pointer ${
-                          isSelected
+                        className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all cursor-pointer ${isSelected
                             ? "bg-rose-600 border-rose-600 text-white font-semibold shadow-xs"
                             : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100 hover:border-slate-300"
-                        }`}
+                          }`}
                       >
                         {rel}
                       </button>
@@ -755,11 +774,10 @@ export const DiscoveryFeedPage: React.FC = () => {
                         key={status}
                         type="button"
                         onClick={() => toggleFilter(selectedMaritalStatuses, setSelectedMaritalStatuses, status)}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all cursor-pointer ${
-                          isSelected
+                        className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all cursor-pointer ${isSelected
                             ? "bg-rose-600 border-rose-600 text-white font-semibold shadow-xs"
                             : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100 hover:border-slate-300"
-                        }`}
+                          }`}
                       >
                         {status}
                       </button>
@@ -776,7 +794,7 @@ export const DiscoveryFeedPage: React.FC = () => {
                     {filterAgeMin} – {filterAgeMax} yrs
                   </span>
                 </div>
-                
+
                 {/* Visual Combined Dual Range Slider */}
                 <div className="relative h-7 flex items-center px-1">
                   {/* Background Track */}

@@ -45,7 +45,7 @@ export const LandingPage: React.FC = () => {
     } catch { }
 
     if (!isAuthenticated) {
-      openLoginModal();
+      openLoginModal("register");
     } else if (profile) {
       navigate("/discover");
     } else {
@@ -55,7 +55,7 @@ export const LandingPage: React.FC = () => {
 
   const handleCtaClick = () => {
     if (!isAuthenticated) {
-      openLoginModal();
+      openLoginModal("register");
     } else if (profile) {
       navigate("/discover");
     } else {

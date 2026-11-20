@@ -3,7 +3,9 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "../../stores/auth.store";
 import { api } from "../../lib/api";
 import { QUERY_KEYS } from "../../lib/queryKeys";
-import { Shield, EyeOff, Check, Lock, AlertCircle, Ban, UserCheck, Loader2 } from "lucide-react";
+import { Shield, EyeOff, Check, Lock, AlertCircle, Ban, UserCheck, Loader2, ArrowLeft } from "lucide-react";
+import { Link } from "react-router-dom";
+import { ChoiceCard, AlertBanner, Button } from "../../components/ui";
 
 interface BlockedItem {
   id: string;
@@ -79,24 +81,32 @@ export const PrivacySettingsPage: React.FC = () => {
   };
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-10 space-y-8">
+    <div className="max-w-3xl mx-auto px-4 py-8 space-y-8">
       <div>
+        <Link
+          to="/discover"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-800 transition-colors mb-4"
+        >
+          <ArrowLeft className="w-4 h-4" /> Back to Discover
+        </Link>
+
         <div className="flex items-center gap-3 mb-2">
           <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
             <Shield className="w-5 h-5" />
           </div>
           <div>
-            <h1 className="text-2xl font-black text-slate-900 tracking-tight">Privacy & Safety Center</h1>
-            <p className="text-xs text-slate-500">Fine-tune who can view your identity, photos, and manage blocked members</p>
+            <h1 className="text-2xl font-black text-slate-900 tracking-tight">Privacy Safeguards</h1>
+            <p className="text-xs text-slate-500">Controls and visibility of your photos and identity on EverPride</p>
           </div>
         </div>
       </div>
 
       {success && (
-        <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center gap-2">
-          <Check className="w-4 h-4 text-emerald-600" />
-          Privacy preferences updated successfully.
-        </div>
+        <AlertBanner
+          variant="success"
+          message="Privacy preferences updated successfully."
+          onClose={() => setSuccess(false)}
+        />
       )}
 
       {/* Visibility Preferences Card */}
@@ -123,37 +133,26 @@ export const PrivacySettingsPage: React.FC = () => {
                 desc: "Photos are blurred for everyone by default. You receive an unblur request when someone wants to see your photos.",
               },
             ].map((tier) => (
-              <label
+              <ChoiceCard
                 key={tier.id}
+                selected={photoVisibility === tier.id}
+                title={tier.title}
+                description={tier.desc}
                 onClick={() => setPhotoVisibility(tier.id)}
-                className={`block p-4 rounded-xl border cursor-pointer transition-all ${
-                  photoVisibility === tier.id
-                    ? "border-brand-500 bg-brand-50/40"
-                    : "border-slate-200 hover:border-slate-300"
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-bold text-slate-900">{tier.title}</span>
-                  {photoVisibility === tier.id && (
-                    <div className="w-5 h-5 rounded-full bg-brand-600 text-white flex items-center justify-center">
-                      <Check className="w-3.5 h-3.5" />
-                    </div>
-                  )}
-                </div>
-                <p className="text-xs text-slate-500 mt-1">{tier.desc}</p>
-              </label>
+              />
             ))}
           </div>
         </div>
 
         <div className="pt-4 flex justify-end">
-          <button
+          <Button
+            variant="gradient"
+            size="md"
             onClick={handleSave}
-            disabled={saving}
-            className="px-6 py-2.5 rounded-xl font-bold text-xs text-white bg-brand-600 hover:bg-brand-700 disabled:opacity-50 cursor-pointer shadow-sm"
+            isLoading={saving}
           >
-            {saving ? "Saving Changes..." : "Save Privacy Settings"}
-          </button>
+            Save Privacy Settings
+          </Button>
         </div>
       </div>
 
