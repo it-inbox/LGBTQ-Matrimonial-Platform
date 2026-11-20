@@ -1475,7 +1475,7 @@ export const OnboardingWizard: React.FC = () => {
 
             {/* Hobbies - Unified Broad Categories in One Section */}
             <div>
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center justify-between mb-2.5">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
                     HOBBIES
@@ -1506,8 +1506,8 @@ export const OnboardingWizard: React.FC = () => {
         )}
       </div>
 
-      {/* NAVIGATION CONTROLS (OUTSIDE CARD) */}
-      <div className="flex items-center justify-between gap-3 mt-6">
+      {/* NAVIGATION CONTROLS (STICKY AT BOTTOM) */}
+      <div className="sticky bottom-0 z-20 -mx-4 px-4 py-3.5 mt-6 bg-white/95 backdrop-blur-md border-t border-slate-200/80 shadow-lg shadow-slate-900/5 flex items-center justify-between gap-3">
         {step > minStep ? (
           <button
             type="button"

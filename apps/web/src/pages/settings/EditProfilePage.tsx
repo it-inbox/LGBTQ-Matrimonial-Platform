@@ -1404,7 +1404,7 @@ export const EditProfilePage: React.FC = () => {
 
                 {/* Hobbies */}
                 <div>
-                  <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center justify-between mb-2.5">
                     <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider">
                       Hobbies
                     </label>
