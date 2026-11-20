@@ -561,7 +561,7 @@ export const OnboardingWizard: React.FC = () => {
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] py-8 px-4 max-w-2xl mx-auto">
+    <div className="min-h-[calc(100vh-4rem)] pt-6 pb-24 px-4 max-w-2xl mx-auto">
       {/* ONBOARDING COMPLETION PERCENTAGE HEADER */}
       <div className="mb-6 bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-5">
         <div className="flex items-center justify-between mb-2">
@@ -1506,35 +1506,37 @@ export const OnboardingWizard: React.FC = () => {
         )}
       </div>
 
-      {/* NAVIGATION CONTROLS (STICKY AT BOTTOM) */}
-      <div className="sticky bottom-0 z-20 -mx-4 px-4 py-3.5 mt-6 bg-white/95 backdrop-blur-md border-t border-slate-200/80 shadow-lg shadow-slate-900/5 flex items-center justify-between gap-3">
-        {step > minStep ? (
+      {/* NAVIGATION CONTROLS (FIXED / ABSOLUTE AT BOTTOM) */}
+      <div className="fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-md border-t border-slate-200/80 shadow-[0_-4px_20px_rgba(0,0,0,0.06)] py-3 px-4">
+        <div className="max-w-2xl mx-auto flex items-center justify-between gap-3">
+          {step > minStep ? (
+            <button
+              type="button"
+              onClick={handleBack}
+              className="py-2.5 px-5 rounded-xl font-bold text-xs text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
+            >
+              <ArrowLeft className="w-4 h-4" /> Back
+            </button>
+          ) : (
+            <div />
+          )}
+
           <button
             type="button"
-            onClick={handleBack}
-            className="py-2.5 px-5 rounded-xl font-bold text-xs text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
+            disabled={loading}
+            onClick={handleNext}
+            className="py-2.5 px-6 rounded-xl font-bold text-xs text-white bg-gradient-to-r from-brand-600 to-pink-600 hover:from-brand-700 hover:to-pink-700 shadow-md shadow-brand-500/25 flex items-center gap-2 cursor-pointer transition-all ml-auto"
           >
-            <ArrowLeft className="w-4 h-4" /> Back
+            {step === totalSteps ? (
+              loading ? "Creating Profile..." : "Complete Profile & Discover Matches"
+            ) : (
+              <>
+                Next Step <ArrowRight className="w-4 h-4" />
+              </>
+            )}
+            {step === totalSteps && !loading && <UserCheck className="w-4 h-4" />}
           </button>
-        ) : (
-          <div />
-        )}
-
-        <button
-          type="button"
-          disabled={loading}
-          onClick={handleNext}
-          className="py-2.5 px-6 rounded-xl font-bold text-xs text-white bg-gradient-to-r from-brand-600 to-pink-600 hover:from-brand-700 hover:to-pink-700 shadow-md shadow-brand-500/25 flex items-center gap-2 cursor-pointer transition-all ml-auto"
-        >
-          {step === totalSteps ? (
-            loading ? "Creating Profile..." : "Complete Profile & Discover Matches"
-          ) : (
-            <>
-              Next Step <ArrowRight className="w-4 h-4" />
-            </>
-          )}
-          {step === totalSteps && !loading && <UserCheck className="w-4 h-4" />}
-        </button>
+        </div>
       </div>
     </div>
   );
