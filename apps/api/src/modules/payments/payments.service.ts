@@ -44,9 +44,6 @@ export interface UserMembership {
 export class PaymentsService {
   private readonly logger = new Logger(PaymentsService.name);
 
-  // In-memory membership cache for fast lookups
-  private readonly memberships = new Map<string, UserMembership>();
-
   constructor(private readonly prisma: PrismaService) {}
 
   /**
@@ -167,8 +164,6 @@ export class PaymentsService {
       lastPaymentAmount: dto.amount,
     };
 
-    this.memberships.set(userId, membership);
-
     // Persist membership & payment transaction in database
     try {
       await this.prisma.client.$transaction([
@@ -238,21 +233,16 @@ export class PaymentsService {
   }
 
   /**
-   * Retrieves the current user's membership status and active perks.
+   * Retrieves the current user's membership status and active perks directly from PostgreSQL database.
    */
   async getMembership(userId: string): Promise<UserMembership> {
-    const cached = this.memberships.get(userId);
-    if (cached) {
-      return cached;
-    }
-
     try {
       const persisted = await this.prisma.client.membership.findUnique({
         where: { userId },
       });
 
       if (persisted) {
-        const mem: UserMembership = {
+        return {
           tier: persisted.tier as any,
           planName: persisted.planName,
           expiresAt: persisted.expiresAt ? persisted.expiresAt.toISOString() : null,
@@ -264,8 +254,6 @@ export class PaymentsService {
           lastPaymentAt: persisted.lastPaymentAt ? persisted.lastPaymentAt.toISOString() : undefined,
           lastPaymentAmount: persisted.lastPaymentAmount ?? undefined,
         };
-        this.memberships.set(userId, mem);
-        return mem;
       }
     } catch (err) {
       this.logger.error(`Failed to load persisted membership for user ${userId}`, err);
@@ -286,29 +274,25 @@ export class PaymentsService {
   async getAllMemberships(): Promise<UserMembership[]> {
     try {
       const persistedList = await this.prisma.client.membership.findMany();
-      if (persistedList.length > 0) {
-        return persistedList.map((p) => ({
-          tier: p.tier as any,
-          planName: p.planName,
-          expiresAt: p.expiresAt ? p.expiresAt.toISOString() : null,
-          status: p.status as any,
-          superInterestsRemaining: p.superInterestsRemaining,
-          spotlightsRemaining: p.spotlightsRemaining,
-          hasGoldBadge: p.hasGoldBadge,
-          canViewPhoneNumbers: p.canViewPhoneNumbers,
-          lastPaymentAt: p.lastPaymentAt ? p.lastPaymentAt.toISOString() : undefined,
-          lastPaymentAmount: p.lastPaymentAmount ?? undefined,
-        }));
-      }
+      return persistedList.map((p) => ({
+        tier: p.tier as any,
+        planName: p.planName,
+        expiresAt: p.expiresAt ? p.expiresAt.toISOString() : null,
+        status: p.status as any,
+        superInterestsRemaining: p.superInterestsRemaining,
+        spotlightsRemaining: p.spotlightsRemaining,
+        hasGoldBadge: p.hasGoldBadge,
+        canViewPhoneNumbers: p.canViewPhoneNumbers,
+        lastPaymentAt: p.lastPaymentAt ? p.lastPaymentAt.toISOString() : undefined,
+        lastPaymentAmount: p.lastPaymentAmount ?? undefined,
+      }));
     } catch (err) {
       this.logger.error("Failed to load all persisted memberships", err);
+      return [];
     }
-    return Array.from(this.memberships.values());
   }
 
   async setMembership(userId: string, membership: UserMembership): Promise<UserMembership> {
-    this.memberships.set(userId, membership);
-
     try {
       await this.prisma.client.membership.upsert({
         where: { userId },

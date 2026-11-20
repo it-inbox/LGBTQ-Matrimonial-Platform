@@ -88,7 +88,7 @@ export class ChatService {
         const unreadCount = await this.prisma.client.message.count({
           where: {
             conversationId: conv.id,
-            senderId: partner.id,
+            recipientId: userId,
             isRead: false,
           },
         });
@@ -293,6 +293,7 @@ export class ChatService {
         data: {
           conversationId: dto.conversationId,
           senderId,
+          recipientId,
           content: dto.content,
         },
       }),
@@ -348,7 +349,7 @@ export class ChatService {
     await this.prisma.client.message.updateMany({
       where: {
         conversationId,
-        senderId: recipientId,
+        recipientId: userId,
         isRead: false,
       },
       data: { isRead: true },

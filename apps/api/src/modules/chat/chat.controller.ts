@@ -30,6 +30,7 @@ import {
 @Controller("chat")
 export class ChatController {
   constructor(
+    @Inject(forwardRef(() => ChatService))
     private readonly chatService: ChatService,
     @Inject(forwardRef(() => ChatGateway))
     private readonly chatGateway: ChatGateway
@@ -75,7 +76,19 @@ export class ChatController {
     @CurrentUser("userId") userId: string,
     @Body(new ZodValidationPipe(sendMessageSchema)) dto: SendMessageInput
   ) {
-    return this.chatService.sendMessage(userId, dto);
+    const result = await this.chatService.sendMessage(userId, dto);
+
+    // 1. Broadcast to conversation room so open chat views (like Web ActiveChatView) receive it immediately
+    this.chatGateway.emitToConversation(dto.conversationId, "new_message", result.message);
+
+    // 2. Broadcast to recipient's personal user room for badge/toast notifications
+    this.chatGateway.emitToUser(result.recipientId, "incoming_message_notification", {
+      conversationId: dto.conversationId,
+      message: result.message,
+      sender: result.sender,
+    });
+
+    return result.message;
   }
 
   @Patch("messages/:id")

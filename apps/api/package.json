@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "build": "tsc",
+    "test": "vitest run",
+    "test:e2e": "vitest run --config vitest.e2e.config.ts",
     "dev": "node --watch dist/main.js",
     "watch": "tsc --watch --preserveWatchOutput",
     "start": "node dist/main.js",
@@ -32,9 +34,12 @@
     "@everpride/typescript-config": "workspace:*",
     "@nestjs/cli": "^11.0.2",
     "@nestjs/schematics": "^11.0.0",
+    "@nestjs/testing": "^11.2.11",
     "@types/express": "^5.0.0",
     "@types/node": "^22.10.7",
+    "@types/supertest": "^7.2.1",
     "rimraf": "^6.0.1",
+    "supertest": "^7.3.2",
     "typescript": "^5.7.2"
   }
 }

@@ -8,9 +8,16 @@ import {
   HttpStatus,
 } from "@nestjs/common";
 import { ApiTags, ApiOperation, ApiBearerAuth } from "@nestjs/swagger";
-import { PaymentsService, CreateCheckoutSessionDto, CompletePaymentDto } from "./payments.service.js";
+import { PaymentsService } from "./payments.service.js";
 import { AuthGuard } from "../../common/guards/auth.guard.js";
 import { CurrentUser } from "../../common/decorators/current-user.decorator.js";
+import { ZodValidationPipe } from "../../common/pipes/zod-validation.pipe.js";
+import {
+  createCheckoutSessionSchema,
+  completePaymentSchema,
+  CreateCheckoutSessionInput,
+  CompletePaymentInput,
+} from "@everpride/shared";
 
 @ApiTags("Payments & Subscriptions")
 @ApiBearerAuth()
@@ -30,7 +37,7 @@ export class PaymentsController {
   @ApiOperation({ summary: "Create checkout session (Live Stripe or Dev Simulator)" })
   async createCheckoutSession(
     @CurrentUser("userId") userId: string,
-    @Body() dto: CreateCheckoutSessionDto
+    @Body(new ZodValidationPipe(createCheckoutSessionSchema)) dto: CreateCheckoutSessionInput
   ) {
     return this.paymentsService.createCheckoutSession(userId, dto);
   }
@@ -40,7 +47,7 @@ export class PaymentsController {
   @ApiOperation({ summary: "Complete simulated payment and activate membership perks" })
   async completeSimulation(
     @CurrentUser("userId") userId: string,
-    @Body() dto: CompletePaymentDto
+    @Body(new ZodValidationPipe(completePaymentSchema)) dto: CompletePaymentInput
   ) {
     return this.paymentsService.completeSimulatedPayment(userId, dto);
   }

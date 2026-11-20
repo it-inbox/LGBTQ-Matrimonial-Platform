@@ -97,7 +97,7 @@ export class MatchesService {
     // 3. Build comprehensive database WHERE clause
     const whereClause: any = {
       userId: { notIn: Array.from(excludedUserIds) },
-      user: { isActive: true },
+      user: { isActive: true, deletedAt: null },
     };
 
     // Preference filters
@@ -1017,9 +1017,9 @@ export class MatchesService {
           ...item.receiver,
           profile: item.receiver?.profile
             ? {
-                ...item.receiver.profile,
-                photos: this.sanitizePhotos(item.receiver.profile.photos, true),
-              }
+              ...item.receiver.profile,
+              photos: this.sanitizePhotos(item.receiver.profile.photos, true),
+            }
             : undefined,
         },
       };
@@ -1041,9 +1041,9 @@ export class MatchesService {
           ...item.sender,
           profile: item.sender?.profile
             ? {
-                ...item.sender.profile,
-                photos: this.sanitizePhotos(item.sender.profile.photos, true),
-              }
+              ...item.sender.profile,
+              photos: this.sanitizePhotos(item.sender.profile.photos, true),
+            }
             : undefined,
         },
       };

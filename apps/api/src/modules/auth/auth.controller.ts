@@ -1,8 +1,9 @@
-import { Controller, Post, Get, Body, HttpCode, HttpStatus, Res, Req, UseGuards, UnauthorizedException } from "@nestjs/common";
+import { Controller, Post, Get, Body, Query, HttpCode, HttpStatus, Res, Req, UseGuards, UnauthorizedException, Inject, forwardRef } from "@nestjs/common";
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from "@nestjs/swagger";
 import type { Response, Request } from "express";
 import { AuthService } from "./auth.service.js";
 import { AuthGuard } from "../../common/guards/auth.guard.js";
+import { IpRateLimiterGuard } from "../../common/guards/ip-rate-limiter.guard.js";
 import { CurrentUser } from "../../common/decorators/current-user.decorator.js";
 import { ZodValidationPipe } from "../../common/pipes/zod-validation.pipe.js";
 import {
@@ -21,7 +22,10 @@ import {
 @ApiTags("Authentication")
 @Controller("auth")
 export class AuthController {
-  constructor(private readonly authService: AuthService) { }
+  constructor(
+    @Inject(forwardRef(() => AuthService))
+    private readonly authService: AuthService
+  ) { }
 
   private setRefreshTokenCookie(res: Response, refreshToken: string) {
     res.cookie("everpride_refresh_token", refreshToken, {
@@ -41,7 +45,15 @@ export class AuthController {
     return this.authService.getSession(userId);
   }
 
+  @Get("check-phone")
+  @ApiOperation({ summary: "Check if a phone number is already registered" })
+  async checkPhone(@Query("phoneNumber") phoneNumber: string) {
+    const exists = await this.authService.checkPhoneRegistered(phoneNumber || "");
+    return { exists };
+  }
+
   @Post("send-otp")
+  @UseGuards(IpRateLimiterGuard)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: "Send OTP to mobile number" })
   async sendOtp(@Body(new ZodValidationPipe(sendOtpSchema)) dto: SendOtpInput) {
@@ -108,7 +120,24 @@ export class AuthController {
   @Post("logout")
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: "Log out and clear refresh token cookie" })
-  async logout(@Res({ passthrough: true }) res: Response) {
+  async logout(
+    @Body() body: { refreshToken?: string },
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response
+  ) {
+    const tokenFromCookie =
+      req.cookies?.everpride_refresh_token ||
+      (req.headers.cookie &&
+        req.headers.cookie
+          .split(";")
+          .find((c) => c.trim().startsWith("everpride_refresh_token="))
+          ?.split("=")[1]);
+    const token = body?.refreshToken || tokenFromCookie;
+
+    if (token) {
+      await this.authService.logout(token);
+    }
+
     res.clearCookie("everpride_refresh_token", {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",

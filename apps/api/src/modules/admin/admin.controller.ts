@@ -15,6 +15,7 @@ import { AdminService, AdminUsersQuery, InviteAdminDto } from "./admin.service.j
 import { AuthGuard } from "../../common/guards/auth.guard.js";
 import { RolesGuard } from "../../common/guards/roles.guard.js";
 import { Roles } from "../../common/decorators/roles.decorator.js";
+import { CurrentUser } from "../../common/decorators/current-user.decorator.js";
 
 type UserRole = "USER" | "MODERATOR" | "ADMIN";
 
@@ -81,10 +82,11 @@ export class AdminController {
   @ApiBearerAuth()
   @ApiOperation({ summary: "Ban or unban a user (toggle isActive)" })
   async updateUserStatus(
+    @CurrentUser("userId") adminId: string,
     @Param("id") id: string,
     @Body("isActive") isActive: boolean
   ) {
-    return this.adminService.updateUserStatus(id, isActive);
+    return this.adminService.updateUserStatus(id, isActive, adminId);
   }
 
   @Patch("users/:id/role")
@@ -105,10 +107,11 @@ export class AdminController {
   @ApiBearerAuth()
   @ApiOperation({ summary: "Toggle profile verification badge (isVerified)" })
   async updateUserVerified(
+    @CurrentUser("userId") adminId: string,
     @Param("id") id: string,
     @Body("isVerified") isVerified: boolean
   ) {
-    return this.adminService.updateUserVerified(id, isVerified);
+    return this.adminService.updateUserVerified(id, isVerified, adminId);
   }
 
   @Post("dummy/purge")
@@ -127,9 +130,10 @@ export class AdminController {
   @ApiBearerAuth()
   @ApiOperation({ summary: "Manually grant or adjust user membership tier and duration" })
   async updateMembership(
+    @CurrentUser("userId") adminId: string,
     @Param("userId") userId: string,
     @Body() body: { tier: "FREE" | "PRO" | "PRO_MAX" | "PRO_SUPREME" | "PREMIER_LITE"; durationDays?: number }
   ) {
-    return this.adminService.updateMembership(userId, body.tier, body.durationDays || 30);
+    return this.adminService.updateMembership(userId, body.tier, body.durationDays || 30, adminId);
   }
 }

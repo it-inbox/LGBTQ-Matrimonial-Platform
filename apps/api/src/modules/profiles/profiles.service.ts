@@ -190,10 +190,11 @@ export class ProfilesService {
         motherTongue: data.motherTongue,
         languagesSpoken: data.languagesSpoken || [],
         maritalStatus: data.maritalStatus,
-        phoneNumber: data.phoneNumber,
         city: data.city,
         state: data.state,
         country: data.country,
+        originCountry: data.originCountry || null,
+        originCity: data.originCity || null,
         education: data.education,
         degree: data.degree,
         sector: data.sector,
@@ -205,6 +206,7 @@ export class ProfilesService {
         drinking: data.drinking,
         smoking: data.smoking,
         pets: data.pets,
+        children: data.children || null,
         hobbies: data.hobbies || [],
         photoVisibility: data.photoVisibility as PhotoVisibility,
         ghostModeEnabled: data.ghostModeEnabled,
@@ -259,18 +261,44 @@ export class ProfilesService {
 
     const { dateOfBirth, gender, orientation, outnessStatus, photoVisibility, partnerPreference, photos, educations, ...rest } = data;
 
-    // If photos are provided, replace existing photos with the updated photo list
+    // If photos are provided, diff and update preserving existing photo IDs
     if (photos && Array.isArray(photos)) {
-      await this.prisma.client.profilePhoto.deleteMany({
+      const existingPhotos = await this.prisma.client.profilePhoto.findMany({
         where: { profileId: profile.id },
       });
 
-      if (photos.length > 0) {
+      const existingUrls = new Set(existingPhotos.map((p) => p.originalUrl));
+      const targetUrls = new Set(photos);
+
+      // 1. Delete photos that are no longer in the list
+      const toDelete = existingPhotos.filter((p) => !targetUrls.has(p.originalUrl));
+      if (toDelete.length > 0) {
+        await this.prisma.client.profilePhoto.deleteMany({
+          where: { id: { in: toDelete.map((p) => p.id) } },
+        });
+      }
+
+      // 2. Update isPrimary for remaining photos
+      for (const p of existingPhotos) {
+        if (targetUrls.has(p.originalUrl)) {
+          const newIsPrimary = photos[0] === p.originalUrl;
+          if (p.isPrimary !== newIsPrimary) {
+            await this.prisma.client.profilePhoto.update({
+              where: { id: p.id },
+              data: { isPrimary: newIsPrimary },
+            });
+          }
+        }
+      }
+
+      // 3. Insert newly added photos
+      const newUrls = photos.filter((url) => !existingUrls.has(url));
+      if (newUrls.length > 0) {
         await this.prisma.client.profilePhoto.createMany({
-          data: photos.map((url, idx) => ({
+          data: newUrls.map((url) => ({
             profileId: profile.id,
             originalUrl: url,
-            isPrimary: idx === 0,
+            isPrimary: photos[0] === url,
             isApproved: true,
           })),
         });

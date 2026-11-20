@@ -1,13 +1,17 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 import "reflect-metadata";
 import { NestFactory } from "@nestjs/core";
 import { ValidationPipe } from "@nestjs/common";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 import { NestExpressApplication } from "@nestjs/platform-express";
-import dotenv from "dotenv";
 import { AppModule } from "./app.module.js";
 import { AllExceptionsFilter } from "./common/filters/all-exceptions.filter.js";
+import { getJwtSecrets } from "./config/jwt.config.js";
 
-dotenv.config();
+// Fail-fast validate critical environment variables on startup
+getJwtSecrets();
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
@@ -41,7 +45,7 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup("api/docs", app, document);
 
-  const port = process.env.PORT || 4000;
+  const port = process.env.PORT || 4001;
   await app.listen(port);
   console.log(`[EverPride API] Server listening on http://localhost:${port}/api/v1`);
   console.log(`[EverPride API] Swagger documentation available at http://localhost:${port}/api/docs`);

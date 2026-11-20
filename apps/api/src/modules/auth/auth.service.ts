@@ -2,7 +2,10 @@ import {
   Injectable,
   ConflictException,
   UnauthorizedException,
+  NotFoundException,
   BadRequestException,
+  Inject,
+  forwardRef,
 } from "@nestjs/common";
 import * as crypto from "crypto";
 import { PrismaService } from "../prisma/prisma.service.js";
@@ -10,27 +13,65 @@ import { TokenService } from "@everpride/auth";
 import { RegisterInput, LoginInput, SendOtpInput, VerifyOtpInput } from "@everpride/shared";
 import { SmsService } from "./sms.service.js";
 import { PaymentsService } from "../payments/payments.service.js";
+import { getJwtSecrets } from "../../config/jwt.config.js";
 
 @Injectable()
 export class AuthService {
   private tokenService: TokenService;
+  private otpHmacSecret: string;
 
   constructor(
+    @Inject(forwardRef(() => PrismaService))
     private prisma: PrismaService,
+    @Inject(forwardRef(() => SmsService))
     private smsService: SmsService,
+    @Inject(forwardRef(() => PaymentsService))
     private paymentsService: PaymentsService,
   ) {
-    const accessSecret = process.env.JWT_ACCESS_SECRET || "super-secret-access-token-change-in-production";
-    const refreshSecret = process.env.JWT_REFRESH_SECRET || "super-secret-refresh-token-change-in-production";
+    const { accessSecret, refreshSecret, otpHmacSecret } = getJwtSecrets();
     this.tokenService = new TokenService(accessSecret, "15m", refreshSecret, "7d");
+    this.otpHmacSecret = otpHmacSecret;
+  }
+
+  async checkPhoneRegistered(phoneNumber: string): Promise<boolean> {
+    const cleanPhone = phoneNumber.trim();
+    const user = await this.prisma.client.user.findFirst({
+      where: {
+        phoneNumber: cleanPhone,
+        deletedAt: null,
+      },
+      select: { id: true },
+    });
+    return !!user;
   }
 
   private hashOtp(phone: string, otp: string): string {
-    return crypto.createHash("sha256").update(`${phone}:${otp}:everpride_salt`).digest("hex");
+    return crypto
+      .createHmac("sha256", this.otpHmacSecret)
+      .update(`${phone}:${otp}`)
+      .digest("hex");
+  }
+
+  private async purgeExpiredVerifications(): Promise<void> {
+    try {
+      const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+      await this.prisma.client.phoneVerification.deleteMany({
+        where: {
+          expiresAt: {
+            lt: oneHourAgo,
+          },
+        },
+      });
+    } catch {
+      // Non-blocking background cleanup
+    }
   }
 
   async sendOtp(data: SendOtpInput) {
     const cleanPhone = data.phoneNumber.trim();
+
+    // Trigger asynchronous purge of old expired phone verifications
+    this.purgeExpiredVerifications().catch(() => {});
 
     // Rate-limit check: cooldown of 30 seconds before sending another OTP
     const existing = await this.prisma.client.phoneVerification.findUnique({
@@ -100,7 +141,14 @@ export class AuthService {
     }
 
     const expectedHash = this.hashOtp(cleanPhone, inputOtp);
-    if (record.otpHash !== expectedHash) {
+    const expectedBuffer = Buffer.from(expectedHash, "hex");
+    const recordBuffer = Buffer.from(record.otpHash, "hex");
+
+    const isMatch =
+      expectedBuffer.length === recordBuffer.length &&
+      crypto.timingSafeEqual(expectedBuffer, recordBuffer);
+
+    if (!isMatch) {
       await this.prisma.client.phoneVerification.update({
         where: { phoneNumber: cleanPhone },
         data: { attempts: record.attempts + 1 },
@@ -155,7 +203,7 @@ export class AuthService {
       },
     });
 
-    const tokens = this.generateTokens(user.id, cleanPhone);
+    const tokens = await this.generateAndSaveTokens(user.id, cleanPhone);
     const membership = this.paymentsService.getMembership(user.id);
     return {
       user: {
@@ -173,18 +221,15 @@ export class AuthService {
     const cleanPhone = data.phoneNumber.trim();
     await this.validateAndConsumeOtp(cleanPhone, data.otp);
 
-    let user = await this.prisma.client.user.findUnique({
-      where: { phoneNumber: cleanPhone },
+    const user = await this.prisma.client.user.findFirst({
+      where: {
+        phoneNumber: cleanPhone,
+        deletedAt: null,
+      },
     });
 
     if (!user) {
-      // Register on the fly if new user authenticates with phone
-      user = await this.prisma.client.user.create({
-        data: {
-          phoneNumber: cleanPhone,
-          isVerified: true,
-        },
-      });
+      throw new NotFoundException("User not registered. Please register a new account.");
     }
 
     if (!user.isActive) {
@@ -199,7 +244,7 @@ export class AuthService {
       Promise.resolve(this.paymentsService.getMembership(user.id)),
     ]);
 
-    const tokens = this.generateTokens(user.id, cleanPhone);
+    const tokens = await this.generateAndSaveTokens(user.id, cleanPhone);
     return {
       user: {
         id: user.id,
@@ -217,6 +262,34 @@ export class AuthService {
   async refresh(refreshToken: string) {
     try {
       const payload = this.tokenService.verifyRefreshToken(refreshToken);
+      const tokenHash = this.hashToken(refreshToken);
+
+      // Check database for token status
+      const storedToken = await this.prisma.client.refreshToken.findUnique({
+        where: { tokenHash },
+      });
+
+      if (!storedToken) {
+        throw new UnauthorizedException("Invalid refresh token");
+      }
+
+      // Reuse detection: If token was already revoked, revoke ALL tokens for this user as a security measure
+      if (storedToken.revoked) {
+        await this.prisma.client.refreshToken.updateMany({
+          where: { userId: payload.userId },
+          data: { revoked: true },
+        });
+        throw new UnauthorizedException("Refresh token was previously revoked. Suspicious reuse detected.");
+      }
+
+      if (new Date() > storedToken.expiresAt) {
+        await this.prisma.client.refreshToken.update({
+          where: { tokenHash },
+          data: { revoked: true },
+        });
+        throw new UnauthorizedException("Refresh token has expired");
+      }
+
       const user = await this.prisma.client.user.findUnique({
         where: { id: payload.userId },
       });
@@ -224,10 +297,35 @@ export class AuthService {
         throw new UnauthorizedException("User no longer active");
       }
 
-      return this.generateTokens(user.id, user.phoneNumber || "");
-    } catch {
+      // Rotate token: revoke current stored token
+      await this.prisma.client.refreshToken.update({
+        where: { tokenHash },
+        data: { revoked: true },
+      });
+
+      // Issue and persist new refresh token
+      return await this.generateAndSaveTokens(user.id, user.phoneNumber || "");
+    } catch (err: any) {
+      if (err instanceof UnauthorizedException) {
+        throw err;
+      }
       throw new UnauthorizedException("Invalid or expired refresh token");
     }
+  }
+
+  async logout(refreshToken?: string) {
+    if (refreshToken) {
+      try {
+        const tokenHash = this.hashToken(refreshToken);
+        await this.prisma.client.refreshToken.updateMany({
+          where: { tokenHash },
+          data: { revoked: true },
+        });
+      } catch {
+        // Non-blocking
+      }
+    }
+    return { success: true };
   }
 
   async getSession(userId: string) {
@@ -266,11 +364,31 @@ export class AuthService {
     };
   }
 
-  private generateTokens(userId: string, phoneNumber: string, role: string = "USER") {
+  private hashToken(token: string): string {
+    return crypto.createHash("sha256").update(token).digest("hex");
+  }
+
+  private async generateAndSaveTokens(userId: string, phoneNumber: string, role: string = "USER") {
     const payload = { userId, phoneNumber, role };
+    const accessToken = this.tokenService.signAccessToken(payload);
+    const refreshToken = this.tokenService.signRefreshToken(payload);
+
+    // 7 days expiration for refresh tokens
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    const tokenHash = this.hashToken(refreshToken);
+
+    await this.prisma.client.refreshToken.create({
+      data: {
+        userId,
+        tokenHash,
+        expiresAt,
+        revoked: false,
+      },
+    });
+
     return {
-      accessToken: this.tokenService.signAccessToken(payload),
-      refreshToken: this.tokenService.signRefreshToken(payload),
+      accessToken,
+      refreshToken,
     };
   }
 }

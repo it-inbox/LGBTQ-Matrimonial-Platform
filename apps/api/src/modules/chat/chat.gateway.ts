@@ -11,6 +11,7 @@ import { Server, Socket } from "socket.io";
 import { Logger } from "@nestjs/common";
 import { TokenService } from "@everpride/auth";
 import { ChatService } from "./chat.service.js";
+import { getJwtSecrets } from "../../config/jwt.config.js";
 
 interface AuthenticatedSocket extends Socket {
   userId?: string;
@@ -29,9 +30,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   private readonly logger = new Logger(ChatGateway.name);
   private tokenService: TokenService;
+  private readonly typingThrottleMap = new Map<string, number>();
 
   constructor(private readonly chatService: ChatService) {
-    const accessSecret = process.env.JWT_ACCESS_SECRET || "super-secret-access-token-change-in-production";
+    const { accessSecret } = getJwtSecrets();
     this.tokenService = new TokenService(accessSecret);
   }
 
@@ -89,6 +91,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   handleDisconnect(client: AuthenticatedSocket) {
     if (client.userId) {
+      // Clean up typing throttle record
+      this.typingThrottleMap.delete(client.userId);
+
       const becameOffline = this.chatService.removeUserSocket(client.userId, client.id);
       if (becameOffline) {
         this.logger.log(`[ChatGateway] User ${client.userId} went offline`);
@@ -161,6 +166,21 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @MessageBody() data: { conversationId: string; isTyping: boolean }
   ) {
     if (!client.userId || !data?.conversationId) return;
+
+    // Rate-limit typing broadcasts to max 1 per 1.5 seconds per user-conversation pair
+    const throttleKey = `${client.userId}:${data.conversationId}`;
+    const now = Date.now();
+    const lastEmit = this.typingThrottleMap.get(throttleKey) || 0;
+
+    // If starting to type, enforce throttle to avoid flood; if stopping typing, let it through
+    if (data.isTyping) {
+      if (now - lastEmit < 1500) {
+        return; // Drop excessive typing events
+      }
+      this.typingThrottleMap.set(throttleKey, now);
+    } else {
+      this.typingThrottleMap.delete(throttleKey);
+    }
 
     client.to(`conversation:${data.conversationId}`).emit("user_typing", {
       conversationId: data.conversationId,

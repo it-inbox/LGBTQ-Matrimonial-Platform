@@ -3,6 +3,7 @@ import { PrismaService } from "../prisma/prisma.service.js";
 import { PaymentsService, UserMembership } from "../payments/payments.service.js";
 import { Gender, GenderEnum, Orientation } from "@everpride/shared";
 import { PasswordService, TokenService } from "@everpride/auth";
+import { getJwtSecrets } from "../../config/jwt.config.js";
 
 type UserRole = "USER" | "MODERATOR" | "ADMIN";
 
@@ -33,8 +34,7 @@ export class AdminService {
     private readonly prisma: PrismaService,
     private readonly paymentsService: PaymentsService
   ) {
-    const accessSecret = process.env.JWT_ACCESS_SECRET || "super-secret-access-token-change-in-production";
-    const refreshSecret = process.env.JWT_REFRESH_SECRET || "super-secret-refresh-token-change-in-production";
+    const { accessSecret, refreshSecret } = getJwtSecrets();
     this.tokenService = new TokenService(accessSecret, "15m", refreshSecret, "7d");
   }
 
@@ -222,30 +222,57 @@ export class AdminService {
     };
   }
 
-  async updateUserStatus(userId: string, isActive: boolean) {
+  async logAction(adminId: string, action: string, targetId?: string, details?: any) {
+    try {
+      await this.prisma.client.adminAuditLog.create({
+        data: {
+          adminId,
+          action,
+          targetId: targetId || null,
+          details: details || undefined,
+        },
+      });
+    } catch {
+      // Non-blocking background log
+    }
+  }
+
+  async updateUserStatus(userId: string, isActive: boolean, adminId?: string) {
     const user = await this.prisma.client.user.findUnique({ where: { id: userId } });
     if (!user) throw new NotFoundException("User not found");
 
-    return this.prisma.client.user.update({
+    const updated = await this.prisma.client.user.update({
       where: { id: userId },
       data: { isActive },
       select: { id: true, isActive: true },
     });
+
+    if (adminId) {
+      this.logAction(adminId, isActive ? "UNBAN_USER" : "BAN_USER", userId, { previousState: user.isActive }).catch(() => {});
+    }
+
+    return updated;
   }
 
   async updateUserRole(_userId: string, role: UserRole) {
     return { id: _userId, role };
   }
 
-  async updateUserVerified(userId: string, isVerified: boolean) {
+  async updateUserVerified(userId: string, isVerified: boolean, adminId?: string) {
     const user = await this.prisma.client.user.findUnique({ where: { id: userId } });
     if (!user) throw new NotFoundException("User not found");
 
-    return this.prisma.client.user.update({
+    const updated = await this.prisma.client.user.update({
       where: { id: userId },
       data: { isVerified },
       select: { id: true, isVerified: true },
     });
+
+    if (adminId) {
+      this.logAction(adminId, isVerified ? "VERIFY_USER" : "UNVERIFY_USER", userId).catch(() => {});
+    }
+
+    return updated;
   }
 
   async purgeDummyUsers() {
@@ -366,11 +393,13 @@ export class AdminService {
   async updateMembership(
     userId: string,
     tier: "FREE" | "PRO" | "PRO_MAX" | "PRO_SUPREME" | "PREMIER_LITE",
-    durationDays: number = 30
+    durationDays: number = 30,
+    adminId?: string
   ) {
     const user = await this.prisma.client.user.findUnique({ where: { id: userId } });
     if (!user) throw new NotFoundException("User not found");
 
+    const previousMembership = await this.paymentsService.getMembership(userId);
     const expiresAt = tier === "FREE" ? null : new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000).toISOString();
 
     const updated: UserMembership = {
@@ -386,6 +415,16 @@ export class AdminService {
       lastPaymentAmount: 0,
     };
 
-    return this.paymentsService.setMembership(userId, updated);
+    const result = await this.paymentsService.setMembership(userId, updated);
+
+    if (adminId) {
+      this.logAction(adminId, "OVERRIDE_MEMBERSHIP", userId, {
+        previousTier: previousMembership.tier,
+        newTier: tier,
+        durationDays,
+      }).catch(() => {});
+    }
+
+    return result;
   }
 }

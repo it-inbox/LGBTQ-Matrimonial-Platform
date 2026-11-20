@@ -6,6 +6,7 @@ import {
 } from "@nestjs/common";
 import { Request } from "express";
 import { TokenService, TokenPayload } from "@everpride/auth";
+import { getJwtSecrets } from "../../config/jwt.config.js";
 
 export interface AuthenticatedUserRequest extends Request {
   user: TokenPayload;
@@ -16,7 +17,7 @@ export class AuthGuard implements CanActivate {
   private tokenService: TokenService;
 
   constructor() {
-    const accessSecret = process.env.JWT_ACCESS_SECRET || "super-secret-access-token-change-in-production";
+    const { accessSecret } = getJwtSecrets();
     this.tokenService = new TokenService(accessSecret);
   }
 
