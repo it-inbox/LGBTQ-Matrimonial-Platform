@@ -499,8 +499,9 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
   };
 
   return (
-    <ScrollView contentContainerStyle={{ flexGrow: 1 }} className="bg-slate-50 p-4">
-      {/* ── HEADER PROGRESS TRACKER ── */}
+    <View className="flex-1 bg-slate-50">
+      <ScrollView contentContainerStyle={{ flexGrow: 1, padding: 16, paddingBottom: 100 }}>
+        {/* ── HEADER PROGRESS TRACKER ── */}
       <View className="bg-white border border-slate-200/90 rounded-2xl p-4 mb-4 shadow-sm">
         <View className="flex-row items-center justify-between mb-2">
           <View className="flex-row items-center gap-1.5 flex-1 pr-2">
@@ -1413,9 +1414,10 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
           </View>
         )}
       </View>
+      </ScrollView>
 
-      {/* ── NAVIGATION BUTTONS ── */}
-      <View className="flex-row items-center justify-between gap-3 mb-6">
+      {/* ── STICKY BOTTOM NAVIGATION BUTTONS ── */}
+      <View className="absolute bottom-0 left-0 right-0 bg-white/95 border-t border-slate-200 px-4 py-3 flex-row items-center justify-between gap-3 shadow-lg">
         {step > 1 ? (
           <TouchableOpacity
             onPress={handleBack}
@@ -1675,6 +1677,6 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
           </View>
         </View>
       </Modal>
-    </ScrollView>
+    </View>
   );
 };
