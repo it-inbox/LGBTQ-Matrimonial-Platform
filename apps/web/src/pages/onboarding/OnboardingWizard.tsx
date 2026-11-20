@@ -265,7 +265,7 @@ export const OnboardingWizard: React.FC = () => {
     "Picture Privacy Settings",
     "Your Pictures",
     "Bio",
-    "Lifestyle & Interests",
+    "Lifestyle",
   ];
 
   const handleChange = (field: string, value: any) => {
@@ -1004,6 +1004,9 @@ export const OnboardingWizard: React.FC = () => {
 
                     <div className="space-y-3">
                       <div>
+                        <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2">
+                          QUALIFICATION <span className="text-rose-500">*</span>
+                        </label>
                         <div className="flex flex-wrap gap-2">
                           {QUALIFICATION_OPTIONS.map((q) => {
                             const isSelected = edu.degree === q;
@@ -1363,7 +1366,7 @@ export const OnboardingWizard: React.FC = () => {
         {step === 10 && (
           <div className="space-y-8">
             <div>
-              <h2 className="text-xl sm:text-2xl font-black text-rose-600 tracking-tight">Lifestyle & Interests</h2>
+              <h2 className="text-xl sm:text-2xl font-black text-rose-600 tracking-tight">Lifestyle</h2>
             </div>
 
             {/* Dietary Preferences */}
@@ -1435,7 +1438,7 @@ export const OnboardingWizard: React.FC = () => {
             {/* Pet Preferences */}
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-                PET PREFERENCES
+                PETS
               </label>
               <div className="flex flex-wrap gap-2">
                 {PET_OPTIONS.map((petOption) => (
@@ -1451,10 +1454,10 @@ export const OnboardingWizard: React.FC = () => {
               </div>
             </div>
 
-            {/* Children Preferences */}
+            {/*  */}
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-                CHILDREN PREFERENCES
+                CHILDREN
               </label>
               <div className="flex flex-wrap gap-2">
                 {CHILDREN_OPTIONS.map((childOption) => (
@@ -1470,16 +1473,13 @@ export const OnboardingWizard: React.FC = () => {
               </div>
             </div>
 
-            {/* Hobbies & Interests - Unified Broad Categories in One Section */}
+            {/* Hobbies - Unified Broad Categories in One Section */}
             <div>
-              <div className="flex items-center justify-between mb-2.5">
+              <div className="flex items-center justify-between mb-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                    HOBBIES & INTERESTS
+                    HOBBIES
                   </label>
-                  <p className="text-[11px] text-slate-500">
-                    Select your favorite activities, passions, and lifestyle interests.
-                  </p>
                 </div>
                 <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-brand-50 text-brand-700 border border-brand-200">
                   {formData.hobbies.length} selected

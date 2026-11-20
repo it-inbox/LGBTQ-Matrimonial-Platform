@@ -79,7 +79,7 @@ export const ChoiceCard: React.FC<ChoiceCardProps> = ({
         <div className="flex items-center justify-between gap-2">
           <span
             className={cn(
-              "text-xs sm:text-sm font-bold",
+              "text-xs sm:text-sm font-normal",
               selected ? "text-brand-900" : "text-slate-800"
             )}
           >

@@ -194,7 +194,7 @@ const SECTION_TABS: SectionTab[] = [
   },
   {
     id: "lifestyle",
-    label: "Lifestyle & Interests",
+    label: "Lifestyle",
     icon: Coffee,
     description: "Diet, drinking, smoking & hobbies",
   },
@@ -283,7 +283,7 @@ export const EditProfilePage: React.FC = () => {
     // Bio
     bio: "",
 
-    // Lifestyle & Interests
+    // Lifestyle
     diet: "Vegetarian",
     drinking: "Non-drinker",
     smoking: "Non-smoker",
@@ -1123,6 +1123,9 @@ export const EditProfilePage: React.FC = () => {
 
                       {/* Qualification Level (Inline Selectable Pill Chips) */}
                       <div>
+                        <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2">
+                          Qualification <span className="text-rose-500">*</span>
+                        </label>
                         <div className="flex flex-wrap gap-2">
                           {[
                             "Doctorate / Ph.D",
@@ -1283,7 +1286,7 @@ export const EditProfilePage: React.FC = () => {
             {/* SECTION 7: LIFESTYLE & HOBBIES */}
             <section id="lifestyle" className="space-y-6">
               <h2 className="text-base font-bold text-rose-600 uppercase tracking-wider">
-                Lifestyle & Interests
+                Lifestyle
               </h2>
               <div className="space-y-7">
                 {/* Dietary Preference */}
@@ -1364,7 +1367,7 @@ export const EditProfilePage: React.FC = () => {
                 {/* Pet Preferences */}
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
-                    Pet Preferences
+                    Pets
                   </label>
                   <div className="flex flex-wrap gap-2">
                     {PET_OPTIONS.map((petOption) => (
@@ -1380,10 +1383,10 @@ export const EditProfilePage: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Children Preferences */}
+                {/* Children */}
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
-                    Children Preferences
+                    Children
                   </label>
                   <div className="flex flex-wrap gap-2">
                     {CHILDREN_OPTIONS.map((childOption) => (
@@ -1399,11 +1402,11 @@ export const EditProfilePage: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Hobbies / Interests */}
+                {/* Hobbies */}
                 <div>
-                  <div className="flex items-center justify-between mb-2.5">
+                  <div className="flex items-center justify-between mb-4">
                     <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider">
-                      Hobbies & Interests
+                      Hobbies
                     </label>
                     <span className="text-[11px] text-slate-400">
                       {formData.hobbies.length} selected
