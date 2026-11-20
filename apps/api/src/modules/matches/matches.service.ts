@@ -462,7 +462,6 @@ export class MatchesService {
                   state: true,
                   country: true,
                   religion: true,
-                  annualIncome: true,
                   pronouns: true,
                   photoVisibility: true,
                   photos: {
@@ -537,7 +536,6 @@ export class MatchesService {
                 dateOfBirth: true,
                 heightCm: true,
                 religion: true,
-                annualIncome: true,
                 maritalStatus: true,
                 pronouns: true,
                 photoVisibility: true,
@@ -607,7 +605,6 @@ export class MatchesService {
                 dateOfBirth: true,
                 heightCm: true,
                 religion: true,
-                annualIncome: true,
                 maritalStatus: true,
                 pronouns: true,
                 photoVisibility: true,
@@ -752,7 +749,6 @@ export class MatchesService {
                   state: true,
                   country: true,
                   religion: true,
-                  annualIncome: true,
                   pronouns: true,
                   photoVisibility: true,
                   photos: {
@@ -935,7 +931,6 @@ export class MatchesService {
                 state: true,
                 country: true,
                 religion: true,
-                annualIncome: true,
                 pronouns: true,
                 photos: {
                   select: {
@@ -982,7 +977,6 @@ export class MatchesService {
                 state: true,
                 country: true,
                 religion: true,
-                annualIncome: true,
                 pronouns: true,
                 photos: {
                   select: {

@@ -200,7 +200,6 @@ export class ProfilesService {
         sector: data.sector,
         profession: data.profession,
         company: data.company,
-        annualIncome: data.annualIncome,
         bio: data.bio,
         diet: data.diet,
         drinking: data.drinking,
