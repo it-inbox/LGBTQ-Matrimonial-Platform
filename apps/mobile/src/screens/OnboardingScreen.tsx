@@ -57,6 +57,7 @@ import {
   ANNUAL_INCOME_OPTIONS,
   PET_OPTIONS,
   CHILDREN_OPTIONS,
+  getDegreesForQualification,
 } from "@everpride/shared";
 import { getStatesForCountry, getCitiesForState, getCitiesForCountry } from "../data/locations";
 import { MobileAgeRangeSlider } from "../components/MobileAgeRangeSlider";
@@ -171,6 +172,7 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
 
   // Searchable modal pickers
   const [activeModal, setActiveModal] = useState<"country" | "nationality" | "originCountry" | "originCity" | "state" | "city" | "religion" | "language" | null>(null);
+  const [degreePickerIndex, setDegreePickerIndex] = useState<number | null>(null);
   const [searchFilter, setSearchFilter] = useState("");
 
   const stepTitles = [
@@ -259,12 +261,19 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
   const handleUpdateEducation = (index: number, field: keyof EducationEntry, value: any) => {
     setFormData((prev) => {
       const updated = [...(prev.educations || [])];
-      updated[index] = { ...updated[index], [field]: value };
+      let newEntry = { ...updated[index], [field]: value };
+      if (field === "degree" && value !== updated[index]?.degree) {
+        const validDegrees = getDegreesForQualification(value);
+        if (newEntry.degreeName && !validDegrees.includes(newEntry.degreeName)) {
+          newEntry.degreeName = "";
+        }
+      }
+      updated[index] = newEntry;
       return {
         ...prev,
         educations: updated,
         education: updated[0]?.degree || prev.education,
-        degree: updated[0]?.degreeName || prev.degree,
+        degree: updated[0]?.degreeName || updated[0]?.major || prev.degree,
       };
     });
   };
@@ -565,10 +574,10 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
               </View>
             </View>
 
-            {/* Orientation */}
+            {/* Sexual Orientation */}
             <View className="mt-3">
               <Text className="text-slate-700 text-xs font-bold uppercase tracking-wider mb-2">
-                ORIENTATION <Text className="text-rose-500">*</Text>
+                SEXUAL ORIENTATION <Text className="text-rose-500">*</Text>
               </Text>
               <View className="flex-row flex-wrap gap-2">
                 {ORIENTATION_OPTIONS.map((o) => {
@@ -621,7 +630,6 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
                 value={formData.displayName}
                 onChangeText={(val) => handleChange("displayName", val)}
                 className="bg-slate-50 text-slate-900 p-3 rounded-xl border border-slate-200 text-sm"
-                placeholder="e.g. Steve or your chosen alias"
                 placeholderTextColor="#94a3b8"
               />
               <Text className="text-[10px] text-slate-400 mt-1">
@@ -1037,13 +1045,21 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
                     <Text className="text-slate-700 text-xs font-bold uppercase tracking-wider mb-1.5">
                       DEGREE <Text className="text-rose-500">*</Text>
                     </Text>
-                    <TextInput
-                      value={edu.degreeName || ""}
-                      onChangeText={(val) => handleUpdateEducation(idx, "degreeName", val)}
-                      className="bg-white text-slate-900 p-2.5 rounded-lg border border-slate-200 text-xs mb-2.5"
-                      placeholder="e.g. B.Tech, MBA, MBBS"
-                      placeholderTextColor="#94a3b8"
-                    />
+                    <TouchableOpacity
+                      onPress={() => {
+                        setSearchFilter("");
+                        setDegreePickerIndex(idx);
+                      }}
+                      className="bg-white p-2.5 rounded-lg border border-slate-200 flex-row items-center justify-between mb-2.5"
+                    >
+                      <Text
+                        className={`text-xs ${edu.degreeName ? "text-slate-900 font-medium" : "text-slate-400"
+                          }`}
+                      >
+                        {edu.degreeName || "Select Degree"}
+                      </Text>
+                      <ChevronDown size={16} color="#64748b" />
+                    </TouchableOpacity>
 
                     <Text className="text-slate-700 text-xs font-bold uppercase tracking-wider mb-1.5">
                       FIELD OF STUDY
@@ -1636,6 +1652,62 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
                             }`}
                         >
                           {l}
+                        </Text>
+                        {sel && <Check size={16} color="#e11d48" />}
+                      </TouchableOpacity>
+                    );
+                  })}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Degree Selection Modal */}
+      <Modal visible={degreePickerIndex !== null} transparent animationType="slide">
+        <View className="flex-1 bg-black/60 justify-end">
+          <View className="bg-white border-t border-slate-200 rounded-t-3xl p-5 max-h-[80%]">
+            <View className="flex-row items-center justify-between pb-3 border-b border-slate-100">
+              <Text className="text-slate-900 font-bold text-base">
+                Select Degree
+              </Text>
+              <TouchableOpacity onPress={() => setDegreePickerIndex(null)}>
+                <X size={20} color="#64748b" />
+              </TouchableOpacity>
+            </View>
+
+            {/* Search Filter */}
+            <View className="flex-row items-center bg-slate-50 rounded-xl px-3 py-2 my-3 border border-slate-200">
+              <Search size={16} color="#94a3b8" />
+              <TextInput
+                value={searchFilter}
+                onChangeText={setSearchFilter}
+                placeholder="Search degree..."
+                placeholderTextColor="#94a3b8"
+                className="flex-1 text-slate-800 text-xs ml-2 py-0"
+              />
+            </View>
+
+            <ScrollView className="space-y-1">
+              {degreePickerIndex !== null &&
+                getDegreesForQualification(formData.educations[degreePickerIndex]?.degree)
+                  .filter((d) => d.toLowerCase().includes(searchFilter.toLowerCase()))
+                  .map((d) => {
+                    const sel = formData.educations[degreePickerIndex]?.degreeName === d;
+                    return (
+                      <TouchableOpacity
+                        key={d}
+                        onPress={() => {
+                          handleUpdateEducation(degreePickerIndex, "degreeName", d);
+                          setDegreePickerIndex(null);
+                        }}
+                        className={`p-3 rounded-xl flex-row items-center justify-between ${sel ? "bg-rose-50 border border-rose-200" : "active:bg-slate-50"
+                          }`}
+                      >
+                        <Text
+                          className={`text-xs ${sel ? "text-rose-700 font-bold" : "text-slate-800 font-medium"
+                            }`}
+                        >
+                          {d}
                         </Text>
                         {sel && <Check size={16} color="#e11d48" />}
                       </TouchableOpacity>
