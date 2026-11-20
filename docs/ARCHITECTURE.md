@@ -84,21 +84,29 @@ erDiagram
     string pronouns
     enum outnessStatus "DISCREET_NOT_OUT, OUT_TO_SELECT_FEW, OUT_TO_ALL"
     datetime dateOfBirth
+    int heightCm
     string city
     string state
     string country
     string nationality
+    string originCountry
+    string originCity
     string religion
     string motherTongue
     string[] languagesSpoken
     string maritalStatus
     string education
+    string degree
+    string sector
     string profession
+    string company
     string annualIncome
     string bio
     string diet
     string drinking
     string smoking
+    string pets "Have pets, Want pets, Open to pets, Don't want pets"
+    string children "Want children, Don't want children, Open to children, Have children, Not sure yet"
     string[] hobbies
     enum photoVisibility "ALL_MEMBERS, MUTUAL_MATCHES_ONLY, REQUEST_REQUIRED"
     boolean ghostModeEnabled

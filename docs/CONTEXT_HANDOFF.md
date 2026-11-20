@@ -76,10 +76,19 @@ All activity feeds and lists (`/discover`, `/matches`, `/unblur/received`, `/unb
 
 ### 3.3. Profile Edit Architecture (`/profile/edit`)
 Located at [`EditProfilePage.tsx`](file:///c:/Users/Inboxuser.IBDT01/code/helloq-matrimonial/apps/web/src/pages/settings/EditProfilePage.tsx):
-* **Left Sticky Navigation Sidebar**: 8 distinct section tabs (*About & Demographics*, *Identity*, *Marital Status*, *Education & Work*, *Bio*, *Lifestyle & Interests*, *Looking For*, *Privacy Safeguards & Photos*).
+* **Left Sticky Navigation Sidebar**: 8 distinct section tabs (*About You*, *Identity*, *Marital Status*, *Education Details*, *Career*, *Bio*, *Lifestyle & Interests*, *Your Pictures*).
 * **Anchor Hash Jump**: Clicking any tab updates the URL (e.g. `/profile/edit#marital-status`) and smoothly scrolls the screen to the target section card.
 * **Intersection Observer**: Automatically highlights the active sidebar tab as the user scrolls through the form.
 * **Aligned Right Column**: Top header ("Back to Discover", "Edit Your Profile", and subtitle) is housed inside the right column, perfectly aligned with the left sidebar.
+* **Form Layout Standards**: Strict 1-field-per-row layout across desktop and mobile, with standardized headers:
+  - Location: `COUNTRY`, `STATE`, `CITY`.
+  - Origin: `NATIONALITY / CITIZENSHIP`, `COUNTRY OF ORIGIN`, `HOMETOWN`.
+  - Religion & Languages: `RELIGION`, `LANGUAGES`.
+  - Identity & Outness: `ARE YOU OUT OF THE CLOSET` with options `Yes, openly`, `Only to some`, and `No`.
+  - Education: Dynamic `SCHOOL`, `INSTITUTION`, or `UNIVERSITY` header based on qualification level, plus dedicated `DEGREE` and `FIELD OF STUDY` inputs.
+  - Career: Major header `Career`, field `JOB TITLE`, and `ANNUAL INCOME` options.
+  - Lifestyle: `Pet Preferences` (`PET_OPTIONS`: *Have pets*, *Want pets*, *Open to pets*, *Don't want pets*) and `Children Preferences` (`CHILDREN_OPTIONS`: *Want children*, *Don't want children*, *Open to children*, *Have children*, *Not sure yet*).
+  - Pictures: `Picture Privacy Settings` and `Your Pictures`.
 
 ### 3.4. Connect & Messenger Experience (`/messages`)
 Located at [`MessengerPage.tsx`](file:///c:/Users/Inboxuser.IBDT01/code/helloq-matrimonial/apps/web/src/pages/chat/MessengerPage.tsx) and [`ActiveChatView.tsx`](file:///c:/Users/Inboxuser.IBDT01/code/helloq-matrimonial/apps/web/src/components/chat/ActiveChatView.tsx):
