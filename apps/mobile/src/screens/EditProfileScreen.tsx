@@ -744,7 +744,7 @@ export const EditProfileScreen: React.FC<EditProfileScreenProps> = ({
                       >
                         <View className="flex-row items-center justify-between">
                           <Text
-                            className={`text-xs font-bold ${sel ? "text-rose-950" : "text-slate-900"
+                            className={`text-xs font-normal ${sel ? "text-rose-950" : "text-slate-900"
                               }`}
                           >
                             {ms.id}
@@ -793,6 +793,9 @@ export const EditProfileScreen: React.FC<EditProfileScreenProps> = ({
                         )}
 
                         {/* Level Chips */}
+                        <Text className="text-[10px] font-bold text-slate-600 uppercase mb-1">
+                          Qualification *
+                        </Text>
                         <View className="flex-row flex-wrap gap-1.5">
                           {QUALIFICATION_OPTIONS.map((q) => {
                             const sel = edu.degree === q;
@@ -973,10 +976,10 @@ export const EditProfileScreen: React.FC<EditProfileScreenProps> = ({
 
               <View className="h-px bg-slate-100 my-6" />
 
-              {/* SECTION 7: LIFESTYLE & INTERESTS */}
+              {/* SECTION 7: LIFESTYLE */}
               <View>
                 <Text className="text-sm font-bold text-rose-600 uppercase tracking-wider mb-3">
-                  Lifestyle & Interests
+                  Lifestyle
                 </Text>
 
                 <View className="space-y-4">
@@ -1070,7 +1073,7 @@ export const EditProfileScreen: React.FC<EditProfileScreenProps> = ({
                   {/* Pet Preferences */}
                   <View>
                     <Text className="text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-2">
-                      Pet Preferences
+                      Pets
                     </Text>
                     <View className="flex-row flex-wrap gap-2">
                       {PET_OPTIONS.map((petOpt) => {
@@ -1096,10 +1099,10 @@ export const EditProfileScreen: React.FC<EditProfileScreenProps> = ({
                     </View>
                   </View>
 
-                  {/* Children Preferences */}
+                  {/* Children */}
                   <View>
                     <Text className="text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-2">
-                      Children Preferences
+                      Children
                     </Text>
                     <View className="flex-row flex-wrap gap-2">
                       {CHILDREN_OPTIONS.map((childOpt) => {
@@ -1127,9 +1130,9 @@ export const EditProfileScreen: React.FC<EditProfileScreenProps> = ({
 
                   {/* Hobbies */}
                   <View>
-                    <View className="flex-row items-center justify-between mb-2">
+                    <View className="flex-row items-center justify-between mb-3">
                       <Text className="text-[11px] font-bold text-slate-700 uppercase tracking-wider">
-                        Hobbies & Interests
+                        Hobbies
                       </Text>
                       <Text className="text-[10px] text-slate-400">
                         {hobbies.length} selected

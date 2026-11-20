@@ -182,7 +182,7 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
     "Privacy Safeguards",
     "Pictures & Gallery",
     "Bio",
-    "Lifestyle & Interests",
+    "Lifestyle",
   ];
 
   const progressPercent = Math.round((step / totalSteps) * 100);
@@ -988,7 +988,7 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
                       }`}
                   >
                     <View className="flex-1 pr-2">
-                      <Text className={`text-sm font-bold ${sel ? "text-rose-700" : "text-slate-900"}`}>
+                      <Text className={`text-sm font-normal ${sel ? "text-rose-700" : "text-slate-900"}`}>
                         {ms.id}
                       </Text>
                     </View>
@@ -1018,6 +1018,9 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
                 )}
 
                 {/* Qualification Level Chips */}
+                <Text className="text-slate-700 text-xs font-bold uppercase tracking-wider mb-1.5">
+                  QUALIFICATION <Text className="text-rose-500">*</Text>
+                </Text>
                 <View className="flex-row flex-wrap gap-1.5 mb-3">
                   {QUALIFICATION_OPTIONS.map((q) => {
                     const sel = edu.degree === q;
@@ -1241,7 +1244,7 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
         {step === 10 && (
           <View className="space-y-7">
             <View className="mb-2">
-              <Text className="text-rose-600 text-xl font-bold">Lifestyle & Interests</Text>
+              <Text className="text-rose-600 text-xl font-bold">Lifestyle</Text>
             </View>
 
             {/* Diet */}
@@ -1325,7 +1328,7 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
             {/* Pet Preferences */}
             <View className="mt-4">
               <Text className="text-slate-700 text-xs font-bold uppercase tracking-wider mb-2">
-                PET PREFERENCES
+                PETS
               </Text>
               <View className="flex-row flex-wrap gap-2">
                 {PET_OPTIONS.map((petOpt) => {
@@ -1349,10 +1352,10 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
               </View>
             </View>
 
-            {/* Children Preferences */}
+            {/* Children */}
             <View className="mt-4">
               <Text className="text-slate-700 text-xs font-bold uppercase tracking-wider mb-2">
-                CHILDREN PREFERENCES
+                CHILDREN
               </Text>
               <View className="flex-row flex-wrap gap-2">
                 {CHILDREN_OPTIONS.map((childOpt) => {
@@ -1376,19 +1379,16 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ onSuccess })
               </View>
             </View>
 
-            {/* Hobbies & Interests */}
+            {/* Hobbies */}
             <View className="mt-4">
-              <View className="flex-row items-center justify-between mb-1">
+              <View className="flex-row items-center justify-between mb-3">
                 <Text className="text-slate-700 text-xs font-bold uppercase tracking-wider">
-                  HOBBIES & INTERESTS
+                  HOBBIES
                 </Text>
                 <Text className="text-rose-600 text-[10px] font-bold">
                   {formData.hobbies.length} selected
                 </Text>
               </View>
-              <Text className="text-[11px] text-slate-500 mb-2.5">
-                Select your favorite activities, passions, and lifestyle interests.
-              </Text>
               <View className="flex-row flex-wrap gap-2">
                 {HOBBY_OPTIONS.map((hobby) => {
                   const sel = formData.hobbies.includes(hobby);
