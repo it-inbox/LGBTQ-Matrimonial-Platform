@@ -28,6 +28,8 @@ import { EditProfileScreen } from "../screens/EditProfileScreen";
 import { PartnerPreferencesScreen } from "../screens/PartnerPreferencesScreen";
 import { PrivacySafeguardsScreen } from "../screens/PrivacySafeguardsScreen";
 import { ProfileDetailScreen } from "../screens/ProfileDetailScreen";
+import { UpgradeMembershipScreen } from "../screens/UpgradeMembershipScreen";
+import { SuccessStoriesScreen } from "../screens/SuccessStoriesScreen";
 
 interface AppHeaderProps {
   onOpenOnboarding?: () => void;
@@ -301,79 +303,16 @@ export const AppHeader: React.FC<AppHeaderProps> = ({ onOpenOnboarding, onNaviga
       </Modal>
 
       {/* Modal: Success Stories */}
-      <Modal
+      <SuccessStoriesScreen
         visible={activeModal === "stories"}
-        animationType="slide"
-        presentationStyle="pageSheet"
-        onRequestClose={() => setActiveModal(null)}
-      >
-        <View className="flex-1 bg-white">
-          <View className="px-5 py-4 border-b border-slate-200 flex-row items-center justify-between">
-            <Text className="text-lg font-bold text-slate-900">Success Stories</Text>
-            <TouchableOpacity onPress={() => setActiveModal(null)}>
-              <X size={20} color="#64748b" />
-            </TouchableOpacity>
-          </View>
-          <ScrollView className="flex-1 p-5">
-            <View className="p-4 bg-rose-50/50 rounded-2xl border border-rose-100 mb-4">
-              <Text className="font-bold text-slate-800 text-sm">
-                Aarav & Rohan (Mumbai)
-              </Text>
-              <Text className="text-xs text-slate-600 mt-1 leading-5">
-                "We found love and mutual understanding on EverPride. The verified community gave us confidence and peace of mind."
-              </Text>
-            </View>
-            <View className="p-4 bg-rose-50/50 rounded-2xl border border-rose-100 mb-4">
-              <Text className="font-bold text-slate-800 text-sm">
-                Maya & Ananya (Bengaluru)
-              </Text>
-              <Text className="text-xs text-slate-600 mt-1 leading-5">
-                "Finding someone who shared the same life goals and family values was so simple. Celebrated our union with pride!"
-              </Text>
-            </View>
-          </ScrollView>
-        </View>
-      </Modal>
+        onClose={() => setActiveModal(null)}
+      />
 
       {/* Modal: Upgrade Membership */}
-      <Modal
+      <UpgradeMembershipScreen
         visible={activeModal === "upgrade"}
-        animationType="slide"
-        presentationStyle="pageSheet"
-        onRequestClose={() => setActiveModal(null)}
-      >
-        <View className="flex-1 bg-white">
-          <View className="px-5 py-4 border-b border-slate-200 flex-row items-center justify-between">
-            <Text className="text-lg font-bold text-slate-900">Upgrade Membership</Text>
-            <TouchableOpacity onPress={() => setActiveModal(null)}>
-              <X size={20} color="#64748b" />
-            </TouchableOpacity>
-          </View>
-          <View className="p-6 items-center">
-            <View className="w-16 h-16 rounded-full bg-rose-100 items-center justify-center mb-4">
-              <Heart size={32} color="#e11d48" fill="#e11d48" />
-            </View>
-            <Text className="text-xl font-extrabold text-slate-900 text-center">
-              EverPride Premium
-            </Text>
-            <Text className="text-xs font-semibold text-rose-600 mt-1 mb-4">
-              Flat 65% OFF till 02 Nov
-            </Text>
-            <Text className="text-sm text-slate-600 text-center leading-6 mb-6">
-              Unlock unlimited direct messaging, send unblur requests instantly, view profile visitors, and enjoy priority profile spotlight.
-            </Text>
-            <TouchableOpacity
-              onPress={() => {
-                setActiveModal(null);
-                Alert.alert("Premium", "Upgrade checkout flow simulated!");
-              }}
-              className="w-full py-3.5 rounded-xl bg-rose-600 items-center justify-center shadow-xs"
-            >
-              <Text className="text-white font-bold text-sm">Continue to Upgrade</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+        onClose={() => setActiveModal(null)}
+      />
     </>
   );
 };
