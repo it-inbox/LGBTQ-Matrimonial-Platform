@@ -47,11 +47,14 @@ export const AuthScreen: React.FC = () => {
   const [showExistingAccountPrompt, setShowExistingAccountPrompt] = useState(false);
   const [authMode, setAuthMode] = useState<"signin" | "register">("register");
 
+  const [devOtpHint, setDevOtpHint] = useState<string | null>(null);
+
   // Clear inputs on mount
   useEffect(() => {
     setPhoneNumber("");
     setOtp("");
     setOtpSent(false);
+    setDevOtpHint(null);
     setIsRegistering(true);
     setShowNewAccountPrompt(false);
     setShowExistingAccountPrompt(false);
@@ -122,14 +125,22 @@ export const AuthScreen: React.FC = () => {
         setIsRegistering(false);
       }
 
-      await sendOtp(fullPhone);
+      const otpResponse = await sendOtp(fullPhone);
       setShowNewAccountPrompt(false);
       setShowExistingAccountPrompt(false);
       setOtpSent(true);
+      if (otpResponse?.devOtp) {
+        setDevOtpHint(otpResponse.devOtp);
+        setOtp(otpResponse.devOtp);
+      }
     } catch (err: any) {
-      setErrorMsg(
-        err.response?.data?.message || "Failed to send code. Please try again."
-      );
+      if (!err.response) {
+        setErrorMsg("Unable to connect to the server. Please check backend connection.");
+      } else {
+        setErrorMsg(
+          err.response?.data?.message || "Failed to send code. Please try again."
+        );
+      }
     } finally {
       setBusy(false);
     }
@@ -456,6 +467,14 @@ export const AuthScreen: React.FC = () => {
                     autoFocus
                   />
                 </View>
+
+                {devOtpHint && (
+                  <View className="mt-2 p-2 bg-amber-50 border border-amber-200 rounded-lg items-center">
+                    <Text className="text-[11px] text-amber-800">
+                      Test Mode Code: <Text className="font-bold">{devOtpHint}</Text> (or <Text className="font-bold">123456</Text>)
+                    </Text>
+                  </View>
+                )}
 
                 <TouchableOpacity
                   onPress={handleLogin}

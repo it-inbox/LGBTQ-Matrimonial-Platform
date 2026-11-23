@@ -137,8 +137,8 @@ export const MobileProfileCard: React.FC<MobileProfileCardProps> = ({
                 {profile.photoVisibility === "REQUEST_REQUIRED"
                   ? "Requires Approval"
                   : profile.photoVisibility === "MUTUAL_MATCHES_ONLY"
-                  ? "Matches Only"
-                  : "Protected"}
+                    ? "Matches Only"
+                    : "Protected"}
               </Text>
             </View>
           )}
@@ -153,18 +153,17 @@ export const MobileProfileCard: React.FC<MobileProfileCardProps> = ({
                 {onChat
                   ? "Connected on "
                   : isReceived
-                  ? "Received on "
-                  : "Sent on "}
+                    ? "Received on "
+                    : "Sent on "}
                 {formattedDate}
               </Text>
               <View
-                className={`px-2 py-0.5 rounded-full flex-row items-center gap-1 ${
-                  onChat || isAccepted
+                className={`px-2 py-0.5 rounded-full flex-row items-center gap-1 ${onChat || isAccepted
                     ? "bg-emerald-50 border border-emerald-200"
                     : isDeclined
-                    ? "bg-rose-50 border border-rose-200"
-                    : "bg-amber-50 border border-amber-200"
-                }`}
+                      ? "bg-rose-50 border border-rose-200"
+                      : "bg-amber-50 border border-amber-200"
+                  }`}
               >
                 {onChat ? (
                   <Sparkles size={10} color="#059669" />
@@ -176,15 +175,14 @@ export const MobileProfileCard: React.FC<MobileProfileCardProps> = ({
                   <Clock size={10} color="#d97706" />
                 )}
                 <Text
-                  className={`text-[10px] font-bold ${
-                    onChat
+                  className={`text-[10px] font-bold ${onChat
                       ? "text-emerald-700"
                       : isAccepted
-                      ? "text-emerald-700"
-                      : isDeclined
-                      ? "text-rose-600"
-                      : "text-amber-700"
-                  }`}
+                        ? "text-emerald-700"
+                        : isDeclined
+                          ? "text-rose-600"
+                          : "text-amber-700"
+                    }`}
                 >
                   {onChat ? "Matched" : isAccepted ? "Accepted" : isDeclined ? "Declined" : "Pending"}
                 </Text>
@@ -277,8 +275,8 @@ export const MobileProfileCard: React.FC<MobileProfileCardProps> = ({
             {isAccepted
               ? "Member accepted your interest! Connected."
               : isDeclined
-              ? "Member declined this match interest."
-              : "Waiting for member to respond."}
+                ? "Member declined this match interest."
+                : "Waiting for member to respond."}
           </Text>
           {isPending && onUnsend && (
             <TouchableOpacity

@@ -43,12 +43,15 @@ export const LoginModal: React.FC = () => {
       )
     : ALL_COUNTRIES;
 
+  const [devOtpHint, setDevOtpHint] = useState<string | null>(null);
+
   // Whenever modal opens or is opened again, reset inputs if not currently active
   useEffect(() => {
     if (isLoginModalOpen) {
       setPhoneNumber("");
       setOtpCode("");
       setOtpSent(false);
+      setDevOtpHint(null);
       setIsRegistering(authModalMode === "register");
       setShowNewAccountPrompt(false);
       setShowExistingAccountPrompt(false);
@@ -116,14 +119,23 @@ export const LoginModal: React.FC = () => {
         setIsRegistering(false);
       }
 
-      await sendOtp(fullPhone);
+      const otpResponse = await sendOtp(fullPhone);
       setShowNewAccountPrompt(false);
       setShowExistingAccountPrompt(false);
       setOtpSent(true);
       setCooldown(30); // 30s cooldown before allow resend
-      setOtpCode(""); // User enters real OTP
+      if (otpResponse?.devOtp) {
+        setDevOtpHint(otpResponse.devOtp);
+        setOtpCode(otpResponse.devOtp);
+      } else {
+        setOtpCode("");
+      }
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to send OTP. Please check phone number.");
+      if (!err.response) {
+        setError("Unable to connect to the server. Please check if the backend is running.");
+      } else {
+        setError(err.response?.data?.message || "Failed to send OTP. Please check phone number.");
+      }
     } finally {
       setLoading(false);
     }
@@ -417,6 +429,14 @@ export const LoginModal: React.FC = () => {
                   className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-center text-sm font-medium text-slate-900 placeholder:text-slate-400 placeholder:font-normal focus:outline-none focus:border-brand-600 focus:ring-1 focus:ring-brand-600/30"
                 />
               </div>
+
+              {devOtpHint && (
+                <div className="mt-2 p-2 bg-amber-50 border border-amber-200 rounded-lg text-center">
+                  <span className="text-[11px] text-amber-800">
+                    Test Mode Code: <strong className="font-mono">{devOtpHint}</strong> (or <strong className="font-mono">123456</strong>)
+                  </span>
+                </div>
+              )}
 
               <Button
                 type="submit"

@@ -74,11 +74,12 @@ export class AuthService {
     this.purgeExpiredVerifications().catch(() => {});
 
     // Rate-limit check: cooldown of 30 seconds before sending another OTP
+    const isDev = process.env.NODE_ENV !== "production";
     const existing = await this.prisma.client.phoneVerification.findUnique({
       where: { phoneNumber: cleanPhone },
     });
 
-    if (existing) {
+    if (existing && !isDev) {
       const msSinceLast = Date.now() - existing.updatedAt.getTime();
       if (msSinceLast < 30 * 1000) {
         const remainingSeconds = Math.ceil((30 * 1000 - msSinceLast) / 1000);
@@ -115,12 +116,23 @@ export class AuthService {
       success: true,
       phoneNumber: cleanPhone,
       message: "Verification code sent to your mobile number.",
+      ...(isDev ? { devOtp: randomOtp } : {}),
     };
   }
 
   private async validateAndConsumeOtp(phoneNumber: string, otp: string): Promise<boolean> {
     const cleanPhone = phoneNumber.trim();
     const inputOtp = otp.trim();
+    const isDev = process.env.NODE_ENV !== "production";
+
+    // In development mode, allow universal bypass OTP '123456'
+    if (isDev && inputOtp === "123456") {
+      // Consume phone verification record if it exists
+      await this.prisma.client.phoneVerification
+        .delete({ where: { phoneNumber: cleanPhone } })
+        .catch(() => {});
+      return true;
+    }
 
     const record = await this.prisma.client.phoneVerification.findUnique({
       where: { phoneNumber: cleanPhone },
