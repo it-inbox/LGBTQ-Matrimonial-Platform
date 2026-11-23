@@ -140,6 +140,16 @@ export const DiscoveryFilterModal: React.FC<DiscoveryFilterModalProps> = ({
                 )}
               </View>
 
+              <TouchableOpacity
+                onPress={() => setShowNationalitySearchModal(true)}
+                className="flex-row items-center bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 mb-2"
+              >
+                <Search size={14} color="#94a3b8" />
+                <Text className="text-xs text-slate-500 ml-2">
+                  Add / Search Nationalities...
+                </Text>
+              </TouchableOpacity>
+
               {/* Selected Tags */}
               {selectedNationalities.length > 0 && (
                 <View className="flex-row flex-wrap gap-1.5 mb-2">
@@ -163,16 +173,6 @@ export const DiscoveryFilterModal: React.FC<DiscoveryFilterModalProps> = ({
                   ))}
                 </View>
               )}
-
-              <TouchableOpacity
-                onPress={() => setShowNationalitySearchModal(true)}
-                className="flex-row items-center bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5"
-              >
-                <Search size={14} color="#94a3b8" />
-                <Text className="text-xs text-slate-500 ml-2">
-                  Add / Search Nationalities...
-                </Text>
-              </TouchableOpacity>
             </View>
 
             {/* 2. Religion Filter */}

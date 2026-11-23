@@ -614,27 +614,6 @@ export const DiscoveryFeedPage: React.FC = () => {
                   )}
                 </div>
 
-                {/* Selected Nationality Tags */}
-                {selectedNationalities.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 mb-2">
-                    {selectedNationalities.map((nat) => (
-                      <span
-                        key={nat}
-                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-rose-600 text-white shadow-2xs"
-                      >
-                        {nat}
-                        <button
-                          type="button"
-                          onClick={() => toggleFilter(selectedNationalities, setSelectedNationalities, nat)}
-                          className="hover:text-rose-200 cursor-pointer"
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
-                      </span>
-                    ))}
-                  </div>
-                )}
-
                 {/* Search Nationality Input with Floating Dropdown Overlay */}
                 <div className="relative mb-2">
                   <div className="relative">
@@ -699,6 +678,27 @@ export const DiscoveryFeedPage: React.FC = () => {
                     </div>
                   )}
                 </div>
+
+                {/* Selected Nationality Tags */}
+                {selectedNationalities.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mb-2">
+                    {selectedNationalities.map((nat) => (
+                      <span
+                        key={nat}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-rose-600 text-white shadow-2xs"
+                      >
+                        {nat}
+                        <button
+                          type="button"
+                          onClick={() => toggleFilter(selectedNationalities, setSelectedNationalities, nat)}
+                          className="hover:text-rose-200 cursor-pointer"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Religion Filter (Multi-Select, matching Onboarding list) */}
@@ -767,7 +767,7 @@ export const DiscoveryFeedPage: React.FC = () => {
                   )}
                 </div>
                 <div className="flex flex-wrap gap-1.5">
-                  {["Never Married", "Divorced", "Widowed", "Awaiting Divorce"].map((status) => {
+                  {["Never Married", "Divorced", "Widowed", "Awaiting Divorce", "Annulled"].map((status) => {
                     const isSelected = selectedMaritalStatuses.includes(status);
                     return (
                       <button
