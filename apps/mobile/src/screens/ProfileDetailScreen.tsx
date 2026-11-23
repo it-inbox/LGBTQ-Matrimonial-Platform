@@ -296,12 +296,12 @@ export const ProfileDetailScreen: React.FC<ProfileDetailScreenProps> = ({
         ) : (
           <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 110 }}>
             {/* HERO PHOTO CAROUSEL */}
-            <View className="w-full bg-slate-900 relative" style={{ height: Math.min(Math.round(SCREEN_WIDTH * 0.72), 300) }}>
+            <View className="w-full bg-slate-900 relative" style={{ height: Math.min(Math.round(SCREEN_WIDTH * 0.72), 600) }}>
               {currentPhoto?.url || profile.photoUrl ? (
                 <Image
                   source={{ uri: currentPhoto?.url || profile.photoUrl }}
                   className="w-full h-full"
-                  blurRadius={isBlurred ? 60 : 0}
+                  blurRadius={isBlurred ? 50 : 0}
                   contentFit="cover"
                 />
               ) : (
@@ -412,9 +412,8 @@ export const ProfileDetailScreen: React.FC<ProfileDetailScreenProps> = ({
                       <TouchableOpacity
                         key={idx}
                         onPress={() => setActivePhotoIdx(idx)}
-                        className={`w-11 h-11 rounded-lg overflow-hidden border-2 mr-2 relative ${
-                          activePhotoIdx === idx ? "border-rose-500 scale-105" : "border-transparent opacity-60"
-                        }`}
+                        className={`w-11 h-11 rounded-lg overflow-hidden border-2 mr-2 relative ${activePhotoIdx === idx ? "border-rose-500 scale-105" : "border-transparent opacity-60"
+                          }`}
                       >
                         <Image
                           source={{ uri: p.url || p.originalUrl }}
