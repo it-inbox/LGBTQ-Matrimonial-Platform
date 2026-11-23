@@ -156,7 +156,7 @@ export const ProfileAvatarWithShield: React.FC<ProfileAvatarWithShieldProps> = (
         <img
           src={photoUrl}
           alt={displayName}
-          className={`w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-105 ${isBlurred ? "filter blur-xl scale-110" : ""
+          className={`w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-105 ${isBlurred ? "filter blur-3xl scale-125" : ""
             } ${imgClassName}`}
         />
       ) : (

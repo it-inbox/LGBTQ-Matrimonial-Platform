@@ -296,12 +296,12 @@ export const ProfileDetailScreen: React.FC<ProfileDetailScreenProps> = ({
         ) : (
           <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 110 }}>
             {/* HERO PHOTO CAROUSEL */}
-            <View className="w-full bg-slate-900 relative" style={{ height: Math.min(Math.round(SCREEN_WIDTH * 0.82), 340) }}>
+            <View className="w-full bg-slate-900 relative" style={{ height: Math.min(Math.round(SCREEN_WIDTH * 0.72), 300) }}>
               {currentPhoto?.url || profile.photoUrl ? (
                 <Image
                   source={{ uri: currentPhoto?.url || profile.photoUrl }}
                   className="w-full h-full"
-                  blurRadius={isBlurred ? 50 : 0}
+                  blurRadius={isBlurred ? 60 : 0}
                   contentFit="cover"
                 />
               ) : (

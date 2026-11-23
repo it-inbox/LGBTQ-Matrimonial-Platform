@@ -532,7 +532,7 @@ export const MemberProfileDetailPage: React.FC = () => {
                               src={p.url || p.originalUrl}
                               alt={`Thumbnail ${idx + 1}`}
                               className={`w-full h-full object-cover ${
-                                isBlurred || p.isBlurred ? "filter blur-md scale-110" : ""
+                                isBlurred || p.isBlurred ? "filter blur-xl scale-125" : ""
                               }`}
                             />
                             {(isBlurred || p.isBlurred) && (
