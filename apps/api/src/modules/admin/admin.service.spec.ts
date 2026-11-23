@@ -112,7 +112,7 @@ describe("AdminService Unit Tests", () => {
         isActive: false,
       });
 
-      const res = await service.updateUserStatus("target-user-1", false, "admin-1", "Spam activity");
+      const res = await service.updateUserStatus("target-user-1", false, "admin-1");
 
       expect(mockPrisma.client.user.update).toHaveBeenCalledWith(
         expect.objectContaining({

@@ -1,5 +1,5 @@
 import React from "react";
-import { Lock } from "lucide-react";
+import { Lock, ImageOff } from "lucide-react";
 
 export interface ProfileAvatarWithShieldProps {
   /** Photo URL or null/undefined if no photo */
@@ -78,8 +78,9 @@ export const ProfileAvatarWithShield: React.FC<ProfileAvatarWithShieldProps> = (
               />
             </>
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gradient-to-tr from-brand-600 via-rose-600 to-rose-500 text-white font-extrabold text-6xl">
-              {initials}
+            <div className="w-full h-full flex flex-col items-center justify-center bg-slate-900 text-slate-400 p-6 text-center">
+              <ImageOff className="w-12 h-12 mb-3 text-slate-500" />
+              <span className="text-base font-semibold text-slate-300">No pictures uploaded</span>
             </div>
           )}
           {/* Ambient vignette gradient */}
@@ -145,8 +146,9 @@ export const ProfileAvatarWithShield: React.FC<ProfileAvatarWithShieldProps> = (
           } ${imgClassName}`}
         />
       ) : (
-        <div className="w-full h-full flex items-center justify-center bg-gradient-to-tr from-brand-100 to-rose-100 text-brand-600 font-bold text-3xl sm:text-4xl">
-          {displayName?.[0] || "?"}
+        <div className="w-full h-full flex flex-col items-center justify-center bg-slate-100 text-slate-500 p-4 text-center">
+          <ImageOff className="w-8 h-8 mb-1.5 text-slate-400" />
+          <span className="text-xs font-semibold text-slate-500 leading-tight">No pictures uploaded</span>
         </div>
       )}
 

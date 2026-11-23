@@ -29,6 +29,7 @@ import {
   ShieldAlert,
   UserCheck,
   Check,
+  ImageOff,
 } from "lucide-react-native";
 
 interface ProfileDetailScreenProps {
@@ -291,9 +292,10 @@ export const ProfileDetailScreen: React.FC<ProfileDetailScreenProps> = ({
                   contentFit="cover"
                 />
               ) : (
-                <View className="w-full h-full bg-gradient-to-tr from-slate-900 via-rose-950 to-slate-900 items-center justify-center">
-                  <Text className="text-6xl font-black text-white/30 uppercase">
-                    {(profile.displayName || "?")[0]}
+                <View className="w-full h-full bg-slate-900 items-center justify-center p-6">
+                  <ImageOff size={44} color="#64748b" />
+                  <Text className="text-slate-400 font-semibold text-sm mt-3 text-center">
+                    No pictures uploaded
                   </Text>
                 </View>
               )}

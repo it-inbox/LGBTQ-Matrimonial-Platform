@@ -14,6 +14,7 @@ import {
   RotateCcw,
   MessageCircle,
   Sparkles,
+  ImageOff,
 } from "lucide-react-native";
 
 export interface MobileProfileCardProps {
@@ -110,9 +111,10 @@ export const MobileProfileCard: React.FC<MobileProfileCardProps> = ({
               contentFit="cover"
             />
           ) : (
-            <View className="w-full h-full bg-rose-50/80 items-center justify-center">
-              <Text className="text-rose-600 font-extrabold text-3xl">
-                {(profile.displayName || profile.name || "?")[0]?.toUpperCase()}
+            <View className="w-full h-full bg-slate-100 items-center justify-center p-2.5">
+              <ImageOff size={22} color="#94a3b8" />
+              <Text className="text-[11px] font-semibold text-slate-500 text-center mt-1.5 leading-tight">
+                No pictures uploaded
               </Text>
             </View>
           )}

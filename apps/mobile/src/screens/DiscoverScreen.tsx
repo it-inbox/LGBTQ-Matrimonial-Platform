@@ -27,6 +27,7 @@ import {
   Send,
   ChevronRight,
   SlidersHorizontal,
+  ImageOff,
 } from "lucide-react-native";
 import { DiscoveryFilterModal, DiscoveryFilters } from "../components/DiscoveryFilterModal";
 
@@ -206,7 +207,7 @@ export const DiscoverScreen: React.FC<{
       primaryPhoto?.url ||
       primaryPhoto?.originalUrl ||
       primaryPhoto?.blurredUrl ||
-      "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80";
+      null;
 
     const isBlurred = primaryPhoto?.isBlurred ?? false;
     const age = calculateAge(item.dateOfBirth) || item.age;
@@ -222,12 +223,21 @@ export const DiscoverScreen: React.FC<{
         >
           {/* Left Photo Container: fixed width, full height */}
           <View className="w-36 h-full relative bg-slate-100 overflow-hidden">
-            <Image
-              source={{ uri: photoUrl }}
-              className="w-full h-full"
-              contentFit="cover"
-              blurRadius={isBlurred ? 24 : 0}
-            />
+            {photoUrl ? (
+              <Image
+                source={{ uri: photoUrl }}
+                className="w-full h-full"
+                contentFit="cover"
+                blurRadius={isBlurred ? 24 : 0}
+              />
+            ) : (
+              <View className="w-full h-full bg-slate-100 items-center justify-center p-3">
+                <ImageOff size={24} color="#94a3b8" />
+                <Text className="text-[11px] font-semibold text-slate-500 text-center mt-2 leading-tight">
+                  No pictures uploaded
+                </Text>
+              </View>
+            )}
 
             {/* Outness Badge (Top Right of Photo) */}
             {item.outnessStatus && (
