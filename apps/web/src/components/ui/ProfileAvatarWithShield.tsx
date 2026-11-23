@@ -75,9 +75,8 @@ export const ProfileAvatarWithShield: React.FC<ProfileAvatarWithShieldProps> = (
               <img
                 src={photoUrl}
                 alt={displayName}
-                className={`relative max-h-full max-w-full w-auto h-full object-contain sm:object-cover transition-all duration-300 ${
-                  isBlurred ? "filter blur-2xl scale-110" : ""
-                } ${imgClassName}`}
+                className={`relative max-h-full max-w-full w-auto h-full object-contain sm:object-cover transition-all duration-300 ${isBlurred ? "filter blur-2xl scale-110" : ""
+                  } ${imgClassName}`}
               />
             </>
           ) : (
@@ -112,8 +111,8 @@ export const ProfileAvatarWithShield: React.FC<ProfileAvatarWithShieldProps> = (
               {photoVisibility === "REQUEST_REQUIRED"
                 ? "Requires Approval"
                 : photoVisibility === "MUTUAL_MATCHES_ONLY"
-                ? "Matches Only"
-                : "Photo Shield Active"}
+                  ? "Matches Only"
+                  : "Photo Shield Active"}
             </h2>
             <p className="text-[11px] text-slate-300 mt-1 mb-3">
               {displayName} maintains private photos. Send a request to view clear original pictures.
@@ -148,8 +147,8 @@ export const ProfileAvatarWithShield: React.FC<ProfileAvatarWithShieldProps> = (
     photoVisibility === "REQUEST_REQUIRED"
       ? "Requires Approval"
       : photoVisibility === "MUTUAL_MATCHES_ONLY"
-      ? "Matches Only"
-      : "Photo Protected";
+        ? "Matches Only"
+        : "Photo Protected";
 
   return (
     <div className={`relative bg-slate-100 overflow-hidden ${className}`}>
@@ -157,9 +156,8 @@ export const ProfileAvatarWithShield: React.FC<ProfileAvatarWithShieldProps> = (
         <img
           src={photoUrl}
           alt={displayName}
-          className={`w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-105 ${
-            isBlurred ? "filter blur-xl scale-110" : ""
-          } ${imgClassName}`}
+          className={`w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-105 ${isBlurred ? "filter blur-xl scale-110" : ""
+            } ${imgClassName}`}
         />
       ) : (
         <div className="w-full h-full flex flex-col items-center justify-center bg-slate-100 text-slate-500 p-4 text-center">

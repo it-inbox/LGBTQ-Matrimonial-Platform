@@ -26,7 +26,10 @@ import {
   Pencil,
   Trash2,
   X,
+  Lock,
+  ChevronRight,
 } from "lucide-react-native";
+import { ProfileDetailScreen } from "./ProfileDetailScreen";
 import { Alert } from "react-native";
 import { MobileEmojiPicker } from "../components/MobileEmojiPicker";
 import { useChatStore, MessageItem } from "../stores/chat.store";
@@ -46,6 +49,7 @@ export const MessagesScreen: React.FC<{
   const [chatFilter, setChatFilter] = useState<ChatFilter>("ALL");
   const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
   const [editingMessage, setEditingMessage] = useState<MessageItem | null>(null);
+  const [detailUserId, setDetailUserId] = useState<string | null>(null);
   const flatListRef = useRef<FlatList>(null);
 
   const {
@@ -285,6 +289,9 @@ export const MessagesScreen: React.FC<{
       null;
 
     const isOnline = !!partner.isOnline;
+    const isPhotoProtected = !!partner.isPhotoProtected;
+    const hasUploadedPhotos = partner.hasUploadedPhotos ?? (partnerProfile.photos?.length > 0);
+    const photoVisibility = partner.photoVisibility || partnerProfile.photoVisibility;
     const initial = (displayName || "?")[0]?.toUpperCase();
     const initials = (displayName || "Member")
       .trim()
@@ -300,6 +307,9 @@ export const MessagesScreen: React.FC<{
       displayName,
       photoUrl,
       isOnline,
+      isPhotoProtected,
+      hasUploadedPhotos,
+      photoVisibility,
       initial,
       initials,
     };
@@ -329,8 +339,17 @@ export const MessagesScreen: React.FC<{
 
   // If in an active conversation detail view
   if (selectedConversation) {
-    const { partner, partnerProfile, displayName, photoUrl, isOnline, initial } =
-      getPartnerInfo(selectedConversation);
+    const {
+      partner,
+      partnerProfile,
+      displayName,
+      photoUrl,
+      isOnline,
+      isPhotoProtected,
+      hasUploadedPhotos,
+      photoVisibility,
+      initial,
+    } = getPartnerInfo(selectedConversation);
 
     return (
       <KeyboardAvoidingView
@@ -354,6 +373,20 @@ export const MessagesScreen: React.FC<{
                 className="bg-slate-100 border border-slate-200"
                 contentFit="cover"
               />
+            ) : isPhotoProtected || (hasUploadedPhotos && photoVisibility === "REQUEST_REQUIRED") ? (
+              <View
+                style={{ width: 44, height: 44, borderRadius: 22 }}
+                className="bg-slate-100 border border-slate-200 items-center justify-center shadow-xs"
+              >
+                <Lock size={18} color="#64748b" />
+              </View>
+            ) : hasUploadedPhotos === false ? (
+              <View
+                style={{ width: 44, height: 44, borderRadius: 22 }}
+                className="bg-slate-100 border border-slate-200 items-center justify-center shadow-xs"
+              >
+                <X size={18} color="#94a3b8" />
+              </View>
             ) : (
               <View
                 style={{ width: 44, height: 44, borderRadius: 22 }}
@@ -370,14 +403,22 @@ export const MessagesScreen: React.FC<{
           </View>
 
           <View className="ml-3 flex-1">
-            <View className="flex-row items-center">
-              <Text className="text-slate-900 font-bold text-base" numberOfLines={1}>
+            <TouchableOpacity
+              onPress={() => {
+                const targetId = partner.id || partnerProfile.userId || partnerProfile.id;
+                if (targetId) setDetailUserId(targetId);
+              }}
+              activeOpacity={0.7}
+              className="flex-row items-center"
+            >
+              <Text className="text-slate-900 font-bold text-base mr-1" numberOfLines={1}>
                 {displayName}
               </Text>
+              <ChevronRight size={18} color="#64748b" />
               {partner.isVerified && (
                 <Shield size={13} color="#10b981" style={{ marginLeft: 4 }} />
               )}
-            </View>
+            </TouchableOpacity>
             <Text className="text-slate-500 text-xs" numberOfLines={1}>
               {isOnline
                 ? "Online"
@@ -638,7 +679,15 @@ export const MessagesScreen: React.FC<{
           showsVerticalScrollIndicator={true}
           indicatorStyle="black"
           renderItem={({ item }) => {
-            const { displayName, photoUrl, isOnline, initials } = getPartnerInfo(item);
+            const {
+              displayName,
+              photoUrl,
+              isOnline,
+              initials,
+              isPhotoProtected,
+              hasUploadedPhotos,
+              photoVisibility,
+            } = getPartnerInfo(item);
             const lastMsg = item.lastMessage;
             const hasUnread =
               (item.unreadCount || 0) > 0 || (lastMsg && !lastMsg.isRead && !lastMsg.isOwn);
@@ -658,6 +707,20 @@ export const MessagesScreen: React.FC<{
                       className="bg-slate-100 border border-slate-200"
                       contentFit="cover"
                     />
+                  ) : isPhotoProtected || (hasUploadedPhotos && photoVisibility === "REQUEST_REQUIRED") ? (
+                    <View
+                      style={{ width: 48, height: 48, borderRadius: 24 }}
+                      className="bg-slate-100 border border-slate-200 items-center justify-center shadow-xs"
+                    >
+                      <Lock size={20} color="#64748b" />
+                    </View>
+                  ) : hasUploadedPhotos === false ? (
+                    <View
+                      style={{ width: 48, height: 48, borderRadius: 24 }}
+                      className="bg-slate-100 border border-slate-200 items-center justify-center shadow-xs"
+                    >
+                      <X size={20} color="#94a3b8" />
+                    </View>
                   ) : (
                     <View
                       style={{ width: 48, height: 48, borderRadius: 24 }}
@@ -729,6 +792,14 @@ export const MessagesScreen: React.FC<{
           }
         />
       )}
+
+      {/* Profile Detail Modal if opened from chat */}
+      <ProfileDetailScreen
+        userId={detailUserId}
+        visible={!!detailUserId}
+        openedFromChat={true}
+        onClose={() => setDetailUserId(null)}
+      />
     </View>
   );
 };

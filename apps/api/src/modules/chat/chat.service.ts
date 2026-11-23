@@ -60,14 +60,14 @@ export class ChatService {
         participant1: {
           include: {
             profile: {
-              include: { photos: { where: { isPrimary: true } } },
+              include: { photos: true },
             },
           },
         },
         participant2: {
           include: {
             profile: {
-              include: { photos: { where: { isPrimary: true } } },
+              include: { photos: true },
             },
           },
         },
@@ -102,16 +102,18 @@ export class ChatService {
             },
           },
         });
+        const hasUploadedPhotos = (partner.profile?.photos?.length || 0) > 0;
+        const visibility = partner.profile?.photoVisibility || "MUTUAL_MATCHES_ONLY";
+        const isUnblurApproved = photoRequest?.status === "ACCEPTED" && !photoRequest?.isHidden;
         const canViewOriginal =
-          partner.profile?.photoVisibility === "ALL_MEMBERS" ||
-          (partner.profile?.photoVisibility === "MUTUAL_MATCHES_ONLY") ||
-          (photoRequest?.status === "ACCEPTED" && !photoRequest?.isHidden);
+          visibility === "ALL_MEMBERS" ||
+          visibility === "MUTUAL_MATCHES_ONLY" ||
+          isUnblurApproved;
 
-        const primaryPhoto = partner.profile?.photos?.[0];
-        const displayPhotoUrl = primaryPhoto
-          ? canViewOriginal
-            ? primaryPhoto.originalUrl
-            : primaryPhoto.blurredUrl || primaryPhoto.originalUrl
+        const primaryPhoto =
+          partner.profile?.photos?.find((p) => p.isPrimary) || partner.profile?.photos?.[0];
+        const displayPhotoUrl = (primaryPhoto && canViewOriginal)
+          ? primaryPhoto.originalUrl
           : null;
 
         return {
@@ -125,6 +127,9 @@ export class ChatService {
             state: partner.profile?.state,
             profession: partner.profile?.profession,
             avatarUrl: displayPhotoUrl,
+            photoVisibility: visibility,
+            hasUploadedPhotos,
+            isPhotoProtected: hasUploadedPhotos && !canViewOriginal,
             isOnline: this.isUserOnline(partner.id),
           },
           lastMessage: lastMessage

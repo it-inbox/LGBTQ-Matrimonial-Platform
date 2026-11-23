@@ -7,15 +7,19 @@ import {
   ActivityIndicator,
   RefreshControl,
 } from "react-native";
-import { Image } from "expo-image";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "../lib/api";
 import { QUERY_KEYS } from "../lib/queryKeys";
-import { Eye, Check, X, ShieldAlert } from "lucide-react-native";
+import { Eye, ShieldAlert } from "lucide-react-native";
+import { MobileProfileCard } from "../components/MobileProfileCard";
+import { ProfileDetailScreen } from "./ProfileDetailScreen";
 
-export const UnblurScreen: React.FC = () => {
+export const UnblurScreen: React.FC<{ onNavigateToChat?: (partnerId: string) => void }> = ({
+  onNavigateToChat,
+}) => {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<"received" | "sent">("received");
+  const [detailUserId, setDetailUserId] = useState<string | null>(null);
 
   // Fetch Received Unblur Requests
   const {
@@ -88,92 +92,23 @@ export const UnblurScreen: React.FC = () => {
 
   const renderItem = ({ item }: { item: any }) => {
     const isReceived = activeTab === "received";
-    const partner = (isReceived ? item.requester : item.targetUser) || {};
-    const photoUrl =
-      partner.photos?.find((p: any) => p.isPrimary)?.thumbnailUrl ||
-      partner.photos?.[0]?.thumbnailUrl ||
-      partner.photoUrl;
-
-    const isPending = item.status === "PENDING";
-    const isAccepted = item.status === "ACCEPTED";
-    const isDeclined = item.status === "DECLINED";
-
     return (
-      <View className="bg-white rounded-2xl p-4 mb-3 border border-slate-200/80 shadow-xs">
-        <View className="flex-row items-center">
-          <View className="relative">
-            {photoUrl ? (
-              <Image
-                source={{ uri: photoUrl }}
-                className="w-13 h-13 rounded-full bg-slate-100"
-                contentFit="cover"
-              />
-            ) : (
-              <View className="w-13 h-13 rounded-full bg-rose-100 items-center justify-center">
-                <Text className="text-rose-600 font-bold text-base">
-                  {(partner.displayName || partner.name || "?")[0]?.toUpperCase()}
-                </Text>
-              </View>
-            )}
-          </View>
-
-          <View className="flex-1 ml-3.5">
-            <View className="flex-row items-center justify-between">
-              <Text className="font-bold text-base text-slate-800" numberOfLines={1}>
-                {partner.displayName || partner.name || "Member"}
-              </Text>
-              <View
-                className={`px-2 py-0.5 rounded-full ${isAccepted
-                    ? "bg-emerald-50"
-                    : isDeclined
-                      ? "bg-rose-50"
-                      : "bg-amber-50"
-                  }`}
-              >
-                <Text
-                  className={`text-[11px] font-bold ${isAccepted
-                      ? "text-emerald-700"
-                      : isDeclined
-                        ? "text-rose-600"
-                        : "text-amber-700"
-                    }`}
-                >
-                  {item.status || "PENDING"}
-                </Text>
-              </View>
-            </View>
-            <Text className="text-xs text-slate-500 mt-0.5" numberOfLines={1}>
-              {isReceived
-                ? "Requested to unblur and view your full photos"
-                : "Awaiting response to unblur photos"}
-            </Text>
-          </View>
-        </View>
-
-        {/* Action buttons for received pending unblur requests */}
-        {isReceived && isPending && (
-          <View className="flex-row items-center justify-end gap-2.5 mt-3 pt-3 border-t border-slate-100">
-            <TouchableOpacity
-              onPress={() =>
-                respondMutation.mutate({ id: item.id, status: "DECLINED" })
-              }
-              disabled={respondMutation.isPending}
-              className="px-3.5 py-1.5 rounded-full border border-slate-200 bg-white"
-            >
-              <Text className="text-xs font-semibold text-slate-600">Decline</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() =>
-                respondMutation.mutate({ id: item.id, status: "ACCEPTED" })
-              }
-              disabled={respondMutation.isPending}
-              className="px-4 py-1.5 rounded-full bg-rose-600"
-            >
-              <Text className="text-xs font-bold text-white">Approve Unblur</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-      </View>
+      <MobileProfileCard
+        item={item}
+        isReceived={isReceived}
+        onAccept={
+          isReceived && item.status === "PENDING"
+            ? () => respondMutation.mutate({ id: item.id, status: "ACCEPTED" })
+            : undefined
+        }
+        onDecline={
+          isReceived && item.status === "PENDING"
+            ? () => respondMutation.mutate({ id: item.id, status: "DECLINED" })
+            : undefined
+        }
+        onPressProfile={(uid) => setDetailUserId(uid)}
+        isResponding={respondMutation.isPending}
+      />
     );
   };
 
@@ -233,6 +168,13 @@ export const UnblurScreen: React.FC = () => {
           }
         />
       )}
+      {/* Profile Detail Screen on card tap */}
+      <ProfileDetailScreen
+        userId={detailUserId}
+        visible={!!detailUserId}
+        onClose={() => setDetailUserId(null)}
+        onNavigateToChat={onNavigateToChat}
+      />
     </View>
   );
 };

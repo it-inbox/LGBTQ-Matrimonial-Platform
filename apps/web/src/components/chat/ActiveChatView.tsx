@@ -16,7 +16,10 @@ import {
   MoreVertical,
   Ban,
   UserCheck,
+  Lock,
+  ChevronRight,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 import { ConversationItem, MessageItem, useChatStore } from "../../stores/chat.store";
 import { api } from "../../lib/api";
 import { useAuthStore } from "../../stores/auth.store";
@@ -415,6 +418,14 @@ export const ActiveChatView: React.FC<ActiveChatViewProps> = ({
                   alt={conversation.partner?.displayName || "Member"}
                   className="w-full h-full rounded-full object-cover"
                 />
+              ) : conversation.partner?.isPhotoProtected || (conversation.partner?.hasUploadedPhotos && conversation.partner?.photoVisibility === "REQUEST_REQUIRED") ? (
+                <div className="w-full h-full rounded-full bg-slate-100 flex items-center justify-center text-slate-600 shadow-2xs" title="Requires Approval">
+                  <Lock className="w-4 h-4 text-slate-600" />
+                </div>
+              ) : conversation.partner?.hasUploadedPhotos === false ? (
+                <div className="w-full h-full rounded-full bg-slate-100 flex items-center justify-center text-slate-400 shadow-2xs" title="No pictures uploaded">
+                  <X className="w-4 h-4 text-slate-400" />
+                </div>
               ) : (
                 <div className="w-full h-full rounded-full bg-slate-100 flex items-center justify-center text-slate-500 font-bold text-xs">
                   {(conversation.partner?.displayName || "Member").slice(0, 2).toUpperCase()}
@@ -427,9 +438,20 @@ export const ActiveChatView: React.FC<ActiveChatViewProps> = ({
           </div>
 
           <div>
-            <h3 className="text-sm font-bold text-slate-900 leading-tight">
-              {conversation.partner?.displayName || "Member"}
-            </h3>
+            <div className="flex items-center gap-1">
+              <h3 className="text-sm font-bold text-slate-900 leading-tight">
+                {conversation.partner?.displayName || "Member"}
+              </h3>
+              {conversation.partner?.id && (
+                <Link
+                  to={`/profile/${conversation.partner.id}?from=chat`}
+                  className="p-0.5 text-slate-400 hover:text-slate-800 hover:bg-slate-100 rounded-md transition-colors flex items-center"
+                  title="View Profile"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </Link>
+              )}
+            </div>
             <p className="text-[11px] text-slate-400">
               {isPartnerTyping ? (
                 <span className="text-brand-600 font-semibold animate-pulse">Typing...</span>

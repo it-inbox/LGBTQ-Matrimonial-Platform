@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate, Link, useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "../../lib/api";
 import { QUERY_KEYS } from "../../lib/queryKeys";
@@ -37,7 +37,9 @@ import { ProfileAvatarWithShield } from "../../components/ui/ProfileAvatarWithSh
 
 export const MemberProfileDetailPage: React.FC = () => {
   const { userId: paramUserId } = useParams<{ userId: string }>();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const fromChat = searchParams.get("from") === "chat";
   const queryClient = useQueryClient();
   const { user: currentUser, profile: myProfile } = useAuthStore();
 
@@ -315,14 +317,25 @@ export const MemberProfileDetailPage: React.FC = () => {
             {/* Top Header / Back Button bar: completely stationary */}
             <div className="bg-white rounded-2xl border border-slate-200/90 px-4 py-3 mb-4 shadow-xs shrink-0">
               <div className="flex items-center justify-between">
-                <button
-                  type="button"
-                  onClick={() => navigate(-1)}
-                  className="flex items-center gap-1.5 text-xs font-bold text-slate-700 hover:text-slate-900 cursor-pointer p-1.5 -ml-1 rounded-xl hover:bg-slate-100 transition-colors"
-                >
-                  <ArrowLeft className="w-4 h-4" />
-                  <span>Back</span>
-                </button>
+                {fromChat ? (
+                  <button
+                    type="button"
+                    onClick={() => navigate("/messages")}
+                    className="flex items-center gap-1.5 text-xs font-bold text-rose-600 hover:text-rose-700 cursor-pointer py-1.5 px-3 rounded-xl bg-rose-50 hover:bg-rose-100 border border-rose-200 transition-colors"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                    <span>Back to Chat</span>
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => navigate(-1)}
+                    className="flex items-center gap-1.5 text-xs font-bold text-slate-700 hover:text-slate-900 cursor-pointer p-1.5 -ml-1 rounded-xl hover:bg-slate-100 transition-colors"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                    <span>Back</span>
+                  </button>
+                )}
                 <div className="text-center min-w-0 px-2">
                   <h1 className="text-sm font-bold text-slate-900 truncate">
                     {profile.displayName}

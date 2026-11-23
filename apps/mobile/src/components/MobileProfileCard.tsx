@@ -38,11 +38,12 @@ export const MobileProfileCard: React.FC<MobileProfileCardProps> = ({
   onPressProfile,
   isResponding = false,
 }) => {
-  // Resolve partnerUser from either accepted matches format or interest format
+  // Resolve partnerUser from either accepted matches format, interest format, or unblur request format
   const partnerUser =
     item.user ||
     item.targetUser ||
-    (isReceived ? item.sender : item.receiver) ||
+    item.target ||
+    (isReceived ? (item.requester || item.sender) : (item.receiver || item.target)) ||
     item.partner ||
     {};
   const profile = partnerUser.profile || partnerUser || {};

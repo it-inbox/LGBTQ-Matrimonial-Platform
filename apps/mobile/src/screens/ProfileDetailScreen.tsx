@@ -37,6 +37,7 @@ interface ProfileDetailScreenProps {
   visible: boolean;
   onClose: () => void;
   onNavigateToChat?: (partnerId: string) => void;
+  openedFromChat?: boolean;
 }
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
@@ -46,6 +47,7 @@ export const ProfileDetailScreen: React.FC<ProfileDetailScreenProps> = ({
   visible,
   onClose,
   onNavigateToChat,
+  openedFromChat = false,
 }) => {
   const queryClient = useQueryClient();
   const { user: currentUser } = useAuthStore();
@@ -234,10 +236,20 @@ export const ProfileDetailScreen: React.FC<ProfileDetailScreenProps> = ({
 
         {/* Top Stationary Navbar */}
         <View className="h-14 px-4 bg-white border-b border-slate-200/90 flex-row items-center justify-between z-20">
-          <TouchableOpacity onPress={onClose} className="p-2 -ml-2 rounded-xl flex-row items-center gap-1 active:bg-slate-100">
-            <ArrowLeft size={18} color="#1e293b" />
-            <Text className="text-xs font-bold text-slate-700">Back</Text>
-          </TouchableOpacity>
+          {openedFromChat ? (
+            <TouchableOpacity
+              onPress={onClose}
+              className="px-2.5 py-1.5 -ml-1 rounded-xl flex-row items-center gap-1.5 bg-rose-50 border border-rose-200 active:bg-rose-100"
+            >
+              <ArrowLeft size={16} color="#e11d48" />
+              <Text className="text-xs font-bold text-rose-600">Back to Chat</Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity onPress={onClose} className="p-2 -ml-2 rounded-xl flex-row items-center gap-1 active:bg-slate-100">
+              <ArrowLeft size={18} color="#1e293b" />
+              <Text className="text-xs font-bold text-slate-700">Back</Text>
+            </TouchableOpacity>
+          )}
 
           <View className="items-center px-2 flex-1">
             <Text className="text-sm font-bold text-slate-900 truncate" numberOfLines={1}>

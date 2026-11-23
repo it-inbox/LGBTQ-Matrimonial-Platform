@@ -24,6 +24,9 @@ export interface ConversationPartner {
   state?: string;
   profession?: string;
   avatarUrl?: string | null;
+  photoVisibility?: string;
+  hasUploadedPhotos?: boolean;
+  isPhotoProtected?: boolean;
   isOnline?: boolean;
 }
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { MessageSquare, Search, Phone, ArrowRight } from "lucide-react";
+import { MessageSquare, Search, Phone, ArrowRight, Lock, X } from "lucide-react";
 import { ActivitySidebar } from "../../components/layout/ActivitySidebar";
 import { ActiveChatView } from "../../components/chat/ActiveChatView";
 import { FilterPills, EmptyState } from "../../components/ui";
@@ -222,6 +222,14 @@ export const MessengerPage: React.FC = () => {
                                     alt={partnerName}
                                     className="w-full h-full rounded-full object-cover"
                                   />
+                                ) : conv.partner.isPhotoProtected || (conv.partner.hasUploadedPhotos && conv.partner.photoVisibility === "REQUEST_REQUIRED") ? (
+                                  <div className="w-full h-full rounded-full bg-slate-100 flex items-center justify-center text-slate-600 shadow-2xs" title="Requires Approval">
+                                    <Lock className="w-4 h-4 text-slate-600" />
+                                  </div>
+                                ) : conv.partner.hasUploadedPhotos === false ? (
+                                  <div className="w-full h-full rounded-full bg-slate-100 flex items-center justify-center text-slate-400 shadow-2xs" title="No pictures uploaded">
+                                    <X className="w-4 h-4 text-slate-400" />
+                                  </div>
                                 ) : (
                                   <div className="w-full h-full rounded-full bg-slate-100 flex items-center justify-center text-slate-500 font-bold text-xs">
                                     {partnerName.slice(0, 2).toUpperCase()}
