@@ -36,10 +36,12 @@ import { Modal } from "../../components/ui/Modal";
 import { ProfileAvatarWithShield } from "../../components/ui/ProfileAvatarWithShield";
 
 export const MemberProfileDetailPage: React.FC = () => {
-  const { userId } = useParams<{ userId: string }>();
+  const { userId: paramUserId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { user: currentUser } = useAuthStore();
+  const { user: currentUser, profile: myProfile } = useAuthStore();
+
+  const userId = paramUserId || currentUser?.id || myProfile?.userId || "";
 
   const [activePhotoIdx, setActivePhotoIdx] = useState(0);
   const [interestMessage, setInterestMessage] = useState("");
@@ -330,6 +332,15 @@ export const MemberProfileDetailPage: React.FC = () => {
                   </p>
                 </div>
                 <div className="flex items-center gap-1">
+                  {isOwn && (
+                    <button
+                      type="button"
+                      onClick={() => navigate("/profile/edit")}
+                      className="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition-colors cursor-pointer mr-1"
+                    >
+                      Edit Profile
+                    </button>
+                  )}
                   {!isOwn && (
                     isBlockedByMe ? (
                       <button

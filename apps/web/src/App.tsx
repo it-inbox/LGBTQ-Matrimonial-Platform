@@ -137,6 +137,14 @@ export function App() {
                     }
                   />
                   <Route
+                    path="/profile/me"
+                    element={
+                      <ProtectedRoute requireProfile={true}>
+                        <MemberProfileDetailPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
                     path="/profile/:userId"
                     element={
                       <ProtectedRoute requireProfile={true}>

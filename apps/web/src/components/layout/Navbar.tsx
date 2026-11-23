@@ -111,12 +111,18 @@ export const Navbar: React.FC = () => {
               <div className="p-5 sm:p-6 space-y-5">
                 {/* Profile Card Header */}
                 {profile && (
-                  <div className="flex items-center gap-4 pt-2">
+                  <div
+                    onClick={() => {
+                      closeMobileMenu();
+                      navigate("/profile/me");
+                    }}
+                    className="flex items-center gap-4 pt-2 cursor-pointer group"
+                  >
                     {(() => {
                       const primaryPhoto = profile.photos?.find((p) => p.isPrimary) || profile.photos?.[0];
                       const primaryPhotoUrl = primaryPhoto?.originalUrl || primaryPhoto?.url;
                       return (
-                        <div className="relative w-16 h-16 rounded-full overflow-hidden bg-slate-200 shrink-0 border border-slate-100 shadow-xs flex items-center justify-center">
+                        <div className="relative w-16 h-16 rounded-full overflow-hidden bg-slate-200 shrink-0 border border-slate-100 shadow-xs flex items-center justify-center group-hover:scale-105 transition-transform">
                           {primaryPhotoUrl ? (
                             <img
                               src={primaryPhotoUrl}
@@ -129,10 +135,13 @@ export const Navbar: React.FC = () => {
                         </div>
                       );
                     })()}
-                    <div className="min-w-0 flex-1 pr-6 flex items-center">
-                      <h3 className="font-extrabold text-slate-900 text-lg leading-tight truncate">
+                    <div className="min-w-0 flex-1 pr-6 flex flex-col justify-center">
+                      <h3 className="font-extrabold text-slate-900 text-lg leading-tight truncate group-hover:text-rose-600 transition-colors">
                         {profile.displayName || "Member"}
                       </h3>
+                      <span className="text-xs text-rose-600 font-semibold mt-0.5">
+                        View &amp; Preview Profile &rarr;
+                      </span>
                     </div>
                   </div>
                 )}
@@ -160,6 +169,14 @@ export const Navbar: React.FC = () => {
                 {/* Navigation List Items with Chevron */}
                 <nav className="space-y-0.5">
                   {[
+                    {
+                      label: "View My Profile",
+                      icon: User,
+                      onClick: () => {
+                        closeMobileMenu();
+                        navigate("/profile/me");
+                      },
+                    },
                     {
                       label: "Edit Profile",
                       icon: Edit3,
