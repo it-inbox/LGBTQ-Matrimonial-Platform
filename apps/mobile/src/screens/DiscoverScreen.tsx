@@ -228,7 +228,7 @@ export const DiscoverScreen: React.FC<{
                   source={{ uri: photoUrl }}
                   className="w-full h-full"
                   contentFit="cover"
-                  blurRadius={isBlurred ? 24 : 0}
+                  blurRadius={isBlurred ? 50 : 0}
                 />
               ) : (
                 <View className="w-full h-full bg-slate-100 items-center justify-center p-3">

@@ -108,7 +108,8 @@ export const MobileProfileCard: React.FC<MobileProfileCardProps> = ({
           {photoUrl ? (
             <Image
               source={{ uri: photoUrl }}
-              className={`w-full h-full ${isBlurred ? "blur-md" : ""}`}
+              className="w-full h-full"
+              blurRadius={isBlurred ? 50 : 0}
               contentFit="cover"
             />
           ) : (

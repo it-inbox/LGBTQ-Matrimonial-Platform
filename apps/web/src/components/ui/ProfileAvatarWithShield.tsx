@@ -75,7 +75,7 @@ export const ProfileAvatarWithShield: React.FC<ProfileAvatarWithShieldProps> = (
               <img
                 src={photoUrl}
                 alt={displayName}
-                className={`relative max-h-full max-w-full w-auto h-full object-contain sm:object-cover transition-all duration-300 ${isBlurred ? "filter blur-2xl scale-110" : ""
+                className={`relative max-h-full max-w-full w-auto h-full object-contain sm:object-cover transition-all duration-300 ${isBlurred ? "filter blur-3xl scale-110" : ""
                   } ${imgClassName}`}
               />
             </>
