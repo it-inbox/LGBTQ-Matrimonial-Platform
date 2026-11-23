@@ -81,7 +81,12 @@ export const ActivitySidebar: React.FC<ActivitySidebarProps> = ({ activeTab }) =
                 <span>{membership.planName}</span>
               </span>
             ) : (
-              <span className="text-[11px] font-medium text-slate-400">Free Member</span>
+              <Link
+                to="/profile/me"
+                className="text-[11px] font-semibold text-rose-600 hover:text-rose-700 hover:underline mt-0.5 inline-block"
+              >
+                View Profile
+              </Link>
             )}
           </div>
         </div>
