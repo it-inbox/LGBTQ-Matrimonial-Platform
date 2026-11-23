@@ -132,8 +132,12 @@ export const MobileProfileCard: React.FC<MobileProfileCardProps> = ({
           {isBlurred && (
             <View className="absolute inset-0 bg-slate-900/40 items-center justify-center p-2">
               <Lock size={16} color="#ffffff" />
-              <Text className="text-[10px] font-bold text-white mt-1">
-                Protected
+              <Text className="text-[10px] font-bold text-white mt-1 text-center">
+                {profile.photoVisibility === "REQUEST_REQUIRED"
+                  ? "Requires Approval"
+                  : profile.photoVisibility === "MUTUAL_MATCHES_ONLY"
+                  ? "Matches Only"
+                  : "Protected"}
               </Text>
             </View>
           )}

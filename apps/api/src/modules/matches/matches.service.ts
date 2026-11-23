@@ -34,9 +34,9 @@ export class MatchesService {
     return photos.map((photo) => ({
       id: photo.id,
       isPrimary: photo.isPrimary,
-      url: canViewOriginal ? photo.originalUrl : (photo.blurredUrl || ""),
+      url: canViewOriginal ? photo.originalUrl : (photo.blurredUrl || photo.originalUrl || ""),
       originalUrl: canViewOriginal ? photo.originalUrl : undefined,
-      blurredUrl: photo.blurredUrl || undefined,
+      blurredUrl: photo.blurredUrl || photo.originalUrl || undefined,
       isBlurred: !canViewOriginal,
     }));
   }
@@ -490,9 +490,10 @@ export class MatchesService {
     return interests.map((item) => {
       if (!item.sender?.profile) return item;
       const isMutualAccepted = item.status === "ACCEPTED";
+      const visibility = item.sender.profile.photoVisibility;
       const canView =
-        item.sender.profile.photoVisibility === "ALL_MEMBERS" ||
-        isMutualAccepted ||
+        visibility === "ALL_MEMBERS" ||
+        (visibility === "MUTUAL_MATCHES_ONLY" && isMutualAccepted) ||
         grantedTargetIds.has(item.sender.id);
 
       return {
@@ -777,9 +778,10 @@ export class MatchesService {
     return interests.map((item) => {
       if (!item.receiver?.profile) return item;
       const isMutualAccepted = item.status === "ACCEPTED";
+      const visibility = item.receiver.profile.photoVisibility;
       const canView =
-        item.receiver.profile.photoVisibility === "ALL_MEMBERS" ||
-        isMutualAccepted ||
+        visibility === "ALL_MEMBERS" ||
+        (visibility === "MUTUAL_MATCHES_ONLY" && isMutualAccepted) ||
         grantedIds.has(item.receiver.id);
 
       return {
@@ -902,6 +904,13 @@ export class MatchesService {
       blockedList.filter((b) => b.blockedId === userId).map((b) => b.userId)
     );
 
+    // Query photo grants to check if viewer was granted unblur access
+    const photoGrants = await this.prisma.client.photoAccessRequest.findMany({
+      where: { requesterId: userId, status: "ACCEPTED", isHidden: false },
+      select: { targetId: true },
+    });
+    const grantedTargetIds = new Set(photoGrants.map((g) => g.targetId));
+
     // 1. Interests sent by me that got ACCEPTED
     const sentAccepted = await this.prisma.client.matchInterest.findMany({
       where: {
@@ -932,6 +941,7 @@ export class MatchesService {
                 country: true,
                 religion: true,
                 pronouns: true,
+                photoVisibility: true,
                 photos: {
                   select: {
                     id: true,
@@ -978,6 +988,7 @@ export class MatchesService {
                 country: true,
                 religion: true,
                 pronouns: true,
+                photoVisibility: true,
                 photos: {
                   select: {
                     id: true,
@@ -994,11 +1005,18 @@ export class MatchesService {
       orderBy: { updatedAt: "desc" },
     });
 
-    // Map each into a unified MutualMatch item with sanitized photos (mutual matches are allowed original view)
+    // Map each into a unified MutualMatch item with sanitized photos (enforcing REQUEST_REQUIRED privacy)
     const formattedSent = sentAccepted.map((item) => {
       const partnerId = item.receiver?.id;
       const isBlockedByMe = partnerId ? blockedByMeSet.has(partnerId) : false;
       const hasBlockedMe = partnerId ? blockedMeSet.has(partnerId) : false;
+      const profile = item.receiver?.profile;
+      const visibility = profile?.photoVisibility;
+      const canView =
+        visibility === "ALL_MEMBERS" ||
+        visibility === "MUTUAL_MATCHES_ONLY" ||
+        (visibility === "REQUEST_REQUIRED" && partnerId && grantedTargetIds.has(partnerId));
+
       return {
         interestId: item.id,
         matchType: "ACCEPTED_BY_THEM" as const,
@@ -1009,10 +1027,10 @@ export class MatchesService {
         hasBlockedMe,
         user: {
           ...item.receiver,
-          profile: item.receiver?.profile
+          profile: profile
             ? {
-              ...item.receiver.profile,
-              photos: this.sanitizePhotos(item.receiver.profile.photos, true),
+              ...profile,
+              photos: this.sanitizePhotos(profile.photos, !!canView),
             }
             : undefined,
         },
@@ -1023,6 +1041,13 @@ export class MatchesService {
       const partnerId = item.sender?.id;
       const isBlockedByMe = partnerId ? blockedByMeSet.has(partnerId) : false;
       const hasBlockedMe = partnerId ? blockedMeSet.has(partnerId) : false;
+      const profile = item.sender?.profile;
+      const visibility = profile?.photoVisibility;
+      const canView =
+        visibility === "ALL_MEMBERS" ||
+        visibility === "MUTUAL_MATCHES_ONLY" ||
+        (visibility === "REQUEST_REQUIRED" && partnerId && grantedTargetIds.has(partnerId));
+
       return {
         interestId: item.id,
         matchType: "ACCEPTED_BY_ME" as const,
@@ -1033,10 +1058,10 @@ export class MatchesService {
         hasBlockedMe,
         user: {
           ...item.sender,
-          profile: item.sender?.profile
+          profile: profile
             ? {
-              ...item.sender.profile,
-              photos: this.sanitizePhotos(item.sender.profile.photos, true),
+              ...profile,
+              photos: this.sanitizePhotos(profile.photos, !!canView),
             }
             : undefined,
         },

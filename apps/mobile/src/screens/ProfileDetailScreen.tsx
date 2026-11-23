@@ -399,10 +399,21 @@ export const ProfileDetailScreen: React.FC<ProfileDetailScreenProps> = ({
                       <TouchableOpacity
                         key={idx}
                         onPress={() => setActivePhotoIdx(idx)}
-                        className={`w-11 h-11 rounded-lg overflow-hidden border-2 mr-2 ${activePhotoIdx === idx ? "border-rose-500 scale-105" : "border-transparent opacity-60"
-                          }`}
+                        className={`w-11 h-11 rounded-lg overflow-hidden border-2 mr-2 relative ${
+                          activePhotoIdx === idx ? "border-rose-500 scale-105" : "border-transparent opacity-60"
+                        }`}
                       >
-                        <Image source={{ uri: p.url || p.originalUrl }} className="w-full h-full" contentFit="cover" />
+                        <Image
+                          source={{ uri: p.url || p.originalUrl }}
+                          className="w-full h-full"
+                          contentFit="cover"
+                          blurRadius={isBlurred ? 24 : 0}
+                        />
+                        {isBlurred && (
+                          <View className="absolute inset-0 bg-black/40 items-center justify-center">
+                            <Lock size={12} color="#ffffff" />
+                          </View>
+                        )}
                       </TouchableOpacity>
                     ))}
                   </ScrollView>

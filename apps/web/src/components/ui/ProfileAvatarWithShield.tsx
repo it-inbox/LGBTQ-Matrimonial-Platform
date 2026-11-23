@@ -8,6 +8,8 @@ export interface ProfileAvatarWithShieldProps {
   displayName: string;
   /** Whether the photo is protected/blurred */
   isBlurred?: boolean;
+  /** Privacy visibility setting (e.g. "MUTUAL_MATCHES_ONLY" | "REQUEST_REQUIRED" | "ALL_MEMBERS") */
+  photoVisibility?: string | null;
   /** Optional custom aspect ratio / container classes */
   className?: string;
   /** Optional class names passed directly to the <img> element */
@@ -39,6 +41,7 @@ export const ProfileAvatarWithShield: React.FC<ProfileAvatarWithShieldProps> = (
   photoUrl,
   displayName,
   isBlurred = false,
+  photoVisibility,
   className = "",
   imgClassName = "",
   variant = "card",
@@ -105,7 +108,13 @@ export const ProfileAvatarWithShield: React.FC<ProfileAvatarWithShieldProps> = (
             <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center mx-auto mb-2 text-white">
               <Lock className="w-5 h-5" />
             </div>
-            <h2 className="text-sm font-bold text-white">Photo Shield Active</h2>
+            <h2 className="text-sm font-bold text-white">
+              {photoVisibility === "REQUEST_REQUIRED"
+                ? "Requires Approval"
+                : photoVisibility === "MUTUAL_MATCHES_ONLY"
+                ? "Matches Only"
+                : "Photo Shield Active"}
+            </h2>
             <p className="text-[11px] text-slate-300 mt-1 mb-3">
               {displayName} maintains private photos. Send a request to view clear original pictures.
             </p>
@@ -135,6 +144,13 @@ export const ProfileAvatarWithShield: React.FC<ProfileAvatarWithShieldProps> = (
   }
 
   // Default "card" variant
+  const privacyBadgeText =
+    photoVisibility === "REQUEST_REQUIRED"
+      ? "Requires Approval"
+      : photoVisibility === "MUTUAL_MATCHES_ONLY"
+      ? "Matches Only"
+      : "Photo Protected";
+
   return (
     <div className={`relative bg-slate-100 overflow-hidden ${className}`}>
       {photoUrl ? (
@@ -176,7 +192,7 @@ export const ProfileAvatarWithShield: React.FC<ProfileAvatarWithShieldProps> = (
             <Lock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
           </div>
           <span className="text-[10px] sm:text-[11px] font-bold tracking-wide text-white drop-shadow-xs">
-            Photo Protected
+            {privacyBadgeText}
           </span>
           {shieldContent ? (
             shieldContent

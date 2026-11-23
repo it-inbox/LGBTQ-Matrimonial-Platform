@@ -26,6 +26,7 @@ export interface ProfileCardData {
   profession?: string | null;
   education?: string | null;
   maritalStatus?: string | null;
+  photoVisibility?: string | null;
   photos?: Array<{
     id?: string;
     url?: string;
@@ -118,6 +119,7 @@ export const UniversalProfileCard: React.FC<UniversalProfileCardProps> = ({
         photoUrl={photoUrl}
         displayName={profile.displayName}
         isBlurred={isBlurred}
+        photoVisibility={profile.photoVisibility}
         photoCount={profile.photos?.length}
         onRequestUnblur={onRequestUnblur}
         className="w-36 xs:w-44 sm:w-56 md:w-60 h-full shrink-0"

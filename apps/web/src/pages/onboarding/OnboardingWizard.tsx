@@ -561,7 +561,7 @@ export const OnboardingWizard: React.FC = () => {
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] pt-6 pb-24 px-4 max-w-2xl mx-auto">
+    <div className="min-h-[calc(100vh-4rem)] pt-6 pb-36 px-4 max-w-2xl mx-auto">
       {/* ONBOARDING COMPLETION PERCENTAGE HEADER */}
       <div className="mb-6 bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-5">
         <div className="flex items-center justify-between mb-2">
@@ -1507,7 +1507,7 @@ export const OnboardingWizard: React.FC = () => {
       </div>
 
       {/* NAVIGATION CONTROLS (FIXED / ABSOLUTE AT BOTTOM) */}
-      <div className="fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-md border-t border-slate-200/80 shadow-[0_-4px_20px_rgba(0,0,0,0.06)] py-3 px-4">
+      <div className="fixed bottom-0 left-0 right-0 z-60 bg-white/95 backdrop-blur-md border-t border-slate-200/80 shadow-[0_-4px_20px_rgba(0,0,0,0.06)] py-3 px-4">
         <div className="max-w-2xl mx-auto flex items-center justify-between gap-3">
           {step > minStep ? (
             <button

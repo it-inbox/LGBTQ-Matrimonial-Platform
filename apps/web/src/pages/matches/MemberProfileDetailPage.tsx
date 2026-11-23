@@ -389,6 +389,7 @@ export const MemberProfileDetailPage: React.FC = () => {
                 photoUrl={currentPhoto?.url}
                 displayName={profile.displayName}
                 isBlurred={isBlurred}
+                photoVisibility={profile.photoVisibility}
                 photoCount={photos.length}
                 activePhotoIndex={activePhotoIdx + 1}
                 className="w-full aspect-[4/3] sm:aspect-[16/10] max-h-[380px] sm:max-h-[420px]"
@@ -517,9 +518,15 @@ export const MemberProfileDetailPage: React.FC = () => {
                             <img
                               src={p.url || p.originalUrl}
                               alt={`Thumbnail ${idx + 1}`}
-                              className={`w-full h-full object-cover ${p.isBlurred ? "filter blur-sm" : ""
-                                }`}
+                              className={`w-full h-full object-cover ${
+                                isBlurred || p.isBlurred ? "filter blur-md scale-110" : ""
+                              }`}
                             />
+                            {(isBlurred || p.isBlurred) && (
+                              <div className="absolute inset-0 bg-slate-950/40 flex items-center justify-center text-white">
+                                <Lock className="w-3.5 h-3.5" />
+                              </div>
+                            )}
                           </button>
                         ))}
                       </div>
